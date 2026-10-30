@@ -228,6 +228,8 @@ type FixtureState = {
   prices: PricesState;
   aiPlanning: AiPlanningState;
   telegram: TelegramState;
+  goal: typeof goal | null;
+  checkIns: components["schemas"]["GoalProgressEntryDto"][];
 };
 type FixtureNotification = components["schemas"]["NotificationDto"];
 type FixtureReminder = components["schemas"]["ReminderDto"];
@@ -465,6 +467,19 @@ function initialState(empty = false): FixtureState {
     ],
     userId: user.id,
     empty,
+    goal: empty ? null : goal,
+    checkIns: empty
+      ? []
+      : [1, 0].map((ago) => ({
+          id: `c4ec0000-0000-4000-8000-00000000000${ago}`,
+          date: dateAgo(ago),
+          actualCalories: ago ? 2140 : 1820,
+          actualProteinGrams: 120,
+          actualCarbsGrams: 230,
+          actualFatGrams: 60,
+          actualWeight: ago ? 74.2 : null,
+          notes: null,
+        })),
     notifications: [],
     notificationPreferences: initialNotificationPreferences(),
     reminders: [],
@@ -1642,9 +1657,26 @@ const server = Bun.serve({
     if (planned) return planned;
     if (path === "/api/Trainers/my-trainer")
       return json({ error: "No active trainer relationship found" }, 404);
-    if (path === "/api/Goals")
-      return state.empty ? json(null, 204) : json(goal);
-    if (path === "/api/Goals/history") return json(state.empty ? [] : [goal]);
+    if (path === "/api/Goals" && method === "GET")
+      return state.goal ? json(state.goal) : json(null, 204);
+    if (path === "/api/Goals/history")
+      return json(state.goal ? [state.goal] : []);
+    if (path === "/api/Goals/progress" && method === "GET")
+      return json({
+        goal: state.goal ?? undefined,
+        progressEntries: state.goal ? state.checkIns : [],
+      });
+    const goalDelete = path.match(/^\/api\/Goals\/(progress\/)?([^/]+)$/);
+    if (goalDelete && method === "DELETE") {
+      state.writes.push({ path, body: {} });
+      if (goalDelete[1]) {
+        state.checkIns = state.checkIns.filter((c) => c.id !== goalDelete[2]);
+      } else if (state.goal?.id === goalDelete[2]) {
+        state.goal = null;
+        state.checkIns = [];
+      } else return json({ error: "Not found" }, 404);
+      return json(null, 204);
+    }
     if (path === "/api/Achievements/streak")
       return json({
         currentStreak: 4,

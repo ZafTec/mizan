@@ -485,6 +485,67 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
+    #region Goal tools
+
+    [Fact]
+    public async Task A_person_records_their_weight_through_a_connected_app_and_the_check_in_keeps_the_days_food()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "goal-checkin@example.com", emailVerified: true);
+        var food = await _apiFixture.SeedFoodAsync("Check-in oats", 100m, 10m, 20m, 5m);
+        using var web = _apiFixture.CreateAuthenticatedClient(userId, "goal-checkin@example.com");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        (await web.PostAsJsonAsync("/api/Nutrition/log", new { FoodId = food.Id, EntryDate = today, MealType = "lunch", Servings = 2m }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        _mcpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+        var goal = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "create_goal",
+            new { goalType = "weight_loss", targetCalories = 1900, targetCarbsGrams = 180, targetWeightKg = 78.5 })))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        goal!.Error.Should().BeNull();
+
+        var checkIn = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "record_goal_progress",
+            new { currentWeightKg = 82.4, notes = "Felt good" })))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        ExtractToolResultText(checkIn).Should().Contain("82.4");
+
+        var history = await web.GetFromJsonAsync<JsonElement>("/api/Goals/progress?days=7");
+        var entry = history.GetProperty("progressEntries").EnumerateArray().Should().ContainSingle().Subject;
+        entry.GetProperty("actualWeight").GetDecimal().Should().Be(82.4m);
+        entry.GetProperty("actualCalories").GetDecimal().Should().Be(200m);
+        entry.GetProperty("actualCarbsGrams").GetDecimal().Should().Be(40m);
+        history.GetProperty("goal").GetProperty("targetCarbsGrams").GetDecimal().Should().Be(180m);
+
+        var current = await web.GetFromJsonAsync<JsonElement>("/api/Goals");
+        current.GetProperty("targetWeight").GetDecimal().Should().Be(78.5m);
+    }
+
+    [Fact]
+    public async Task A_connected_app_allowed_only_nutrition_records_the_day_but_not_a_weight()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "goal-scope@example.com", emailVerified: true);
+        using var web = _apiFixture.CreateAuthenticatedClient(userId, "goal-scope@example.com");
+        (await web.PostAsJsonAsync("/api/Goals", new { GoalType = "general", TargetCalories = 2000 })).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var access = await _apiFixture.CreateMcpAccessAsync(userId, ["nutrition:read", "nutrition:write"]);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access.Token);
+
+        var refused = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "record_goal_progress",
+            new { currentWeightKg = 80 }))).Content.ReadFromJsonAsync<JsonRpcResponse>();
+        ExtractErrorMessage(refused).Should().Contain("body measurements");
+
+        var recorded = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "record_goal_progress",
+            new { notes = "Rest day" }))).Content.ReadFromJsonAsync<JsonRpcResponse>();
+        recorded!.Error.Should().BeNull();
+        var history = await web.GetFromJsonAsync<JsonElement>("/api/Goals/progress?days=7");
+        history.GetProperty("progressEntries").EnumerateArray().Should().ContainSingle()
+            .Which.GetProperty("actualWeight").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    #endregion
+
     #region get_shopping_list Tool Tests
 
     [Fact]

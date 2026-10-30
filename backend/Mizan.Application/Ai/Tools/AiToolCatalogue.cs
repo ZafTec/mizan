@@ -328,8 +328,8 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "record_goal_progress",
-            "Record a day's nutrition actuals against the user's goal, for the progress chart. "
-            + "Weight is not recorded here - use log_measurement for that.",
+            "Record a day's check-in against the user's goal, for the progress chart. Leave the actuals out to take "
+            + "them from that day's diary. Weight is not recorded here - use log_measurement for that.",
             """
             {
               "type": "object",
@@ -342,15 +342,15 @@ public static class AiToolCatalogue
                 "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" },
                 "notes": { "type": "string" }
               },
-              "required": ["actualCalories"]
+              "required": []
             }
             """,
             (args, _) => new RecordGoalProgressCommand
             {
-                ActualCalories = AiToolArgs.OptionalInt(args, "actualCalories") ?? 0,
-                ActualProteinGrams = AiToolArgs.OptionalDecimal(args, "actualProteinGrams") ?? 0,
-                ActualCarbsGrams = AiToolArgs.OptionalDecimal(args, "actualCarbsGrams") ?? 0,
-                ActualFatGrams = AiToolArgs.OptionalDecimal(args, "actualFatGrams") ?? 0,
+                ActualCalories = AiToolArgs.OptionalInt(args, "actualCalories"),
+                ActualProteinGrams = AiToolArgs.OptionalDecimal(args, "actualProteinGrams"),
+                ActualCarbsGrams = AiToolArgs.OptionalDecimal(args, "actualCarbsGrams"),
+                ActualFatGrams = AiToolArgs.OptionalDecimal(args, "actualFatGrams"),
                 // Deliberately not taken from the arguments. This tool is gated
                 // on nutrition consent, and a weight is body data: accepting it
                 // here would let a nutrition-only grant write the body axis.

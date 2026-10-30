@@ -6,6 +6,7 @@ import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { useActionState, useState, useEffect } from "react";
 import { createGoal, getCurrentGoal } from "@/data/goal";
 import { Select } from "@/components/ui/select";
+import GoalRecord from "./GoalRecord";
 
 const ACTIVITY_FACTORS = {
   sedentary: { label: "Sedentary (desk job, little/no exercise)", value: 1.2 },
@@ -629,6 +630,26 @@ export default function GoalForm() {
           )}
         </button>
       </form>
+
+      <GoalRecord
+        refreshKey={formState}
+        onGoalDeleted={() => {
+          for (const clear of [
+            setCaloriesValue,
+            setProteinValue,
+            setCarbsValue,
+            setFatValue,
+            setFiberValue,
+            setGoalType,
+            setBodyFatValue,
+            setMuscleMassValue,
+            setPcalValue,
+            setTargetWeightValue,
+            setTargetDateValue,
+          ])
+            clear("");
+        }}
+      />
     </div>
   );
 }

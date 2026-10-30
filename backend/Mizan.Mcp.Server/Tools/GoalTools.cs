@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Mizan.Contracts.Users;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -26,39 +27,52 @@ public sealed class GoalTools
     }
 
     [McpServerTool(Name = "create_goal")]
-    [Description("Set a new nutrition/fitness goal. This replaces any existing active goal.")]
+    [Description("Set a new nutrition/fitness goal. This replaces the active goal; the old one stays in the history. Every target is optional.")]
     public async Task<string> CreateGoal(
-        [Description("Goal type: weight_loss, muscle_gain, maintenance, custom")] string goalType,
-        [Description("Target daily calories")] int targetCalories,
-        [Description("Target protein grams")] decimal targetProteinGrams,
-        [Description("Target carbs grams")] decimal targetCarbsGrams,
-        [Description("Target fat grams")] decimal targetFatGrams,
-        [Description("Target fiber grams (optional)")] decimal? targetFiberGrams = null,
-        [Description("Target weight in kg (optional)")] decimal? targetWeightKg = null,
-        [Description("Target date in YYYY-MM-DD format (optional)")] string? targetDate = null,
+        [Description("Goal type: weight_loss, muscle_gain, maintenance or general")] string? goalType = null,
+        [Description("Target daily calories")] int? targetCalories = null,
+        [Description("Target protein grams a day")] decimal? targetProteinGrams = null,
+        [Description("Target carbs grams a day")] decimal? targetCarbsGrams = null,
+        [Description("Target fat grams a day")] decimal? targetFatGrams = null,
+        [Description("Target fiber grams a day")] decimal? targetFiberGrams = null,
+        [Description("Target weight in kg")] decimal? targetWeightKg = null,
+        [Description("Target date, YYYY-MM-DD")] string? targetDate = null,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/Goals", new
-        {
-            goalType,
-            targetCalories,
-            targetProteinGrams,
-            targetCarbsGrams,
-            targetFatGrams,
-            targetFiberGrams,
-            targetWeightKg,
-            targetDate
-        }, ct);
+        var date = ToolArguments.ParseOptionalDate(targetDate, "targetDate");
+        return await _api.PostAsync("/api/Goals", new CreateGoalRequest(
+            goalType, targetCalories, targetProteinGrams, targetCarbsGrams, targetFatGrams, targetFiberGrams,
+            targetWeightKg, targetWeightKg.HasValue ? "kg" : null, date), ct);
     }
 
     [McpServerTool(Name = "record_goal_progress")]
-    [Description("Record a progress entry for the current goal (e.g., weight check-in).")]
+    [Description("Record a day's check-in against the active goal. Calories and macros come from that day's diary unless you pass them; "
+        + "a weight left out comes from that day's body measurement. A weight needs body write permission as well. "
+        + "Returns what was stored.")]
     public async Task<string> RecordProgress(
-        [Description("Current weight in kg (optional)")] decimal? currentWeightKg = null,
+        [Description("Weight in kg (optional)")] decimal? currentWeightKg = null,
         [Description("Notes about progress (optional)")] string? notes = null,
+        [Description("Day, YYYY-MM-DD (defaults to today in the person's time zone)")] string? date = null,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/Goals/progress", new { currentWeightKg, notes }, ct);
+        var day = ToolArguments.ParseOptionalDate(date, "date");
+        return await _api.PostAsync("/api/Goals/progress", new RecordGoalProgressRequest(day, currentWeightKg, notes), ct);
+    }
+
+    [McpServerTool(Name = "delete_goal", Destructive = true)]
+    [Description("Delete one of the person's goals and its check-ins. Deleting the active goal leaves no goal active. This is permanent.")]
+    public async Task<string> DeleteGoal([Description("Goal UUID, from get_current_goal or get_goal_history")] string id, CancellationToken ct = default)
+    {
+        var goalId = ToolArguments.ParseId(id, "id");
+        return await _api.DeleteAsync($"/api/Goals/{goalId}", ct);
+    }
+
+    [McpServerTool(Name = "delete_goal_progress", Destructive = true)]
+    [Description("Delete one goal check-in. This is permanent.")]
+    public async Task<string> DeleteProgress([Description("Check-in UUID, from get_goal_progress")] string id, CancellationToken ct = default)
+    {
+        var entryId = ToolArguments.ParseId(id, "id");
+        return await _api.DeleteAsync($"/api/Goals/progress/{entryId}", ct);
     }
 
     [McpServerTool(Name = "get_goal_progress", ReadOnly = true, Idempotent = true)]

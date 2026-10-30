@@ -29,7 +29,7 @@ public static class McpToolScopes
             "get_nutrition_range", "get_nutrition_summary", "get_current_goal", "get_goal_history", "get_goal_progress",
             "get_food_price");
         Add(McpScopes.NutritionWrite, "create_food", "update_food", "delete_food", "log_day", "log_food", "log_meal",
-            "log_meal_manual", "delete_meal", "create_goal", "record_goal_progress", "report_food_price");
+            "log_meal_manual", "delete_meal", "create_goal", "record_goal_progress", "delete_goal", "delete_goal_progress", "report_food_price");
 
         // Training
         Add(McpScopes.TrainingRead, "list_exercises", "list_workouts", "get_workout", "get_workout_stats",
