@@ -74,6 +74,7 @@ public class GetDailyNutritionQueryHandler : IRequestHandler<GetDailyNutritionQu
 
         var goal = await _context.UserGoals
             .Where(g => g.UserId == _currentUser.UserId && g.IsActive)
+            .OrderByDescending(g => g.CreatedAt) // the goal GET /api/Goals shows, should two ever be active
             .FirstOrDefaultAsync(cancellationToken);
 
         var mealBreakdown = entries
