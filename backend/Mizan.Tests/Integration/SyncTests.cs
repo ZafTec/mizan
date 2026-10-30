@@ -158,7 +158,7 @@ public class SyncTests
     public async Task ManyPages_AreWalkedInOrder_AcrossSeparateSaves()
     {
         var (user, client) = await ClientAsync();
-        for (var i = 0; i < 6; i++) await LogMeasurementAsync(client, 70 + i);
+        for (var i = 0; i < 6; i++) await LogMeasurementAsync(client, 70 + i, daysAgo: i);
 
         var seen = new List<Guid>();
         DateTime? cursor = null;
@@ -222,9 +222,9 @@ public class SyncTests
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    private static async Task<Guid> LogMeasurementAsync(HttpClient client, decimal weight)
+    private static async Task<Guid> LogMeasurementAsync(HttpClient client, decimal weight, int daysAgo = 0)
     {
-        var response = await client.PostAsJsonAsync("/api/BodyMeasurements", new { Date = DateTime.UtcNow, WeightKg = weight });
+        var response = await client.PostAsJsonAsync("/api/BodyMeasurements", new { Date = DateTime.UtcNow.AddDays(-daysAgo), WeightKg = weight });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }

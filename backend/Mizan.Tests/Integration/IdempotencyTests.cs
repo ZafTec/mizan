@@ -39,10 +39,9 @@ public class IdempotencyTests
     public async Task WithoutAKey_EveryRequestIsAWrite()
     {
         using var client = await ClientAsync();
-        var body = new { Date = DateTime.UtcNow, WeightKg = 75.0m };
-
-        await Send(client, body, key: null);
-        await Send(client, body, key: null);
+        // Two days, since a second weight on the same day updates the first.
+        await Send(client, new { Date = DateTime.UtcNow, WeightKg = 75.0m }, key: null);
+        await Send(client, new { Date = DateTime.UtcNow.AddDays(-1), WeightKg = 75.0m }, key: null);
 
         (await CountAsync(client)).Should().Be(2);
     }
