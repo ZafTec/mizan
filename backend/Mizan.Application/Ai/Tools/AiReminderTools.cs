@@ -7,60 +7,12 @@ using Mizan.Domain.Ai;
 namespace Mizan.Application.Ai.Tools;
 
 /// <summary>
-/// The assistant's reminder tools (docs/ARCHITECTURE.md#reminders). They build the same commands the
-/// web, MCP and the bot send, so every rule (kinds, the hourly floor, the plan's cap, quiet hours)
-/// holds without the model knowing it. A reminder is something the person plans, so it sits on
-/// <see cref="DataAxis.Planning"/>: creating one needs the nutrition write consent. Changing or
-/// deleting one stays with the person (rule 3 of <see cref="AiToolCatalogue"/>).
+/// How the reminder task tools read a reminder from arguments and describe a list of them
+/// (docs/ARCHITECTURE.md#reminders). The commands they build hold every rule (kinds, the hourly
+/// floor, the plan's cap, quiet hours), the same for the web, MCP, the bot and the assistant.
 /// </summary>
 public static class AiReminderTools
 {
-    public static readonly IReadOnlyList<AiToolDefinition> All =
-    [
-        new AiToolDefinition(
-            "create_reminder",
-            ReminderToolGuidance.CreateReminder,
-            """
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "kind": { "type": "string", "enum": ["workout", "measurement", "pre_cook", "meal_log", "custom"] },
-                "title": { "type": "string" },
-                "note": { "type": "string" },
-                "repeat": { "type": "string", "enum": ["once", "daily", "days", "every", "monthly"], "description": "days needs days; every needs exactly one of everyHours or everyDays (every other day is every with everyDays 2); monthly needs dayOfMonth, or week with exactly one day. Every repeat except everyHours needs a time." },
-                "time": { "type": "string", "description": "HH:mm, e.g. 07:00" },
-                "days": { "type": "array", "items": { "type": "string", "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] }, "description": "The weekdays of a days repeat, or the one weekday of a monthly repeat with week" },
-                "dayOfMonth": { "type": "integer", "minimum": 1, "maximum": 31, "description": "monthly on a date; 31 is the last day of every month" },
-                "week": { "type": "string", "enum": ["first", "second", "third", "fourth", "last"], "description": "monthly on a weekday: which one of the month" },
-                "date": { "type": "string", "description": "YYYY-MM-DD: the day of a once, or the first day of an every" },
-                "everyHours": { "type": "integer", "minimum": 1 },
-                "everyDays": { "type": "integer", "minimum": 1 },
-                "mealType": { "type": "string", "enum": ["BREAKFAST", "LUNCH", "DINNER", "SNACK"] },
-                "workoutTemplateId": { "type": "string" },
-                "mealPlanId": { "type": "string" },
-                "prepSessionId": { "type": "string" },
-                "prepTime": { "type": "string", "description": "HH:mm the prep starts, default 18:00" },
-                "leadMinutes": { "type": "integer", "description": "How long before the prep to remind, default 60" }
-              },
-              "required": ["kind"]
-            }
-            """,
-            (args, _) => new CreateReminderCommand(Request(args)),
-            result => result is ReminderDto reminder
-                ? $"Set the reminder \"{reminder.Title}\": {reminder.Summary}." + (reminder.NextRunText is { } next ? $" First one {next}." : "")
-                : "Set that reminder.",
-            DataAxis.Planning, AiToolAccess.Write),
-
-        new AiToolDefinition(
-            "list_reminders",
-            "List the user's reminders with when each next fires.",
-            """{ "type": "object", "additionalProperties": false, "properties": {}, "required": [] }""",
-            (_, _) => new ListRemindersQuery(),
-            result => result is ReminderListResult list ? Describe(list) : "No reminders.",
-            DataAxis.Planning, AiToolAccess.Read),
-    ];
-
     public static CreateReminderRequest Request(JsonElement args)
     {
         var kind = AiToolArgs.RequiredString(args, "kind");

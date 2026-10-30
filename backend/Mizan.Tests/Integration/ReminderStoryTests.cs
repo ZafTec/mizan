@@ -185,7 +185,7 @@ public class ReminderStoryTests
         const string weekdays = """{"kind":"workout","repeat":"days","time":"07:00","days":["mon","tue","wed","thu","fri"]}""";
 
         await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
-        _fixture.Ai.CallTools(("create_reminder", weekdays));
+        _fixture.Ai.CallTools(("set_reminder", weekdays));
         _fixture.Ai.Reply("Setting reminders is switched off.");
         var refused = await ChatAsync(client, "Remind me to work out on weekdays at 7");
         refused.Performed.Should().ContainSingle().Which.Succeeded.Should().BeFalse();
@@ -204,7 +204,7 @@ public class ReminderStoryTests
             writeTraining = true,
             writeBody = true,
         })).StatusCode.Should().Be(HttpStatusCode.OK);
-        _fixture.Ai.CallTools(("create_reminder", weekdays));
+        _fixture.Ai.CallTools(("set_reminder", weekdays));
         _fixture.Ai.Reply("Done.");
         var made = await ChatAsync(client, "Remind me to work out on weekdays at 7");
         made.Performed.Should().ContainSingle().Which.Succeeded.Should().BeTrue();

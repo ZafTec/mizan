@@ -6,6 +6,7 @@ using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Tools;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.Ai;
@@ -171,7 +172,7 @@ public class AiEvalRunner : IAiEvalRunner
 
     private static IReadOnlyList<AiToolSpec> ToolsFor(string key) =>
         key == AiPromptKeys.Chat
-            ? AiToolCatalogue.Chat.Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema)).ToList()
+            ? AiToolCatalogue.Assistant(new ToolCallContext(Guid.Empty, ToolSurface.Assistant, "user", null))
             : [];
 
     /// <summary>The reply, then each tool the model asked for with its arguments as compact JSON.</summary>

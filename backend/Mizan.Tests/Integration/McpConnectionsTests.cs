@@ -268,7 +268,7 @@ public class McpConnectionsTests
         using var plainClient = _fixture.CreateAuthenticatedClient(plain, "p@example.com");
         var plainGroups = await plainClient.GetFromJsonAsync<JsonElement>("/api/McpConnections/scopes");
         var names = plainGroups.EnumerateArray().Select(g => g.GetProperty("group").GetString()).ToList();
-        names.Should().Contain("nutrition").And.Contain("ai").And.NotContain("admin");
+        names.Should().Contain("nutrition").And.Contain("coaching").And.NotContain("admin");
         var nutrition = plainGroups.EnumerateArray().Single(g => g.GetProperty("group").GetString() == "nutrition");
         nutrition.GetProperty("readScope").GetString().Should().Be("nutrition:read");
         nutrition.GetProperty("writeScope").GetString().Should().Be("nutrition:write");
@@ -419,14 +419,16 @@ public class McpConnectionsTests
         using var scope = _fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         var mediator = new Mock<MediatR.IMediator>();
-        var runner = new AiToolRunner(mediator.Object, db, NullLogger<AiToolRunner>.Instance, AppUser(w.User, "body:read", "ai:use"));
+        var tasks = new Mock<Mizan.Application.Tools.ITaskToolRunner>();
+        var runner = new AiToolRunner(mediator.Object, db, tasks.Object, NullLogger<AiToolRunner>.Instance, AppUser(w.User, "body:read", "ai:use"));
 
-        var result = await runner.RunAsync(
-            new AiToolCall("1", "log_measurement", """{"weightKg": 80}"""), new AiToolContext(w.User));
+        var result = await runner.RunAssistantAsync(
+            new AiToolCall("1", "log_body", """{"weightKg": 80}"""), new AiToolContext(w.User));
 
-        result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("not allowed to change");
+        result.Invocation.Succeeded.Should().BeFalse();
+        result.Invocation.Error.Should().Contain("not allowed to change");
         mediator.VerifyNoOtherCalls();
+        tasks.VerifyNoOtherCalls();
     }
 
     // ---- helpers ----

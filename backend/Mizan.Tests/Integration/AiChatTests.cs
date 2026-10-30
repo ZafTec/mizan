@@ -217,8 +217,8 @@ public class AiChatTests
         var (client, userId) = await UserAsync();
         await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
         _fixture.Ai.CallTools((
-            "add_plan_entry",
-            $$"""{"planId":"{{Guid.NewGuid()}}","dayIndex":0,"slot":"Breakfast","kind":"text","text":"Eggs"}"""));
+            "edit_meal_plan",
+            $$"""{"planId":"{{Guid.NewGuid()}}","changes":[{"action":"add_entry","dayIndex":0,"slot":"BREAKFAST","text":"Eggs"}]}"""));
         _fixture.Ai.Reply("Adding to your plan is switched off.");
 
         var turn = await SendAsync(client, null, "Add eggs to tomorrow's breakfast");
@@ -304,8 +304,8 @@ public class AiChatTests
         var (other, _) = await world.PersonAsync("other");
         await world.RecipeAsync(other, "Mesir wot deluxe", 2, true, (lentils, 400m, "g", null));
 
-        _fixture.Ai.CallTools(("search_recipes", """{"query":"mesir"}"""));
-        _fixture.Ai.CallTools(("log_meal", $$"""{"recipeId":"{{stew.Id}}","servings":1,"mealType":"LUNCH"}"""));
+        _fixture.Ai.CallTools(("find_food", """{"kind":"recipe","query":"mesir"}"""));
+        _fixture.Ai.CallTools(("log_food", $$"""{"mealType":"LUNCH","items":[{"recipeId":"{{stew.Id}}","servings":1}]}"""));
         _fixture.Ai.Reply("Logged a serving of your mesir wot.");
 
         var turn = await SendAsync(client, null, "I had a bowl of my mesir wot for lunch");
@@ -319,7 +319,7 @@ public class AiChatTests
 
     /// <summary>
     /// M-02: asked which of their saved recipes would close the gap, the assistant called
-    /// search_recipes with no query and was refused. With no query it now gets every saved recipe:
+    /// for the saved recipes with no query and was refused. With no query it now gets every saved recipe:
     /// the person's own and the public ones they favourited, favourites first, with macros per serving.
     /// </summary>
     [Fact]
@@ -336,7 +336,7 @@ public class AiChatTests
         var stranger = await world.RecipeAsync(other, "Stranger stew", 2, true, (lentils, 200m, "g", null));
         (await client.PostAsync($"/api/Recipes/{shiro.Id}/favorite", null)).IsSuccessStatusCode.Should().BeTrue();
 
-        _fixture.Ai.CallTools(("search_recipes", "{}"));
+        _fixture.Ai.CallTools(("find_food", """{"kind":"recipe"}"""));
         _fixture.Ai.Reply("Your misir wot closes most of the gap.");
 
         var turn = await SendAsync(client, null, "Which of my own saved recipes would best close my gap today?");
@@ -382,7 +382,7 @@ public class AiChatTests
         (fit.CaloriesLeft, fit.ProteinLeft, fit.CarbsLeft, fit.FatLeft).Should().Be((500m, 10m, 150m, 20m));
         (fit.Recipes[0].CarbsLeftAfter, fit.Recipes[0].ProteinLeftAfter).Should().Be((60m, -5m));
 
-        _fixture.Ai.CallTools(("rank_recipes_for_today", "{}"));
+        _fixture.Ai.CallTools(("find_food", """{"kind":"fit"}"""));
         _fixture.Ai.Reply("Rice and lentils fits best.");
 
         var turn = await SendAsync(client, null, "Which of my recipes fits the carbs I have left today?");

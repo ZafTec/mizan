@@ -256,7 +256,7 @@ public class MealPlanGenerationTests
         var (me, client) = await StartAsync();
         await _fixture.GrantAiConsentAsync(me);
         await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
-        _fixture.Ai.CallTools(("generate_meal_plan", $$"""{"startDate":"{{Monday:yyyy-MM-dd}}","durationDays":2,"preference":"eggs"}"""));
+        _fixture.Ai.CallTools(("plan_meals", $$"""{"action":"generate","startDate":"{{Monday:yyyy-MM-dd}}","durationDays":2,"preference":"eggs"}"""));
         _fixture.Ai.Reply(TwoDays("Eggs", "Eggs"));
         _fixture.Ai.Reply("Here is a draft for you to look at.");
 
@@ -288,7 +288,7 @@ public class MealPlanGenerationTests
             Entries = [PlanningWorld.FoodEntry(eggs.Id, 100, day: 0)],
         });
         var entryId = (await PlanningWorld.PlanAsync(client, active)).Days[0].Slots[0].Entries[0].Id;
-        _fixture.Ai.CallTools(("remove_plan_entry", $$"""{"planId":"{{active}}","entryId":"{{entryId}}"}"""));
+        _fixture.Ai.CallTools(("delete", $$"""{"kind":"plan_entry","planId":"{{active}}","id":"{{entryId}}"}"""));
         _fixture.Ai.Reply("I could not change that plan.");
 
         var turn = (await (await client.PostAsJsonAsync("/api/Ai/chat", new { message = "Drop the eggs." }))

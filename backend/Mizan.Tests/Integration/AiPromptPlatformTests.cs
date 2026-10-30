@@ -229,13 +229,13 @@ public class AiPromptPlatformTests
         using (var scope = _fixture.Services.CreateScope())
             caseCount = await scope.ServiceProvider.GetRequiredService<MizanDbContext>().AiEvalCases.CountAsync(c => c.PromptKey == AiPromptKeys.Chat);
         for (var i = 0; i < caseCount; i++)
-            _fixture.Ai.CallTools(("create_reminder", """{ "kind": "measurement", "schedule": { "repeat": "days", "time": "08:00", "days": ["sun"] } }"""));
+            _fixture.Ai.CallTools(("set_reminder", """{ "kind": "measurement", "schedule": { "repeat": "days", "time": "08:00", "days": ["sun"] } }"""));
 
         (await client.PostAsync($"/api/Admin/Ai/Prompts/versions/{draft.Id}/evals", null)).EnsureSuccessStatusCode();
         await _fixture.DrainOutboxAsync();
 
         _fixture.Ai.Calls.Should().HaveCount(caseCount).And.OnlyContain(call =>
-            call.Tools.Any(t => t.Name == "create_reminder" && t.Description == Mizan.Contracts.Notifications.ReminderToolGuidance.CreateReminder));
+            call.Tools.Any(t => t.Name == "set_reminder" && t.Description.StartsWith(Mizan.Contracts.Notifications.ReminderToolGuidance.CreateReminder, StringComparison.Ordinal)));
 
         using var read = _fixture.Services.CreateScope();
         var db = read.ServiceProvider.GetRequiredService<MizanDbContext>();
@@ -244,7 +244,7 @@ public class AiPromptPlatformTests
             .Join(db.AiEvalCases, r => r.CaseId, c => c.Id, (r, c) => new { c.Name, r.Outcome, r.Output })
             .SingleAsync(r => r.Name == "A monthly Sunday reminder is never weekly");
         monthly.Outcome.Should().Be(AiEvalOutcome.Failed);
-        monthly.Output.Should().Be("""[tool call] create_reminder {"kind":"measurement","schedule":{"repeat":"days","time":"08:00","days":["sun"]}}""");
+        monthly.Output.Should().Be("""[tool call] set_reminder {"kind":"measurement","schedule":{"repeat":"days","time":"08:00","days":["sun"]}}""");
     }
 
     private async Task<HttpClient> AdminAsync()

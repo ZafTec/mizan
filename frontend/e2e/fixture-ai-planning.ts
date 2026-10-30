@@ -380,7 +380,7 @@ export async function handleAiPlanning(
       reply,
       performed: [
         {
-          tool: "generate_meal_plan",
+          tool: "plan_meals",
           summary: `Drafted ${read.name}`,
           succeeded: true,
           error: null,

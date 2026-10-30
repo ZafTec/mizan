@@ -229,7 +229,7 @@ Quota: a `Planning` allowance line, separate from personal chat, so a Free accou
 
 Typed cards: `AiChatTurnDto.Cards[]` carries `{ type, data }` with `type` in `plan_preview`, `day_plan`, `cost_table`, `shopping_list`. The API validates each card against its schema. The web renders a fixed component per type. Telegram renders text and a keyboard. The MCP App `meal-plan` renders the same data. No model-written markup is rendered anywhere.
 
-New chat tools, all through existing commands: `generate_meal_plan`, `get_plan_day`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`. Planning tools use `DataAxis.Planning`. Consent for planning follows the nutrition write flag. MCP grants map `DataAxis.Planning` to `planning:read` and `planning:write`.
+Chat tools, all task tools through existing commands ([AI](AI.md#planning-tools-and-typed-cards)): `plan_meals` `generate`, `get_meal_plan` `day`, `edit_meal_plan`, `delete` `plan_entry`, `update_shopping_list` `from_plan`. Planning tools use `DataAxis.Planning`. Consent for planning follows the nutrition write flag. MCP grants map `DataAxis.Planning` to `planning:read` and `planning:write`.
 
 ### API (step 4, as built)
 

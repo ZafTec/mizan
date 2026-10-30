@@ -107,7 +107,7 @@ public class TelegramRemindTests
     [Fact]
     public void AFailedAssistantAction_ShowsItsReasonOnce_WithoutAnEmptyLabel()
     {
-        var failed = new Mizan.Contracts.Ai.AiToolInvocation("create_reminder", "", false, "Say how often it repeats.");
+        var failed = new Mizan.Contracts.Ai.AiToolInvocation("set_reminder", "", false, "Say how often it repeats.");
 
         telegram::Mizan.Telegram.Bot.UpdateHandler.PerformedLines([failed, failed])
             .Should().Be("\n\n✗ Say how often it repeats.");

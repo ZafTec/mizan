@@ -20,10 +20,14 @@ public record AiToolRun(
 /// </summary>
 public interface IAiToolRunner
 {
-    Task<AiToolInvocation> RunAsync(
+    /// <summary>The chat assistant's tools for this user: the task tools' assistant view (<see cref="AiToolCatalogue.Assistant"/>).</summary>
+    IReadOnlyList<AiToolSpec> AssistantTools(Guid userId);
+
+    /// <summary>One chat assistant call: a task tool, held to the person's consent on the mode's axis, with its cards after each passed <see cref="Ai.AiCardValidator"/>.</summary>
+    Task<AiToolRun> RunAssistantAsync(
         AiToolCall call, AiToolContext context, CancellationToken cancellationToken = default);
 
-    /// <summary>The same call, with the cards built from its result after each passed <see cref="Ai.AiCardValidator"/>.</summary>
-    Task<AiToolRun> RunWithCardsAsync(
+    /// <summary>One onboarding call, from <see cref="AiToolCatalogue.Onboarding"/>.</summary>
+    Task<AiToolInvocation> RunOnboardingAsync(
         AiToolCall call, AiToolContext context, CancellationToken cancellationToken = default);
 }

@@ -153,13 +153,11 @@ public class NutritionAiService : INutritionAiService
             ? new AiMessage(AiRole.User, userMessage)
             : new AiMessage(AiRole.User, userMessage, new AiImage(image.Bytes, image.ContentType)));
 
-        // The assistant acts as well as answers now. Every tool is refused by
-        // the runner unless this user granted that axis, so offering the whole
-        // catalogue here widens what the model may *ask* for, not what it may
-        // do (docs/AI.md#consent).
-        var specs = AiToolCatalogue.Chat
-            .Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema))
-            .ToList();
+        // The assistant acts as well as answers now. Its tools are the task tools'
+        // assistant view, and every call is refused by the runner unless this user
+        // granted the mode's axis, so offering them here widens what the model may
+        // *ask* for, not what it may do (docs/AI.md#consent).
+        var specs = _tools.AssistantTools(userId);
 
         var performed = new List<AiToolInvocation>();
         var cards = new List<AiCardDto>();
@@ -196,7 +194,7 @@ public class NutritionAiService : INutritionAiService
 
             foreach (var call in response.ToolCalls)
             {
-                var run = await _tools.RunWithCardsAsync(call, toolContext, cancellationToken);
+                var run = await _tools.RunAssistantAsync(call, toolContext, cancellationToken);
                 var invocation = run.Invocation;
                 performed.Add(invocation);
                 cards.AddRange(run.Cards);
@@ -462,7 +460,7 @@ public class NutritionAiService : INutritionAiService
 
             foreach (var call in response.ToolCalls)
             {
-                var invocation = await _tools.RunAsync(call, context, cancellationToken);
+                var invocation = await _tools.RunOnboardingAsync(call, context, cancellationToken);
                 performed.Add(invocation);
 
                 messages.Add(new AiMessage(

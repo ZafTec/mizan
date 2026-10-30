@@ -55,8 +55,8 @@ public class TelegramHandlerTests
     {
         _world.ChatReply = "Done.";
         _world.PerformedJson = """
-            [{"tool":"create_shopping_list","summary":"Created shopping list \"Week 43\"","succeeded":true,"error":null},
-             {"tool":"add_shopping_list_item","summary":"Add 2 kg <teff>","succeeded":false,"error":"List is full"}]
+            [{"tool":"update_shopping_list","summary":"Created shopping list \"Week 43\"","succeeded":true,"error":null},
+             {"tool":"update_shopping_list","summary":"Add 2 kg <teff>","succeeded":false,"error":"List is full"}]
             """;
 
         await _world.Handler().HandleAsync(Text("make me a list"), CancellationToken.None);
