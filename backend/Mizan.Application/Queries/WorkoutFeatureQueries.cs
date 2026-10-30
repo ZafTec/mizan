@@ -137,13 +137,13 @@ public sealed class GetWorkoutStatsQueryHandler : IRequestHandler<GetWorkoutStat
                     priorBest = top;
                     personalRecordCount++;
                 }
-                return new ExercisePoint(workout.Key.WorkoutDate, top, top * (1 + rep / 30m), isPersonalRecord);
+                return new ExercisePoint(workout.Key.WorkoutDate, top, Mizan.Domain.OneRepMax.Estimate(top, rep), isPersonalRecord);
             }).ToList();
             return new ExerciseStatsDto(group.Key.ExerciseId, group.Key.Name, points);
         }).ToList();
         var muscle = allSets.Where(x => !string.IsNullOrWhiteSpace(x.e.Exercise.MuscleGroup)).GroupBy(x => x.e.Exercise.MuscleGroup!).Select(g => new MuscleGroupSetsDto(g.Key, g.Count())).ToList();
         var maxSession = workouts.Select(w => w.Exercises.SelectMany(e => e.Sets).Sum(s => (s.WeightKg ?? 0) * (s.Reps ?? 0))).DefaultIfEmpty(0).Max();
-        return new WorkoutStatsDto(workouts.Count / weeks, allSets.Count / weeks, workouts.Count == 0 ? 0 : (decimal)workouts.Average(w => w.DurationMinutes ?? 0), volume, personalRecordCount, heaviest, maxSession, perExercise, muscle);
+        return new WorkoutStatsDto(Math.Round(workouts.Count / weeks, 2), Math.Round(allSets.Count / weeks, 2), workouts.Count == 0 ? 0 : Math.Round((decimal)workouts.Average(w => w.DurationMinutes ?? 0), 1), volume, personalRecordCount, heaviest, maxSession, perExercise, muscle);
     }
 }
 
