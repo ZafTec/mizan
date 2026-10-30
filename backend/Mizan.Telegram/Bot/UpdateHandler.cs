@@ -198,6 +198,10 @@ public sealed class UpdateHandler
                 await OnShopAsync(chatId, user, page: 0, "The /shop command", ct);
                 return;
 
+            case FitCommand:
+                await OnFitAsync(chatId, user, prefix: null, "The /fit command", ct);
+                return;
+
             case PlanMeHandler.Command:
                 await _planMe.HandleCommandAsync(chatId, user, argument, ct);
                 return;
@@ -344,9 +348,10 @@ public sealed class UpdateHandler
         }
 
         // A proposal, never a silent write - same rule as everywhere else.
+        var photoUrl = PhotoCard.PhotoUrl(analysis);
         await _telegram.SendMessageAsync(
             message.Chat.Id,
-            AnalysisCard(analysis),
+            AnalysisCard(analysis) + (photoUrl is null ? string.Empty : "\n\n" + PhotoCard.PhotoLine(photoUrl)),
             ConfirmKeyboard(analysis),
             ct);
     }
@@ -567,10 +572,37 @@ public sealed class UpdateHandler
             return;
         }
 
-        if (data == "discard")
+        var card = callback.Message;
+
+        if (data == PhotoCard.Discard)
         {
-            await _telegram.SendMessageAsync(chatId, "Discarded. Nothing was logged.", ct: ct);
+            await SendRestOfCardAsync(chatId, card, data, "Discarded. Nothing was logged.", ct);
             await _context.ReportAsync(user, "The person pressed Discard on a meal photo estimate in Telegram: nothing was logged.", ct);
+            return;
+        }
+
+        if (data == PhotoCard.Done)
+        {
+            await SendRestOfCardAsync(chatId, card, data, "Done. Nothing else was logged.", ct);
+            await _context.ReportAsync(user, "The person pressed That's all on a meal photo estimate in Telegram: nothing else was logged.", ct);
+            return;
+        }
+
+        if (data == PhotoCard.DeletePhoto)
+        {
+            await DeletePhotoAsync(chatId, user, card, ct);
+            return;
+        }
+
+        if (data.StartsWith(PhotoCard.RecipePrefix, StringComparison.Ordinal))
+        {
+            await LogRecipeMatchAsync(chatId, user, card, data, ct);
+            return;
+        }
+
+        if (data.StartsWith(FitPrefix, StringComparison.Ordinal))
+        {
+            await LogFitRecipeAsync(chatId, user, card, data, ct);
             return;
         }
 
@@ -584,17 +616,20 @@ public sealed class UpdateHandler
                 return;
             }
 
+            var carried = PhotoCard.CarriedUnderSplit(card.ReplyMarkup).ToList();
+            var link = PhotoCard.LinkIn(card);
             await _telegram.SendMessageAsync(
                 chatId,
-                "<b>Split this meal</b>\nHow many people are sharing it? I will log your share only.",
-                SplitKeyboard(data["split:".Length..]),
+                "<b>Split this meal</b>\nHow many people are sharing it? I will log your share only."
+                + (link is not null && carried.Any(r => r.Any(b => b.CallbackData == PhotoCard.DeletePhoto)) ? "\n\n" + PhotoCard.PhotoLine(link) : string.Empty),
+                SplitKeyboard(data["split:".Length..], carried),
                 ct);
             return;
         }
 
         if (data.StartsWith("share:", StringComparison.Ordinal))
         {
-            await LogShareAsync(chatId, user, data["share:".Length..], ct);
+            await LogShareAsync(chatId, user, card, data, ct);
             return;
         }
 
@@ -680,7 +715,8 @@ public sealed class UpdateHandler
             user.UserId, HttpMethod.Post, "api/Meals", request, ct);
 
         var reply = result.Ok ? $"Logged {request.Name}." : ExplainFailure(result);
-        await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        if (result.Ok) await SendRestOfCardAsync(chatId, card, data, Escape(reply), ct);
+        else await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
         await _context.ReportAsync(
             user,
             result.Ok
@@ -690,35 +726,28 @@ public sealed class UpdateHandler
     }
 
     /// <summary>
-    /// Confirm / Discard. The totals ride in the callback data, rounded to
-    /// whole numbers so they fit inside Telegram's 64-byte limit.
+    /// The photo card's buttons (<see cref="PhotoCard"/>). The totals of the foods that are not recipe matches
+    /// ride in the callback data, rounded to whole numbers so they fit inside Telegram's 64-byte limit.
     /// </summary>
-    internal static object ConfirmKeyboard(FoodAnalysisResult analysis)
+    internal static InlineKeyboardMarkup ConfirmKeyboard(FoodAnalysisResult analysis)
     {
-        var protein = analysis.Foods.Sum(f => f.Protein);
-        var carbs = analysis.Foods.Sum(f => f.Carbs);
-        var fat = analysis.Foods.Sum(f => f.Fat);
+        var recipes = PhotoCard.Recipes(analysis);
+        var rest = analysis.Foods.Where(f => !recipes.Contains(f)).ToList();
+        string? restData = null;
 
-        var numbers = $"{Math.Round(analysis.TotalCalories)}|{Math.Round(protein)}|{Math.Round(carbs)}|{Math.Round(fat)}|";
-
-        // The longest button is "share:5|" plus this, and Telegram refuses the whole message over 64 bytes. The
-        // name is cut by bytes, not characters, so a name in another script cannot push a button over the limit.
-        var name = TruncateUtf8(string.Join(", ", analysis.Foods.Select(f => f.Name)).Replace('|', '/'), 64 - "share:5|".Length - numbers.Length);
-
-        var payload = $"log:{numbers}{name}";
-
-        return new
+        if (rest.Count > 0)
         {
-            inline_keyboard = new[]
-            {
-                new object[]
-                {
-                    new { text = "Log it", callback_data = payload },
-                    new { text = "Split", callback_data = "split:" + payload["log:".Length..] },
-                    new { text = "Discard", callback_data = "discard" },
-                },
-            },
-        };
+            // Beside a recipe only the other foods are logged this way; alone, the analysis's own total.
+            var calories = recipes.Count == 0 ? analysis.TotalCalories : rest.Sum(f => f.Calories);
+            var numbers = $"{Math.Round(calories)}|{Math.Round(rest.Sum(f => f.Protein))}|{Math.Round(rest.Sum(f => f.Carbs))}|{Math.Round(rest.Sum(f => f.Fat))}|";
+
+            // The longest button is "share:5|" plus this, and Telegram refuses the whole message over 64 bytes. The
+            // name is cut by bytes, not characters, so a name in another script cannot push a button over the limit.
+            var name = TruncateUtf8(string.Join(", ", rest.Select(f => f.Name)).Replace('|', '/'), 64 - "share:5|".Length - numbers.Length);
+            restData = numbers + name;
+        }
+
+        return PhotoCard.Keyboard(analysis, restData, PhotoCard.PhotoUrl(analysis) is not null);
     }
 
     /// <summary>People to choose from when a meal is shared. Larger groups can log it by hand on the website.</summary>
@@ -728,21 +757,19 @@ public sealed class UpdateHandler
     /// The count picker. Each button carries the whole meal's totals and the number of people, so one tap logs
     /// one share and the bot needs no state. "Log it all" is there because a tap on Split can be a mistake.
     /// </summary>
-    internal static object SplitKeyboard(string totals) => new
+    internal static InlineKeyboardMarkup SplitKeyboard(string totals, IEnumerable<IReadOnlyList<InlineKeyboardButton>>? carried = null) => new()
     {
-        inline_keyboard = new[]
-        {
-            SplitChoices.Select(n => (object)new { text = n.ToString(CultureInfo.InvariantCulture), callback_data = $"share:{n}|{totals}" }).ToArray(),
-            new object[]
-            {
-                new { text = "Log it all", callback_data = "log:" + totals },
-                new { text = "Discard", callback_data = "discard" },
-            },
-        },
+        InlineKeyboard =
+        [
+            SplitChoices.Select(n => InlineKeyboardButton.Callback(n.ToString(CultureInfo.InvariantCulture), $"share:{n}|{totals}")).ToList(),
+            [InlineKeyboardButton.Callback("Log it all", "log:" + totals), InlineKeyboardButton.Callback("Discard", PhotoCard.Discard)],
+            .. carried ?? [],
+        ],
     };
 
-    private async Task LogShareAsync(long chatId, ResolvedUser user, string data, CancellationToken ct)
+    private async Task LogShareAsync(long chatId, ResolvedUser user, Message card, string pressed, CancellationToken ct)
     {
+        var data = pressed["share:".Length..];
         var bar = data.IndexOf('|');
         if (bar < 1
             || !int.TryParse(data[..bar], NumberStyles.None, CultureInfo.InvariantCulture, out var people)
@@ -760,13 +787,186 @@ public sealed class UpdateHandler
             user.UserId, HttpMethod.Post, "api/Meals", whole with { SharedBetween = people }, ct);
 
         var reply = result.Ok ? $"Logged your 1/{people} share of {whole.Name}." : ExplainFailure(result);
-        await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        if (result.Ok) await SendRestOfCardAsync(chatId, card, pressed, Escape(reply), ct);
+        else await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
         await _context.ReportAsync(
             user,
             result.Ok
                 ? $"The person split a meal photo estimate in Telegram between {people} people: logged their 1/{people} share of {whole.Name}."
                 : $"The person split a meal photo estimate in Telegram and it was refused: {reply}",
             ct);
+    }
+
+    /// <summary>
+    /// The reply to a photo card's button, with what the card still offers under it (<see cref="PhotoCard.Remaining"/>)
+    /// and, while Delete the photo is among it, the line that carries the photo's address.
+    /// </summary>
+    private async Task SendRestOfCardAsync(long chatId, Message card, string pressed, string html, CancellationToken ct)
+    {
+        var rest = PhotoCard.Remaining(card.ReplyMarkup, pressed);
+        var link = PhotoCard.LinkIn(card);
+        if (link is null && PhotoCard.HasDelete(rest)) rest = PhotoCard.Remaining(rest, PhotoCard.DeletePhoto);
+
+        var text = html;
+        if (rest is not null && rest.InlineKeyboard.SelectMany(r => r).Any(b => b.CallbackData is PhotoCard.Discard or PhotoCard.Done))
+        {
+            text += "\n\nThe rest of the estimate is below.";
+        }
+        if (link is not null && PhotoCard.HasDelete(rest)) text += "\n\n" + PhotoCard.PhotoLine(link);
+
+        await _telegram.SendMessageAsync(chatId, text, rest, ct);
+    }
+
+    /// <summary>
+    /// Delete the photo: the card's link is the photo's address, and the API deletes it with the same command as
+    /// <c>DELETE /api/Nutrition/ai/photo</c> on the web, so only its owner can, and only once.
+    /// </summary>
+    private async Task DeletePhotoAsync(long chatId, ResolvedUser user, Message card, CancellationToken ct)
+    {
+        var link = PhotoCard.LinkIn(card);
+        if (link is null)
+        {
+            await _telegram.SendMessageAsync(chatId, "That card is too old to use.", ct: ct);
+            return;
+        }
+
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Delete, $"api/Nutrition/ai/photo?imageUrl={Uri.EscapeDataString(link)}", null, ct);
+
+        var gone = result.Status == HttpStatusCode.NotFound;
+        var reply = result.Ok ? "Photo deleted." : gone ? "That photo is already gone." : ExplainFailure(result);
+        if (result.Ok || gone) await SendRestOfCardAsync(chatId, card, PhotoCard.DeletePhoto, Escape(reply), ct);
+        else await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+
+        await _context.ReportAsync(
+            user,
+            result.Ok
+                ? "The person deleted the photo of a meal photo estimate in Telegram."
+                : $"The person tried to delete the photo of a meal photo estimate in Telegram: {reply}",
+            ct);
+    }
+
+    /// <summary>
+    /// A food the API matched to one of the person's recipes, logged as that recipe at the servings it proposed,
+    /// so the diary gets the recipe's own rows and nutrition rather than an estimate.
+    /// </summary>
+    private async Task LogRecipeMatchAsync(long chatId, ResolvedUser user, Message card, string data, CancellationToken ct)
+    {
+        if (!PhotoCard.TryParseRecipe(data[PhotoCard.RecipePrefix.Length..], out var recipeId, out var servings))
+        {
+            await _telegram.SendMessageAsync(chatId, "That card is too old to use. Send the photo again.", ct: ct);
+            return;
+        }
+
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Post, "api/Meals", new LogMealRequest { RecipeId = recipeId, Servings = servings, MealType = "SNACK" }, ct);
+
+        var what = ButtonLabel(card, data, "the recipe");
+        var reply = result.Ok ? $"Logged {what}." : ExplainFailure(result);
+        if (result.Ok) await SendRestOfCardAsync(chatId, card, data, Escape(reply), ct);
+        else await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        await _context.ReportAsync(
+            user,
+            result.Ok
+                ? $"The person logged {what} from a meal photo estimate in Telegram, as their recipe, as a snack."
+                : $"The person tried to log {what} from a meal photo estimate in Telegram and it was refused: {reply}",
+            ct);
+    }
+
+    /// <summary>"Doro wat, 1.5 servings" from the pressed "Log ..." button, so the reply names what was logged.</summary>
+    private static string ButtonLabel(Message card, string data, string fallback)
+    {
+        var text = card.ReplyMarkup?.InlineKeyboard.SelectMany(r => r).FirstOrDefault(b => b.CallbackData == data)?.Text;
+        return text is { Length: > 4 } && text.StartsWith("Log ", StringComparison.Ordinal) ? text[4..] : fallback;
+    }
+
+    // ---- Recipes that fit -------------------------------------------------
+
+    internal const string FitCommand = "/fit";
+    internal const string FitPrefix = "fr:";
+
+    /// <summary>
+    /// /fit: the saved recipes ranked by how well a serving fits what is left today, as
+    /// <c>GET /api/Recipes/fit</c> ranks them (RecipeFit in Domain), with a Log button each.
+    /// </summary>
+    private async Task OnFitAsync(long chatId, ResolvedUser user, string? prefix, string source, CancellationToken ct)
+    {
+        var result = await _api.SendForResultAsync<RecipeFitResult>(user.UserId, HttpMethod.Get, "api/Recipes/fit?count=5", null, ct);
+        if (result is not { Ok: true, Value: { } fit })
+        {
+            await _telegram.SendMessageAsync(chatId, (prefix ?? string.Empty) + Escape(ExplainFailure(result)), ct: ct);
+            return;
+        }
+
+        var card = (prefix ?? string.Empty) + FitCard(fit);
+        await _telegram.SendMessageAsync(chatId, card, FitKeyboard(fit), ct);
+        await _context.ReportAsync(user, ChatContext.Showed(source, card), ct);
+    }
+
+    /// <summary>What is left, then each recipe in the API's order with one serving and what it would leave.</summary>
+    internal static string FitCard(RecipeFitResult fit)
+    {
+        var text = new StringBuilder("<b>Recipes that fit what is left today</b>").Line();
+
+        var left = new[]
+        {
+            Amount(fit.CaloriesLeft, "kcal"), Amount(fit.ProteinLeft, "g protein"),
+            Amount(fit.CarbsLeft, "g carbs"), Amount(fit.FatLeft, "g fat"),
+        }.Where(part => part is not null).ToList();
+        if (left.Count > 0) text.Append("Left: ").Line(string.Join(", ", left));
+
+        if (fit.Recipes.Count == 0)
+        {
+            text.Line().Line(Escape(fit.Note ?? "There is nothing to rank yet."));
+            return text.ToString();
+        }
+
+        text.Line();
+        foreach (var recipe in fit.Recipes)
+        {
+            text.Append(recipe.Rank.ToString(CultureInfo.InvariantCulture)).Append(". <b>").Append(Escape(recipe.Title)).Append("</b>: ")
+                .Append(recipe.Calories.ToString("0", CultureInfo.InvariantCulture)).Append(" kcal, ")
+                .Append(recipe.Protein.ToString("0", CultureInfo.InvariantCulture)).Append(" g protein a serving");
+            if (Amount(recipe.CaloriesLeftAfter, "kcal") is { } after) text.Append("; leaves ").Append(after);
+            text.Line();
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>"640 kcal", or "120 kcal over" for a figure the API reports below zero.</summary>
+    private static string? Amount(decimal? value, string unit) => value switch
+    {
+        null => null,
+        < 0 => $"{(-value.Value).ToString("0", CultureInfo.InvariantCulture)} {unit} over",
+        _ => $"{value.Value.ToString("0", CultureInfo.InvariantCulture)} {unit}",
+    };
+
+    internal static InlineKeyboardMarkup? FitKeyboard(RecipeFitResult fit) =>
+        fit.Recipes.Count == 0
+            ? null
+            : InlineKeyboardMarkup.Column(fit.Recipes
+                .Select(r => InlineKeyboardButton.Callback(PhotoCard.RecipeLabel(r.Title, 1), $"{FitPrefix}{r.RecipeId:N}"))
+                .ToArray());
+
+    /// <summary>One serving of a ranked recipe, then the ranking again, since what is left has changed.</summary>
+    private async Task LogFitRecipeAsync(long chatId, ResolvedUser user, Message card, string data, CancellationToken ct)
+    {
+        if (!Guid.TryParseExact(data[FitPrefix.Length..], "N", out var recipeId))
+        {
+            await SendStaleCardAsync(chatId, FitCommand, ct);
+            return;
+        }
+
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Post, "api/Meals", new LogMealRequest { RecipeId = recipeId, Servings = 1, MealType = "SNACK" }, ct);
+        if (!result.Ok)
+        {
+            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(result)), ct: ct);
+            return;
+        }
+
+        await OnFitAsync(chatId, user, $"Logged {Escape(ButtonLabel(card, data, "one serving"))}.\n\n", "Pressing Log on the Telegram /fit card", ct);
     }
 
     /// <summary>The longest prefix of the text that fits in the given number of UTF-8 bytes, never cutting a character.</summary>
@@ -1290,6 +1490,7 @@ public sealed class UpdateHandler
         + "<b>/weight 82.4</b> - log a weigh-in\n"
         + "<b>/plan</b> - today's meal plan, with a Log button per entry (<b>/plan tomorrow</b> works too)\n"
         + "<b>/shop</b> - your shopping list, tick items off as you go\n"
+        + "<b>/fit</b> - your recipes that best fit what is left today, with a Log button each\n"
         + "<b>/planme high protein, cheap</b> - draft a week of meals to confirm\n"
         + "<b>/notifications</b> - get the app's notifications here too (<b>on</b> or <b>off</b>), and choose which kinds\n"
         + "<b>/remind</b> - set a reminder (<b>/remind drink water</b> for your own words); <b>/reminders</b> lists them\n"

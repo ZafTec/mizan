@@ -32,6 +32,16 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public bool IsPro { get; set; } = true;
     public string? LinkProblem { get; set; }
     public string FoodName { get; set; } = "Pasta";
+
+    /// <summary>What analyze-image answers in place of the one-food default, such as a recipe match or a stored photo.</summary>
+    public string? AnalysisJson { get; set; }
+
+    /// <summary>What GET api/Recipes/fit answers.</summary>
+    public string FitJson { get; set; } = """{"date":"2026-10-22","caloriesLeft":640,"proteinLeft":40,"carbsLeft":null,"fatLeft":null,"note":null,"recipes":[]}""";
+
+    /// <summary>Every imageUrl the bot asked the API to delete, and what the API answers.</summary>
+    public List<string> PhotoDeletes { get; } = [];
+    public HttpStatusCode PhotoDeleteStatus { get; set; } = HttpStatusCode.NoContent;
     public HttpStatusCode MealsStatus { get; set; } = HttpStatusCode.OK;
     public string DailyJson { get; set; } = """
         {"date":"2026-10-22","totalCalories":1860,"totalProtein":120,"totalCarbs":200,"totalFat":60,
@@ -300,6 +310,39 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         },
     };
 
+    /// <summary>
+    /// A press on a button of the last message, carrying that message as Telegram would: its plain text, its
+    /// buttons, and a <c>text_link</c> for each link in it.
+    /// </summary>
+    public Update PressOnLast(string data)
+    {
+        var sent = LastSend;
+        var html = sent.GetProperty("text").GetString()!;
+        var links = System.Text.RegularExpressions.Regex.Matches(html, "<a href=\"([^\"]+)\">")
+            .Select(m => new MessageEntity { Type = "text_link", Url = System.Net.WebUtility.HtmlDecode(m.Groups[1].Value) }).ToList();
+        var markup = sent.TryGetProperty("reply_markup", out var keyboard)
+            ? keyboard.Deserialize<InlineKeyboardMarkup>()
+            : null;
+        return new Update
+        {
+            UpdateId = 3,
+            CallbackQuery = new CallbackQuery
+            {
+                Id = "cb",
+                From = new TelegramUser { Id = 42 },
+                Data = data,
+                Message = new Message
+                {
+                    MessageId = 12,
+                    Chat = new Chat { Id = 99, Type = "private" },
+                    Text = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", string.Empty),
+                    Entities = links,
+                    ReplyMarkup = markup,
+                },
+            },
+        };
+    }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var url = request.RequestUri!.ToString();
@@ -386,6 +429,15 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                 """);
         }
         if (url.Contains("api/Nutrition/daily")) return Json(DailyJson);
+        if (url.Contains("api/Nutrition/ai/photo") && request.Method == HttpMethod.Delete)
+        {
+            PhotoDeletes.Add(Uri.UnescapeDataString(request.RequestUri!.Query["?imageUrl=".Length..]));
+            return PhotoDeleteStatus == HttpStatusCode.NoContent
+                ? new HttpResponseMessage(HttpStatusCode.NoContent)
+                : Json("""{"errorCode":"not_found","error":"That photo was not found."}""", PhotoDeleteStatus);
+        }
+        if (url.Contains("api/Recipes/fit")) return Json(FitJson);
+        if (url.Contains("api/Nutrition/ai/analyze-image") && AnalysisJson is not null) return Json(AnalysisJson);
         if (url.Contains("api/Nutrition/ai/analyze-image"))
             return Json($$"""
                 {"foods":[{"name":"{{FoodName}}","portionGrams":300,"calories":600,"protein":30,"carbs":60,"fat":20}],

@@ -25,6 +25,18 @@ public sealed record Message
     [JsonPropertyName("text")] public string? Text { get; init; }
     [JsonPropertyName("caption")] public string? Caption { get; init; }
     [JsonPropertyName("photo")] public IReadOnlyList<PhotoSize>? Photo { get; init; }
+
+    /// <summary>Links and formatting in <see cref="Text"/>; a card keeps its photo's address in a <c>text_link</c>.</summary>
+    [JsonPropertyName("entities")] public IReadOnlyList<MessageEntity>? Entities { get; init; }
+
+    /// <summary>The buttons under the message, as the bot sent them. A pressed card says what else it offered.</summary>
+    [JsonPropertyName("reply_markup")] public InlineKeyboardMarkup? ReplyMarkup { get; init; }
+}
+
+public sealed record MessageEntity
+{
+    [JsonPropertyName("type")] public string Type { get; init; } = string.Empty;
+    [JsonPropertyName("url")] public string? Url { get; init; }
 }
 
 public sealed record TelegramUser

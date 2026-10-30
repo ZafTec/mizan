@@ -212,6 +212,7 @@ public sealed class TelegramClient
                 new { command = "weight", description = "Log a weigh-in, e.g. /weight 82.4" },
                 new { command = "plan", description = "Today's meal plan, or /plan tomorrow" },
                 new { command = "shop", description = "Your shopping list, ten items at a time" },
+                new { command = "fit", description = "Your recipes that best fit what is left today" },
                 new { command = "planme", description = "Draft a week of meals, e.g. /planme high protein, cheap" },
                 new { command = "notifications", description = "Get the app's notifications here, and choose which kinds" },
                 new { command = "remind", description = "Set a reminder" },
