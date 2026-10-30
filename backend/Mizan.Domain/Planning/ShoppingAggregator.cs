@@ -7,8 +7,8 @@ namespace Mizan.Domain.Planning;
 /// One line of a shopping list built from a plan, before it is saved.
 /// <see cref="Grams"/> is set when the amount is known in weight. A line that
 /// could not be converted keeps its amount and unit as the recipe wrote them
-/// and is marked <see cref="NeedsReview"/>. <see cref="PrepSessionId"/> is set
-/// only when every use of the item belongs to that one prep session.
+/// and is marked <see cref="NeedsReview"/>. <see cref="PrepSessionId"/> is the
+/// prep session the line is bought for, or null for the plan as a whole.
 /// </summary>
 public sealed record ShoppingDraftItem(
     Guid? FoodId,
@@ -23,11 +23,15 @@ public sealed record ShoppingDraftItem(
 /// <summary>
 /// Turns plan entries into shopping items. Recipe lines are scaled by the
 /// entry's servings over the recipe's servings and converted to grams with the
-/// recipe unit converter. Each item is one line for the whole plan: lines are
-/// merged by food, and a line without a linked food joins the food of the same
-/// name (or other lines of the same normalized text). Amounts that cannot be
-/// weighed are added when their units agree or convert (spoons, cups, litres);
-/// otherwise the first amount is kept and the line needs review.
+/// recipe unit converter. Lines are merged by food, and a line without a linked
+/// food joins the food of the same name (or other lines of the same normalized
+/// text). Prep sessions split an item this way (docs/PLANNING.md#shopping-list):
+/// what one prep session uses is a line under that session, and the uses outside
+/// any session are a second, ungrouped line, so the batch cook never loses an
+/// ingredient to the rest of the week. An item that two or more sessions use is
+/// one line for the whole plan. Amounts that cannot be weighed are added when
+/// their units agree or convert (spoons, cups, litres); otherwise the first
+/// amount is kept and the line needs review.
 /// </summary>
 public static class ShoppingAggregator
 {
@@ -50,8 +54,8 @@ public static class ShoppingAggregator
                             if (RecipeNutritionCalculator.IsUnmeasuredNote(line)) continue;
                             Food? food = line.FoodId is { } fid && foodsById.TryGetValue(fid, out var f) ? f : null;
                             var grams = food is null ? null : RecipeNutritionCalculator.Grams(line, food);
-                            var bucket = BucketFor(buckets, food?.Id, food?.Name ?? line.IngredientText);
-                            bucket.Use(entry.PrepSessionId);
+                            var bucket = BucketFor(buckets, food?.Id, food?.Name ?? line.IngredientText, entry.PrepSessionId);
+                            bucket.Use();
                             if (grams.HasValue)
                             {
                                 bucket.Grams = (bucket.Grams ?? 0m) + grams.Value * factor;
@@ -66,8 +70,8 @@ public static class ShoppingAggregator
                     }
                 case PlanEntryKind.Food when entry.FoodId is { } foodId && foodsById.TryGetValue(foodId, out var food):
                     {
-                        var bucket = BucketFor(buckets, food.Id, food.Name);
-                        bucket.Use(entry.PrepSessionId);
+                        var bucket = BucketFor(buckets, food.Id, food.Name, entry.PrepSessionId);
+                        bucket.Use();
                         if (entry.Grams is { } grams && grams > 0) bucket.Grams = (bucket.Grams ?? 0m) + grams;
                         else bucket.NeedsReview = true;
                         break;
@@ -75,8 +79,8 @@ public static class ShoppingAggregator
                 default:
                     {
                         var text = string.IsNullOrWhiteSpace(entry.Text) ? "Unnamed item" : entry.Text.Trim();
-                        var bucket = BucketFor(buckets, null, text);
-                        bucket.Use(entry.PrepSessionId);
+                        var bucket = BucketFor(buckets, null, text, entry.PrepSessionId);
+                        bucket.Use();
                         bucket.NeedsReview = true;
                         break;
                     }
@@ -86,16 +90,30 @@ public static class ShoppingAggregator
         // A typed line named like one food on the list is that food: "berbere" joins Berbere.
         var byFoodName = buckets.Values.Where(b => b.FoodId.HasValue)
             .GroupBy(b => NormalizeName(b.Name))
-            .Where(g => g.Count() == 1)
-            .ToDictionary(g => g.Key, g => g.Single());
+            .Where(g => g.Select(b => b.FoodId).Distinct().Count() == 1)
+            .ToDictionary(g => g.Key, g => g.First());
         foreach (var (key, text) in buckets.Where(kv => kv.Value.FoodId is null).ToList())
         {
             if (!byFoodName.TryGetValue(NormalizeName(text.Name), out var food)) continue;
-            food.Absorb(text);
+            BucketFor(buckets, food.FoodId, food.Name, text.Session).Absorb(text);
             buckets.Remove(key);
         }
 
-        return buckets.Values
+        // An item two or more sessions use is one line for the plan.
+        var lines = new List<Bucket>();
+        foreach (var item in buckets.Values.GroupBy(b => b.ItemKey))
+        {
+            if (item.Where(b => b.Session.HasValue).Select(b => b.Session).Distinct().Count() < 2)
+            {
+                lines.AddRange(item);
+                continue;
+            }
+            var plan = new Bucket { FoodId = item.First().FoodId, Name = item.First().Name, ItemKey = item.Key };
+            foreach (var part in item) plan.Absorb(part);
+            lines.Add(plan);
+        }
+
+        return lines
             .Select(b => new ShoppingDraftItem(
                 b.FoodId,
                 b.Name,
@@ -144,12 +162,13 @@ public static class ShoppingAggregator
             var other => (other, null),
         };
 
-    private static Bucket BucketFor(Dictionary<string, Bucket> buckets, Guid? foodId, string name)
+    private static Bucket BucketFor(Dictionary<string, Bucket> buckets, Guid? foodId, string name, Guid? session)
     {
-        var key = foodId?.ToString() ?? "text:" + NormalizeName(name);
+        var item = foodId?.ToString() ?? "text:" + NormalizeName(name);
+        var key = item + "|" + session;
         if (!buckets.TryGetValue(key, out var bucket))
         {
-            bucket = new Bucket { FoodId = foodId, Name = name.Trim() };
+            bucket = new Bucket { FoodId = foodId, Name = name.Trim(), ItemKey = item, Session = session };
             buckets[key] = bucket;
         }
         return bucket;
@@ -159,21 +178,17 @@ public static class ShoppingAggregator
     {
         public Guid? FoodId;
         public string Name = string.Empty;
+        public string ItemKey = string.Empty;
+
+        /// <summary>The prep session this line is bought for; null for the plan as a whole.</summary>
+        public Guid? Session;
         public decimal? Grams;
         public decimal? LooseAmount;
         public string? LooseUnit;
         public bool NeedsReview;
         public int Sources;
-        private readonly HashSet<Guid?> _sessions = [];
 
-        /// <summary>The one prep session every use belongs to; null when uses span sessions or have none.</summary>
-        public Guid? Session => _sessions.Count == 1 ? _sessions.Single() : null;
-
-        public void Use(Guid? session)
-        {
-            Sources++;
-            _sessions.Add(session);
-        }
+        public void Use() => Sources++;
 
         public void AddLoose(decimal? amount, string? unit)
         {
@@ -197,7 +212,6 @@ public static class ShoppingAggregator
             if (other.LooseAmount.HasValue) AddLoose(other.LooseAmount, other.LooseUnit);
             NeedsReview |= other.NeedsReview;
             Sources += other.Sources;
-            foreach (var session in other._sessions) _sessions.Add(session);
         }
     }
 }

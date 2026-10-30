@@ -107,7 +107,7 @@ public class ShoppingAggregatorTests
     }
 
     [Fact]
-    public void AnItemUsedOnlyInOnePrepSession_KeepsThatSession_AndIsListedFirst()
+    public void AnItemOfOnePrepSession_IsListedUnderIt_AndItsOtherUsesAreAnUngroupedLine()
     {
         var rice = Food("Rice");
         var coriander = Food("Coriander");
@@ -118,7 +118,8 @@ public class ShoppingAggregatorTests
             [RecipeEntry(stew, 1, day: 0, session: sunday), RecipeEntry(stew, 1, day: 1, session: sunday), FoodEntry(rice, 50, day: 5)],
             Recipes(stew), Foods(rice, coriander));
 
-        items.Select(i => (i.Name, i.PrepSessionId)).Should().Equal(("Coriander", (Guid?)sunday), ("Rice", (Guid?)null));
+        items.Select(i => (i.Name, i.Grams, i.PrepSessionId, i.Sources)).Should().Equal(
+            ("Coriander", (decimal?)10m, (Guid?)sunday, 2), ("Rice", (decimal?)200m, (Guid?)sunday, 2), ("Rice", (decimal?)50m, (Guid?)null, 1));
     }
 
     [Fact]
@@ -133,6 +134,22 @@ public class ShoppingAggregatorTests
         items.Should().ContainSingle().Which.Should().BeEquivalentTo(
             new ShoppingDraftItem(berbere.Id, "Berbere", 20, 2, "tbsp", true, null, 2),
             "the weighed part and the spoonful cannot be added, so both are shown for review");
+    }
+
+    [Fact]
+    public void ATypedLineInAPrepSession_JoinsTheFoodsLineOfThatSession()
+    {
+        var berbere = Food("Berbere");
+        var stew = Recipe("Stew", 1, Line(berbere, 20, "g"));
+        var shiro = Recipe("Shiro", 1, Line(null, 1, "tbsp", "berbere"));
+        var sunday = Guid.NewGuid();
+
+        var items = ShoppingAggregator.Aggregate(
+            [RecipeEntry(stew, 1, day: 0, session: sunday), RecipeEntry(shiro, 1, day: 1, session: sunday), RecipeEntry(stew, 1, day: 4)],
+            Recipes(stew, shiro), Foods(berbere));
+
+        items.Select(i => (i.Name, i.Grams, i.Amount, i.PrepSessionId)).Should().Equal(
+            ("Berbere", (decimal?)20m, (decimal?)1m, (Guid?)sunday), ("Berbere", (decimal?)20m, (decimal?)null, (Guid?)null));
     }
 
     [Theory]

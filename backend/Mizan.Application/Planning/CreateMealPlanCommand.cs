@@ -57,6 +57,7 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
 
         var plan = await PlanFactory.BuildAsync(_entries, request, userId, request.HouseholdId, authoredBy: null, PlanStatus.Active, cancellationToken);
         _context.MealPlans.Add(plan);
+        await _access.ActivateAsync(_cache, plan, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         await PlanAccess.InvalidateAsync(_cache, plan, cancellationToken);
 

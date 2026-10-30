@@ -205,23 +205,23 @@ public class PlanningTests
         var generated = await client.PostAsJsonAsync($"/api/MealPlans/{planId}/shopping-list", new GenerateShoppingListRequest());
         generated.StatusCode.Should().Be(HttpStatusCode.Created, await generated.Content.ReadAsStringAsync());
         var result = (await generated.Content.ReadFromJsonAsync<GenerateShoppingListResult>())!;
-        result.ItemCount.Should().Be(4);
+        result.ItemCount.Should().Be(5);
         result.NeedsReviewCount.Should().Be(3);
 
         var list = await ListAsync(client, result.ListId);
         list.MealPlanId.Should().Be(planId);
         list.GeneratedAt.Should().NotBeNull();
         list.Name.Should().Be("Week shopping list");
-        list.Items.Should().HaveCount(4);
+        list.Items.Should().HaveCount(5);
 
         var sessionItems = list.Items.Where(i => i.PrepSessionTitle == "Sunday batch").ToList();
-        sessionItems.Should().ContainSingle("only the coriander is bought for the batch session alone")
-            .Which.Should().Match<ShoppingListItemDto>(i => i.FoodId == null && i.ItemName == "fresh coriander" && i.Amount == 3 && i.Unit == "bunch" && i.NeedsReview);
-        list.Items.First().Should().BeEquivalentTo(sessionItems[0], "session lines are listed before the rest");
+        sessionItems.Should().HaveCount(2, "the batch session keeps every item it cooks with");
+        sessionItems.Single(i => i.FoodId == null).Should().Match<ShoppingListItemDto>(i => i.ItemName == "fresh coriander" && i.Amount == 3 && i.Unit == "bunch" && i.NeedsReview);
+        sessionItems.Single(i => i.FoodId == onion.Id).Grams.Should().Be(500 + 150, "half the stew's kilo and three salads' 50 g are cooked in the session");
+        list.Items.Take(2).Should().OnlyContain(i => i.PrepSessionTitle == "Sunday batch", "session lines are listed before the rest");
 
         var loose = list.Items.Where(i => i.PrepSessionId == null).ToList();
-        loose.Single(i => i.FoodId == onion.Id).Grams.Should().Be(500 + 150 + 100,
-            "half the stew's kilo, three salads' 50 g and the day's 100 g are one onion line, not one per session");
+        loose.Single(i => i.FoodId == onion.Id).Grams.Should().Be(100, "the day's onion outside the session is its own line");
         loose.Single(i => i.FoodId == flour.Id).Should().Match<ShoppingListItemDto>(i => i.Grams == null && i.Amount == 6 && i.Unit == "cups" && i.NeedsReview);
         loose.Single(i => i.ItemName == "Injera from the shop").NeedsReview.Should().BeTrue();
         list.Items.Should().NotContain(i => i.ItemName.Contains("salt"));
@@ -231,7 +231,7 @@ public class PlanningTests
         again.StatusCode.Should().Be(HttpStatusCode.Created);
         var replaced = await ListAsync(client, result.ListId);
         replaced.Name.Should().Be("Shop");
-        replaced.Items.Should().HaveCount(4);
+        replaced.Items.Should().HaveCount(5);
 
         // The list is then an ordinary list: edit, toggle, clear, delete.
         var flourItem = replaced.Items.Single(i => i.FoodId == flour.Id);
@@ -241,7 +241,7 @@ public class PlanningTests
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
         var cleared = await client.PostAsync($"/api/ShoppingLists/{result.ListId}/clear-checked", null);
         (await cleared.Content.ReadFromJsonAsync<ClearCheckedResult>())!.Removed.Should().Be(1);
-        (await ListAsync(client, result.ListId)).Items.Should().HaveCount(3);
+        (await ListAsync(client, result.ListId)).Items.Should().HaveCount(4);
         (await client.DeleteAsync($"/api/ShoppingLists/{result.ListId}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await client.GetAsync($"/api/ShoppingLists/{result.ListId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -265,7 +265,18 @@ public class PlanningTests
             Rules = new PlanRulesDto { EatingWindowStart = new TimeOnly(10, 0), EatingWindowEnd = new TimeOnly(20, 0) },
             Entries = [FoodEntry(rice.Id, 100, day: 0), FoodEntry(rice.Id, 200, day: 1), FoodEntry(rice.Id, 300, day: 2)],
         });
+        (await PlanAsync(client, current)).Status.Should().Be("Active");
+
+        // A person follows one personal plan: creating another archives this one.
         var past = await CreatePlanAsync(client, new CreateMealPlanRequest { Name = "Last month", StartDate = today.AddDays(-40), DurationDays = 7 });
+        (await PlanAsync(client, current)).Status.Should().Be("Archived");
+        (await PlanAsync(client, past)).Status.Should().Be("Active");
+        (await client.GetAsync("/api/MealPlans/day")).StatusCode.Should().Be(HttpStatusCode.NotFound, "an archived plan is not followed");
+        (await client.GetAsync($"/api/MealPlans/day?date={today.AddDays(-40):yyyy-MM-dd}")).StatusCode.Should().Be(HttpStatusCode.OK, "the active plan covers that date");
+
+        // Making a plan active again archives the other active personal plan.
+        (await client.PostAsJsonAsync($"/api/MealPlans/{current}/status", new SetMealPlanStatusRequest("Active"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await PlanAsync(client, past)).Status.Should().Be("Archived");
 
         var response = await client.GetAsync("/api/MealPlans/day");
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
@@ -278,16 +289,9 @@ public class PlanningTests
 
         var dated = await client.GetFromJsonAsync<PlanDayViewDto>($"/api/MealPlans/day?date={today.AddDays(-1):yyyy-MM-dd}");
         dated!.Day.DayIndex.Should().Be(0);
-        (await client.GetAsync($"/api/MealPlans/day?date={today.AddDays(-40):yyyy-MM-dd}")).StatusCode.Should().Be(HttpStatusCode.OK, "the older plan still covers that date");
 
-        // An archived plan is not followed.
         (await client.PostAsJsonAsync($"/api/MealPlans/{current}/status", new SetMealPlanStatusRequest("Archived"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await client.GetAsync("/api/MealPlans/day")).StatusCode.Should().Be(HttpStatusCode.NotFound);
-
-        // Making a plan active again archives the other active personal plan.
-        (await client.PostAsJsonAsync($"/api/MealPlans/{current}/status", new SetMealPlanStatusRequest("Active"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
-        (await PlanAsync(client, past)).Status.Should().Be("Archived");
-        (await client.GetFromJsonAsync<PlanDayViewDto>("/api/MealPlans/day"))!.PlanId.Should().Be(current);
     }
 
     [Fact]

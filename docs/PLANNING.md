@@ -71,7 +71,7 @@ The goal is the plan owner's active goal, read through `IDataAccessPolicy` on th
 
 ### Prep session
 
-`PrepSession` has `MealPlanId`, `DayIndex`, `Title`, `Notes`. Entries reference it. A shopping item used only by one session is listed under that session; an item that several sessions use is one line for the plan. A session can also become a preparation (`Recipe.IsPreparation`) when the person logs the cooked batch.
+`PrepSession` has `MealPlanId`, `DayIndex`, `Title`, `Notes`. Entries reference it. An item that only one session cooks with is listed under that session, and its uses outside any session are a second, ungrouped line, so the batch keeps everything it needs. An item that several sessions use is one line for the plan. A session can also become a preparation (`Recipe.IsPreparation`) when the person logs the cooked batch.
 
 ### Shopping list
 
@@ -81,7 +81,7 @@ The goal is the plan owner's active goal, read through `IDataAccessPolicy` on th
 
 1. For each recipe entry, scale each ingredient line by `Servings / Recipe.Servings`.
 2. Convert each line to grams with the existing unit converter when a food is linked.
-3. Group by `FoodId`, or by normalized text when no food is linked, across the whole plan; prep sessions do not split an item. A text line named like a food on the list joins that food. Sum the grams.
+3. Group by `FoodId`, or by normalized text when no food is linked, and by prep session: an item of one session is that session's line plus an ungrouped line for its other uses, and an item of several sessions is one line for the plan. A text line named like a food on the list joins that food's line in the same session. Sum the grams.
 4. A line that cannot convert keeps its amount and unit as text and is marked `NeedsReview`. Such amounts are added when their units agree: spellings of one unit (`tbsp`, `tablespoons`) and volumes (`tsp`, `tbsp`, `cup`, `ml`, `l`) convert to the first unit written. Units that cannot be compared keep the first amount.
 5. A text entry becomes one item marked `NeedsReview`.
 
@@ -122,7 +122,7 @@ Where the implementation settled details the design left open:
 
 - Entries on a create or a template carry `prepSessionIndex` into the request's `prepSessions`; on add or update they carry `prepSessionId`. Templates reuse the entry and prep session routes with the template's id.
 - A plan's owner and the members of its household edit it. A coach edits a draft only while it is a draft, and the client cannot change a draft until accepting it. `canEdit` on the plan says which applies to the viewer.
-- Creating a plan leaves other plans alone. Setting a plan active, accepting a draft and applying a template archive the owner's other active personal plan; household plans are never archived that way. Today's plan prefers the viewer's own plan over a household plan, then the most recently changed.
+- A person follows one personal plan at a time (`PlanAccess.ActivateAsync`): whenever a personal plan becomes active, by creating it, setting it active, accepting a draft or applying a template, the owner's other active personal plan is archived. A generated or coach-authored plan starts as a draft and archives nothing until it is accepted. Household plans are never archived that way. Today's plan prefers the viewer's own plan over a household plan, then the most recently changed.
 - Each day and each of its slots carry `totals`, summed by `PlanNutrition.Sum`, so no surface adds entries up.
 - `logged` is the viewer's own diary: a row with the entry's `PlanEntryId` on the entry's date. Logging a day more than a day away from today fills the diary but does not move the streak.
 - A household plan may log a recipe shared in that household; a coach's draft may log the coach's own recipe.
