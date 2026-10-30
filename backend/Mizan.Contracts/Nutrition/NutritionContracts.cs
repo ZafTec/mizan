@@ -42,13 +42,26 @@ public record RecognizedFood
 {
     public const string EstimateSource = "estimate";
     public const string FromCatalogueSource = "catalogue";
+    public const string FromRecipeSource = "recipe";
 
     public string Name { get; init; } = string.Empty;
 
     /// <summary>The catalogue food this is, when one matches by name; its nutrition is then the catalogue's.</summary>
     public Guid? FoodId { get; init; }
 
-    /// <summary>"catalogue" when the numbers are the matched food's per 100 g at this portion, else "estimate".</summary>
+    /// <summary>
+    /// The person's own recipe this is, when its title matches; matched before any food. Log it
+    /// with the recipe and <see cref="Servings"/>.
+    /// </summary>
+    public Guid? RecipeId { get; init; }
+
+    /// <summary>Servings of <see cref="RecipeId"/>: from the portion when the recipe's yield is known, else one.</summary>
+    public decimal? Servings { get; init; }
+
+    /// <summary>
+    /// What the numbers are: "recipe" for the matched recipe's own nutrition at <see cref="Servings"/>,
+    /// "catalogue" for the matched food's per 100 g at this portion, else "estimate".
+    /// </summary>
     public string Source { get; init; } = EstimateSource;
     public decimal PortionGrams { get; init; }
     public decimal Calories { get; init; }

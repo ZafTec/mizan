@@ -14,6 +14,11 @@ public class FoodNameMatchTests
         "Rice flour",
         "Teff injera",
         "Oil",
+        "Egg",
+        "Eggplant",
+        "Misir wot",
+        "Tomatoes",
+        "Hummus",
     ];
 
     public static TheoryData<string, string, string?> Cases => new()
@@ -26,6 +31,11 @@ public class FoodNameMatchTests
         { "nothing that shares a whole name", "Dragonfruit salad", null },
         { "a short catalogue name is not found inside a word", "boiled potatoes in foil", null },
         { "an empty name finds nothing", "   ", null },
+        { "a plural names the singular food, not a longer one that starts the same", "eggs", "Egg" },
+        { "a singular names the plural food", "tomato", "Tomatoes" },
+        { "a common other spelling of a dish", "Misir Wat", "Misir wot" },
+        { "a common other name of a food", "aubergine", "Eggplant" },
+        { "a word that ends in s is not always a plural", "hummus", "Hummus" },
     };
 
     [Theory]
@@ -35,4 +45,18 @@ public class FoodNameMatchTests
         var picked = FoodNameMatch.Pick(written, Catalogue, name => name);
         picked.Should().Be(expected);
     }
+
+    public static TheoryData<string, string, string[]> Keys => new()
+    {
+        { "a plural is searched by its singular", "Eggs", ["egg"] },
+        { "a y plural by the stem both forms contain", "berries", ["berr", "berry"] },
+        { "a word with other spellings by each of them", "yoghurt", ["yogurt", "yoghurt", "yogourt"] },
+        { "a dish by its longest word", "misir wat", ["misir"] },
+        { "nothing long enough is not searched", "a", [] },
+    };
+
+    [Theory]
+    [MemberData(nameof(Keys))]
+    public void SearchKeys_FindEveryNameThatCouldMatch(string _, string written, string[] expected) =>
+        FoodNameMatch.SearchKeys(written).Should().Equal(expected);
 }

@@ -157,7 +157,9 @@ public sealed class AiTools
     [McpServerTool(Name = "analyze_food_text")]
     [Description(
         "Estimates the foods and macros of a meal described in words (\"two eggs and a slice of toast\"). Pro only. "
-        + "Nothing is logged: show the estimate, then log it with log_food or log_meal_manual. Not read-only: it costs an allowance.")]
+        + "Each food says what it is: source \"recipe\" with recipeId and servings for one of the person's own recipes "
+        + "(log it with log_meal), \"catalogue\" with foodId (log it with log_food), or \"estimate\" (log_meal_manual). "
+        + "Nothing is logged: show the estimate first. Not read-only: it costs an allowance.")]
     public Task<string> AnalyzeFoodText(
         [Description("What was eaten, up to 600 characters")] string description,
         CancellationToken ct = default) =>

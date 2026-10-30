@@ -6,7 +6,8 @@ namespace Mizan.Domain.Planning;
 /// ("chicken breast" finds "Chicken breast, raw"), then the closest name the written one contains
 /// ("grilled chicken breast" finds "Chicken breast"). Nothing that shares less than whole words
 /// with it is picked: a line that finds no food stays text for the person to review, which is
-/// better than the wrong food.
+/// better than the wrong food. Words are compared in their <see cref="Canonical"/> form, so a
+/// plural or a common other spelling ("eggs", "misir wat") names the same food ("Egg", "Misir wot").
 /// </summary>
 public static class FoodNameMatch
 {
@@ -24,7 +25,7 @@ public static class FoodNameMatch
     /// </param>
     public static T? Pick<T>(string written, IEnumerable<T> candidates, Func<T, string> name, bool allowContained = true) where T : class
     {
-        var wanted = Words(written);
+        var wanted = CanonicalWords(written);
         if (wanted.Length == 0) return null;
         var wantedLength = Length(wanted);
 
@@ -33,7 +34,7 @@ public static class FoodNameMatch
         var bestName = string.Empty;
         foreach (var candidate in candidates)
         {
-            var have = Words(name(candidate));
+            var have = CanonicalWords(name(candidate));
             if (have.Length == 0) continue;
             var haveLength = Length(have);
 
@@ -72,6 +73,55 @@ public static class FoodNameMatch
         }
         if (current.Length > 0) words.Add(current.ToString());
         return words.ToArray();
+    }
+
+    /// <summary>Other spellings of one word, each mapped to the one the catalogue uses.</summary>
+    private static readonly Dictionary<string, string> Synonyms = new(StringComparer.Ordinal)
+    {
+        ["wat"] = "wot",
+        ["wet"] = "wot",
+        ["yoghurt"] = "yogurt",
+        ["yogourt"] = "yogurt",
+        ["garbanzo"] = "chickpea",
+        ["aubergine"] = "eggplant",
+        ["courgette"] = "zucchini",
+        ["chilli"] = "chili",
+        ["chile"] = "chili",
+    };
+
+    /// <summary>
+    /// A word as names are compared: singular ("eggs" is "egg", "berries" "berry", "tomatoes"
+    /// "tomato"), then the common spelling (<c>wat</c> and <c>wet</c> are <c>wot</c>). Both sides go
+    /// through the same rule, so an irregular result still compares equal to itself.
+    /// </summary>
+    public static string Canonical(string word)
+    {
+        var w = word.ToLowerInvariant();
+        if (w.Length > 3)
+        {
+            if (w.EndsWith("ies") && w.Length > 4) w = w[..^3] + "y";
+            else if (w.EndsWith("oes") || w.EndsWith("ches") || w.EndsWith("shes") || w.EndsWith("xes") || w.EndsWith("sses")) w = w[..^2];
+            else if (w.EndsWith('s') && !w.EndsWith("ss") && !w.EndsWith("us") && !w.EndsWith("is")) w = w[..^1];
+        }
+        return Synonyms.GetValueOrDefault(w, w);
+    }
+
+    /// <summary>The words of a name in their canonical form.</summary>
+    public static string[] CanonicalWords(string? value) => Words(value).Select(Canonical).ToArray();
+
+    /// <summary>
+    /// What to look a written name up by in the database before <see cref="Pick"/> decides: its
+    /// longest word's canonical form and the other spellings of it, each of which a matching
+    /// name contains. Empty when no word is long enough to search by.
+    /// </summary>
+    public static IReadOnlyList<string> SearchKeys(string? written)
+    {
+        var longest = Words(written).OrderByDescending(w => w.Length).FirstOrDefault();
+        if (longest is null || longest.Length < MinimumContainedLength) return [];
+        var canonical = Canonical(longest);
+        // "berry" is the stem of "berries" too once its y is dropped; a written plural searches by its singular.
+        var stem = canonical.Length > 4 && canonical.EndsWith('y') ? canonical[..^1] : canonical;
+        return Synonyms.Where(s => s.Value == canonical).Select(s => s.Key).Append(canonical).Prepend(stem).Distinct().ToList();
     }
 
     private static int Length(string[] words) => words.Sum(w => w.Length) + Math.Max(0, words.Length - 1);

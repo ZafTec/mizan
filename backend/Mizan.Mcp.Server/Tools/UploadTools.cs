@@ -64,7 +64,9 @@ public sealed class UploadTools
     [Description(
         "Estimates what is in a photo of a meal and its macros. Pro only, and "
         + "it costs against your assistant allowance. Returns an estimate to "
-        + "confirm - it does not log anything. Give exactly one of imageUrl or "
+        + "confirm - it does not log anything. Each food has a source: \"recipe\" "
+        + "(recipeId, servings), \"catalogue\" (foodId) or \"estimate\", as "
+        + "analyze_food_text describes. Give exactly one of imageUrl or "
         + "imageBase64. " + ImageArguments + " A small or blurred photo gives a "
         + "poor estimate.")]
     public Task<string> AnalyzeFoodImage(

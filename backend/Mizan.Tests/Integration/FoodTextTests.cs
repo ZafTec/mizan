@@ -85,6 +85,39 @@ public class FoodTextTests
         result.TotalCalories.Should().Be(482);
     }
 
+    /// <summary>
+    /// M-11 retest: "egg" and "misir wot" came back as estimates although the catalogue has Egg and
+    /// the person has a Misir wot recipe. A plural or another spelling still names the food, and the
+    /// person's own recipe comes before a catalogue food of the same name, with its id and kind.
+    /// </summary>
+    [Fact]
+    public async Task APluralOrAnotherSpelling_FindsTheFood_AndTheirOwnRecipeComesFirst()
+    {
+        var (client, user) = await ProUserAsync();
+        var world = new PlanningWorld(_fixture);
+        var egg = await _fixture.SeedFoodAsync("Egg", 143, 12.6m, 0.7m, 9.5m);
+        await _fixture.SeedFoodAsync("Eggplant", 25, 1, 6, 0.2m);
+        await _fixture.SeedFoodAsync("Misir wot", 150, 8, 18, 5);
+        var lentils = await _fixture.SeedFoodAsync("Lentils", 116, 9, 20, 0.4m);
+        // Four servings of 200 g lentils: 232 kcal, P 18 g, C 40 g, F 0.8 g a serving.
+        var misir = await world.RecipeAsync(user, "Misir wot", 4, isPublic: false, (lentils, 800m, "g", null));
+        _fixture.Ai.Reply("""
+            {"foods":[
+               {"name":"eggs","portionGrams":100,"calories":150,"protein":12,"carbs":1,"fat":10},
+               {"name":"misir wat","portionGrams":250,"calories":300,"protein":15,"carbs":40,"fat":8}],
+             "totalCalories":450,"confidence":0.6}
+            """);
+
+        var result = await (await Post(client, "two eggs and misir wat")).Content.ReadFromJsonAsync<FoodAnalysisResult>();
+
+        var eggs = result!.Foods[0];
+        (eggs.FoodId, eggs.RecipeId, eggs.Name, eggs.Source, eggs.Calories).Should().Be((egg.Id, (Guid?)null, "Egg", "catalogue", 143m));
+        var stew = result.Foods[1];
+        (stew.RecipeId, stew.FoodId, stew.Name, stew.Source, stew.Servings).Should().Be((misir.Id, (Guid?)null, "Misir wot", "recipe", 1m));
+        (stew.Calories, stew.Protein, stew.Carbs, stew.Fat).Should().Be((232m, 18m, 40m, 0.8m));
+        result.TotalCalories.Should().Be(375);
+    }
+
     [Fact]
     public async Task TheModelIsToldItIsReadingWords_AndSeesTheDescription()
     {
