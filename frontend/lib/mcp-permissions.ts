@@ -102,7 +102,7 @@ export function defaultLevels(
     const levels: AccessLevels = {};
     for (const group of groups) {
       levels[group.group] =
-        group.group === "ai" || group.group === "admin" ? "none" : "read";
+        group.group === "admin" ? "none" : "read";
     }
     return levels;
   }

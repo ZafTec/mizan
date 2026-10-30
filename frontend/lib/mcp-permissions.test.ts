@@ -26,12 +26,12 @@ const groups: ScopeGroup[] = [
     writeScope: "training:write",
   },
   {
-    group: "ai",
-    title: "Mizan assistant",
+    group: "admin",
+    title: "Administration",
     description: "",
-    hasWrite: false,
-    readScope: "ai:use",
-    writeScope: null,
+    hasWrite: true,
+    readScope: "admin:read",
+    writeScope: "admin:write",
   },
 ];
 
@@ -46,7 +46,7 @@ describe("levelsFromScopes", () => {
     ).toEqual({
       nutrition: "write",
       training: "read",
-      ai: "none",
+      admin: "none",
     });
   });
 
@@ -56,9 +56,6 @@ describe("levelsFromScopes", () => {
     );
   });
 
-  it("reads a group with no write scope as allowed", () => {
-    expect(levelsFromScopes(groups, ["ai:use"]).ai).toBe("read");
-  });
 });
 
 describe("scopesFromLevels", () => {
@@ -67,21 +64,18 @@ describe("scopesFromLevels", () => {
       scopesFromLevels(groups, {
         nutrition: "write",
         training: "read",
-        ai: "none",
+        admin: "none",
       }),
     ).toEqual(["nutrition:read", "nutrition:write", "training:read"]);
   });
 
   it("round-trips", () => {
-    const scopes = ["nutrition:read", "nutrition:write", "ai:use"];
+    const scopes = ["nutrition:read", "nutrition:write", "admin:read"];
     expect(scopesFromLevels(groups, levelsFromScopes(groups, scopes))).toEqual(
       scopes,
     );
   });
 
-  it("never writes a write scope for a group that has none", () => {
-    expect(scopesFromLevels(groups, { ai: "write" })).toEqual(["ai:use"]);
-  });
 });
 
 describe("defaultLevels", () => {
@@ -89,15 +83,15 @@ describe("defaultLevels", () => {
     expect(defaultLevels(groups, ["nutrition:read"])).toEqual({
       nutrition: "read",
       training: "none",
-      ai: "none",
+      admin: "none",
     });
   });
 
-  it("defaults to reading everything but the assistant when the app asked for nothing", () => {
+  it("defaults to reading everything but administration when the app asked for nothing", () => {
     expect(defaultLevels(groups, [])).toEqual({
       nutrition: "read",
       training: "read",
-      ai: "none",
+      admin: "none",
     });
   });
 });
@@ -109,12 +103,12 @@ describe("summaries", () => {
         "nutrition:read",
         "nutrition:write",
         "training:read",
-        "ai:use",
+        "admin:read",
       ]),
     ).toEqual([
       "Food and nutrition: read and change",
       "Training: read",
-      "Mizan assistant",
+      "Administration: read",
     ]);
   });
 

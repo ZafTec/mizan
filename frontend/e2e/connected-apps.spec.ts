@@ -65,7 +65,7 @@ test.describe("Connected apps", () => {
     await expect(claude).toContainText("claude.ai");
     await expect(claude).toContainText("Food and nutrition: read and change");
     await expect(claude).toContainText("Training: read");
-    await expect(claude).toContainText("Mizan assistant");
+    await expect(claude).toContainText("Body measurements: read");
     await expect(claude).toContainText("Home");
     await expect(claude).toContainText("42 calls in 30 days");
 
@@ -96,12 +96,12 @@ test.describe("Connected apps", () => {
     // Planning is not held at all, so nothing in it can be chosen.
     await expect(
       dialog
-        .getByRole("radiogroup", { name: "Meal plans and shopping" })
+        .getByRole("radiogroup", { name: "Plans, lists and households" })
         .getByLabel("Read", { exact: true }),
     ).toBeDisabled();
 
     await choose(dialog, "Food and nutrition", "Read");
-    await choose(dialog, "Mizan assistant", "No access");
+    await choose(dialog, "Body measurements", "No access");
     await dialog.getByRole("button", { name: "Save" }).click();
 
     await expect(
@@ -243,7 +243,9 @@ test.describe("Consent screen", () => {
 
     await choose(page, "Food and nutrition", "Read and change");
     await choose(page, "Training", "No access");
-    await choose(page, "Mizan assistant", "Allowed");
+    await choose(page, "Body measurements", "Read");
+    await choose(page, "Social and notifications", "No access");
+    await choose(page, "Coaching", "No access");
     await page.getByLabel("Only households I choose").check();
     await page.getByLabel("Home", { exact: true }).check();
     await page.getByRole("button", { name: "Allow" }).click();
@@ -260,8 +262,8 @@ test.describe("Consent screen", () => {
         scopes: [
           "nutrition:read",
           "nutrition:write",
+          "body:read",
           "planning:read",
-          "ai:use",
         ],
         householdMode: "selected",
       },
@@ -275,7 +277,10 @@ test.describe("Consent screen", () => {
     for (const group of [
       "Food and nutrition",
       "Training",
-      "Meal plans and shopping",
+      "Body measurements",
+      "Plans, lists and households",
+      "Social and notifications",
+      "Coaching",
     ]) {
       await choose(page, group, "No access");
     }
