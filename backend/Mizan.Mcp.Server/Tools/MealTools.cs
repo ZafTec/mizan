@@ -294,6 +294,16 @@ public sealed class MealTools
         return await _api.DeleteAsync($"/api/Meals/{id}", ct);
     }
 
+    [McpServerTool(Name = "delete_meal_group", Destructive = true)]
+    [Description("Delete a whole logged recipe: every diary row that shares its groupId (from get_food_diary). "
+        + "Use delete_meal for one row. This is permanent.")]
+    public async Task<string> DeleteMealGroup(
+        [Description("The groupId of the logged recipe's rows")] string groupId,
+        CancellationToken ct = default)
+    {
+        return await _api.DeleteAsync($"/api/Meals/groups/{ToolArguments.ParseId(groupId, "groupId")}", ct);
+    }
+
     private static string NormalizeMealType(string mealType)
     {
         return mealType.Trim().ToUpperInvariant() switch

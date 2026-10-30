@@ -2162,6 +2162,14 @@ const server = Bun.serve({
       return json({ error: "No social profile" }, 404);
     if (method === "DELETE") {
       const id = path.split("/").at(-1);
+      if (path.startsWith("/api/Meals/groups/")) {
+        // DeleteDiaryGroupCommand: every row of one logged recipe.
+        const rows = state.meals.filter((item) => item.groupId === id);
+        if (!rows.length) return json({ error: "Not found" }, 404);
+        state.meals = state.meals.filter((item) => item.groupId !== id);
+        state.writes.push({ path, body: {} });
+        return json({ deleted: rows.length, groupName: rows[0].groupName });
+      }
       if (path.startsWith("/api/Meals/"))
         state.meals = state.meals.filter((item) => item.id !== id);
       else if (path.startsWith("/api/Workouts/"))

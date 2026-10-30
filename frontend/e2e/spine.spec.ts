@@ -676,3 +676,38 @@ test("pricing and billing show the plans on sale, with the yearly deal", async (
   await expect(page.getByRole("button", { name: "Go Pro" })).toBeEnabled();
   await noOverflow(page);
 });
+
+test("A person deletes a whole logged recipe only after confirming", async ({
+  context,
+  page,
+}) => {
+  await signIn(context, { recipeGroup: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/today");
+  const meals = page.getByRole("region", { name: "Meals" });
+  await meals.getByText("Misir wat").click();
+  await meals.getByRole("button", { name: "Delete whole recipe" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("every ingredient row");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  expect(
+    (await fixtureState(context)).writes.filter((w: { path: string }) =>
+      w.path.includes("/groups/"),
+    ),
+  ).toEqual([]);
+
+  await meals.getByRole("button", { name: "Delete whole recipe" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Delete recipe" })
+    .click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(meals.getByText("Misir wat")).toHaveCount(0);
+  await noOverflow(page);
+  const state = await fixtureState(context);
+  expect(state.writes.map((w: { path: string }) => w.path)).toContain(
+    "/api/Meals/groups/9a000000-0000-4000-8000-000000000001",
+  );
+  expect(state.unhandled).toEqual([]);
+});

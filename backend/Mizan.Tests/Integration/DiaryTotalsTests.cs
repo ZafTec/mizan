@@ -100,4 +100,38 @@ public class DiaryTotalsTests
         (await client.PostAsJsonAsync("/api/Nutrition/log", new LogFoodRequest { RecipeId = chickenRice.Id, MealType = "LUNCH", AmountGrams = 300 }))
             .StatusCode.Should().Be(HttpStatusCode.BadRequest, "a recipe is logged by servings");
     }
+
+    [Fact]
+    public async Task A_person_deletes_a_logged_recipe_and_every_row_of_it_goes_while_the_rest_of_the_day_stays()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (me, client) = await _world.PersonAsync("group-delete");
+        var (_, stranger) = await _world.PersonAsync("group-stranger");
+        var rice = await _world.FoodAsync("Rice", 130, 2.7m, 28, 0.3m);
+        var chicken = await _world.FoodAsync("Chicken", 165, 31, 0, 3.6m);
+        var chickenRice = await _world.RecipeAsync(me, "Chicken rice", 2, false, (rice, 200, "g", null), (chicken, 300, "g", null));
+        var today = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
+
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new { recipeId = chickenRice.Id, entryDate = today, mealType = "LUNCH", servings = 1 }))
+            .EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/Meals", new { name = "Tea", entryDate = today, mealType = "LUNCH", servings = 1, calories = 30 }))
+            .EnsureSuccessStatusCode();
+        var before = (await client.GetFromJsonAsync<FoodDiaryResult>($"/api/Meals?date={today}"))!;
+        var groupId = before.Groups.Single().GroupId;
+        before.Entries.Count(e => e.GroupId == groupId).Should().Be(2);
+
+        (await stranger.DeleteAsync($"/api/Meals/groups/{groupId}")).StatusCode
+            .Should().Be(HttpStatusCode.NotFound, "another person's recipe group is not theirs to delete");
+
+        var response = await client.DeleteAsync($"/api/Meals/groups/{groupId}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        (await response.Content.ReadFromJsonAsync<Mizan.Application.Commands.DeleteDiaryGroupResult>())!
+            .Should().Be(new Mizan.Application.Commands.DeleteDiaryGroupResult(2, "Chicken rice"));
+
+        var after = (await client.GetFromJsonAsync<FoodDiaryResult>($"/api/Meals?date={today}"))!;
+        after.Entries.Select(e => e.Name).Should().Equal("Tea");
+        after.Groups.Should().BeEmpty();
+        after.Totals.Calories.Should().Be(30m, "the totals are read again after the delete");
+        (await client.DeleteAsync($"/api/Meals/groups/{groupId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

@@ -88,6 +88,13 @@ function MealEntries({
             {group.map((item) => (
               <MealRow key={item.id} entry={item} />
             ))}
+            <div className="flex justify-end py-2">
+              <DeleteLogEntry
+                kind="MealGroup"
+                id={entry.groupId}
+                name={entry.groupName || "This recipe"}
+              />
+            </div>
           </div>
         </details>
       </ViewTransition>

@@ -56,6 +56,14 @@ public class MealsController : ControllerBase
     public async Task<ActionResult<MealPreviewResult>> PreviewMeal([FromBody] PreviewMealQuery query) =>
         Ok(await _mediator.Send(query));
 
+    /// <summary>Deletes every row of one logged recipe. 404 when none of the person's rows has that group.</summary>
+    [HttpDelete("groups/{groupId:guid}")]
+    public async Task<ActionResult<DeleteDiaryGroupResult>> DeleteGroup(Guid groupId)
+    {
+        var result = await _mediator.Send(new DeleteDiaryGroupCommand(groupId));
+        return result.Deleted == 0 ? NotFound() : Ok(result);
+    }
+
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<ActionResult> DeleteMeal(Guid id)

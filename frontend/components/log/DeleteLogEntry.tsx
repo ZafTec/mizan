@@ -12,10 +12,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-type EntryKind = "Meals" | "Workouts" | "BodyMeasurements";
+type EntryKind = "Meals" | "MealGroup" | "Workouts" | "BodyMeasurements";
 
 const deleteEntry: Record<EntryKind, (id: string) => Promise<unknown>> = {
   Meals: (id) => clientApi(`/api/Meals/${id}`, { method: "DELETE" }),
+  MealGroup: (id) => clientApi(`/api/Meals/groups/${id}`, { method: "DELETE" }),
   Workouts: (id) => clientApi(`/api/Workouts/${id}`, { method: "DELETE" }),
   BodyMeasurements: (id) =>
     clientApi(`/api/BodyMeasurements/${id}`, { method: "DELETE" }),
@@ -34,6 +35,7 @@ export default function DeleteLogEntry({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const group = kind === "MealGroup";
   return (
     <Dialog
       open={open}
@@ -44,17 +46,30 @@ export default function DeleteLogEntry({
         }
       }}
     >
-      <button
-        className="icon-button-destructive"
-        onClick={() => setOpen(true)}
-        aria-label={`Delete ${name}`}
-      >
-        <Trash2 size={15} />
-      </button>
+      {group ? (
+        <button
+          className="btn-ghost-destructive btn-sm"
+          onClick={() => setOpen(true)}
+        >
+          Delete whole recipe
+        </button>
+      ) : (
+        <button
+          className="icon-button-destructive"
+          onClick={() => setOpen(true)}
+          aria-label={`Delete ${name}`}
+        >
+          <Trash2 size={15} />
+        </button>
+      )}
       <DialogContent>
-        <DialogTitle>Delete this entry?</DialogTitle>
+        <DialogTitle>
+          {group ? "Delete this recipe from your log?" : "Delete this entry?"}
+        </DialogTitle>
         <DialogDescription>
-          {name} will be removed from your log. This cannot be undone.
+          {group
+            ? `${name} and every ingredient row logged with it will be removed. This cannot be undone.`
+            : `${name} will be removed from your log. This cannot be undone.`}
         </DialogDescription>
         {error && (
           <p role="alert" className="text-destructive text-sm">
@@ -87,7 +102,7 @@ export default function DeleteLogEntry({
               }
             }}
           >
-            {pending ? "Deleting…" : "Delete entry"}
+            {pending ? "Deleting…" : group ? "Delete recipe" : "Delete entry"}
           </button>
         </div>
       </DialogContent>
