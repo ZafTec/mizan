@@ -8660,6 +8660,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Nutrition/ai/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: {
+                    imageUrl?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Nutrition/ai/analyze-text": {
         parameters: {
             query?: never;
@@ -9290,6 +9325,46 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Recipes/fit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    date?: string;
+                    count?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RecipeFitResult"];
+                        "application/json": components["schemas"]["RecipeFitResult"];
+                        "text/json": components["schemas"]["RecipeFitResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -15717,6 +15792,45 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        RecipeFitItem: {
+            /** Format: int32 */
+            rank: number;
+            /** Format: uuid */
+            recipeId: string;
+            title: string;
+            /** Format: double */
+            score: number;
+            /** Format: double */
+            calories: number;
+            /** Format: double */
+            protein: number;
+            /** Format: double */
+            carbs: number;
+            /** Format: double */
+            fat: number;
+            /** Format: double */
+            caloriesLeftAfter?: number | null;
+            /** Format: double */
+            proteinLeftAfter?: number | null;
+            /** Format: double */
+            carbsLeftAfter?: number | null;
+            /** Format: double */
+            fatLeftAfter?: number | null;
+        };
+        RecipeFitResult: {
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            caloriesLeft?: number | null;
+            /** Format: double */
+            proteinLeft?: number | null;
+            /** Format: double */
+            carbsLeft?: number | null;
+            /** Format: double */
+            fatLeft?: number | null;
+            note?: string | null;
+            recipes: components["schemas"]["RecipeFitItem"][];
+        };
         RecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
@@ -15744,6 +15858,10 @@ export interface components {
             name: string;
             /** Format: uuid */
             foodId?: string | null;
+            /** Format: uuid */
+            recipeId?: string | null;
+            /** Format: double */
+            servings?: number | null;
             source: string;
             /** Format: double */
             portionGrams: number;
@@ -16485,7 +16603,6 @@ export interface components {
             /** Format: uuid */
             id: string;
             name?: string | null;
-            email: string;
             image?: string | null;
             bio?: string | null;
             specialties?: string | null;
