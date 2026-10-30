@@ -145,6 +145,7 @@
   --animate-overlay-in: fade-in 180ms var(--ease-out) both;
   --animate-overlay-out: fade-out 150ms var(--ease-out) both;
   --animate-modal-in: modal-pop 200ms var(--ease-out) both;
+  --animate-badge-in: badge-in 360ms var(--ease-out) 80ms both;
   --animate-dialog-in: dialog-pop-in 200ms var(--ease-out) both;
   --animate-dialog-out: dialog-pop-out 150ms var(--ease-out) both;
   --animate-modal-out: modal-pop-out 150ms var(--ease-out) both;
@@ -551,6 +552,17 @@ html {
     transform: scale(0.5) rotate(5deg);
   }
   50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* An earned badge settles into its modal just after the panel arrives. */
+@keyframes badge-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
     opacity: 1;
     transform: scale(1);
   }

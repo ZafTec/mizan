@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { getAchievements, getStreak } from "@/data/achievement";
 import { getUserServer } from "@/helper/session";
+import { EarnedAchievementRow, LockedAchievementRow } from "./AchievementRow";
 
 export const dynamic = "force-dynamic";
 
@@ -59,55 +60,14 @@ type Achievement = Awaited<
   criteriaType?: string | null;
 };
 
-function Row({
-  achievement,
-  earned,
-}: {
-  achievement: Achievement;
-  earned: boolean;
-}) {
+function lockedDetail(achievement: Achievement) {
   const threshold = achievement.threshold ?? 0;
   const progress = Math.min(achievement.progress ?? 0, threshold);
-  const detail = earned
-    ? [
-        achievement.category,
-        achievement.earnedAt
-          ? `Earned ${new Date(achievement.earnedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`
-          : null,
-      ]
-    : [
-        achievement.description ||
-          criteriaLabel(achievement.criteriaType, threshold),
-        threshold > 0 ? `${progress} / ${threshold}` : null,
-      ];
-  return (
-    <li className="ledger-row">
-      {achievement.iconUrl && (
-        <Image
-          src={achievement.iconUrl}
-          alt=""
-          width={28}
-          height={28}
-          unoptimized
-          className={`h-7 w-7 shrink-0 ${earned ? "" : "opacity-50 grayscale"}`}
-        />
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="block font-medium">
-          {achievement.name || "Achievement"}
-        </span>
-        <span className="tabular-nums mt-0.5 block text-sm text-muted-foreground">
-          {detail.filter(Boolean).join(" · ")}
-        </span>
-      </span>
-      <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
-        <span className="text-base font-semibold text-foreground">
-          {achievement.points}
-        </span>{" "}
-        pts
-      </span>
-    </li>
-  );
+  return [
+    achievement.description ||
+      criteriaLabel(achievement.criteriaType, threshold),
+    threshold > 0 ? `${progress} / ${threshold}` : null,
+  ];
 }
 
 export default async function AchievementsPage() {
@@ -183,7 +143,10 @@ export default async function AchievementsPage() {
         ) : (
           <ul>
             {earned.map((achievement) => (
-              <Row key={achievement.id} achievement={achievement} earned />
+              <EarnedAchievementRow
+                key={achievement.id}
+                achievement={achievement}
+              />
             ))}
           </ul>
         )}
@@ -197,10 +160,10 @@ export default async function AchievementsPage() {
           </header>
           <ul>
             {unearned.map((achievement) => (
-              <Row
+              <LockedAchievementRow
                 key={achievement.id}
                 achievement={achievement}
-                earned={false}
+                detail={lockedDetail(achievement)}
               />
             ))}
           </ul>
