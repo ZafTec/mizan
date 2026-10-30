@@ -88,3 +88,38 @@ public record RecognizedFood
 
 /// <summary>A meal described in words for the assistant to estimate (POST api/Nutrition/ai/analyze-text).</summary>
 public record AnalyzeFoodTextRequest(string? Description);
+
+/// <summary>
+/// Body of GET /api/Recipes/fit: the person's saved recipes in the order of how well one serving
+/// fits what is left of the day's targets (RecipeFit in Domain). A "left" figure is null where
+/// there is no target; it is negative when the day is already over.
+/// </summary>
+public record RecipeFitResult
+{
+    public DateOnly Date { get; init; }
+    public decimal? CaloriesLeft { get; init; }
+    public decimal? ProteinLeft { get; init; }
+    public decimal? CarbsLeft { get; init; }
+    public decimal? FatLeft { get; init; }
+
+    /// <summary>Why nothing is ranked, when nothing is: no target or no recipe with nutrition.</summary>
+    public string? Note { get; init; }
+    public List<RecipeFitItem> Recipes { get; init; } = new();
+}
+
+/// <summary>One recipe, best first: one serving's nutrition and what would be left after it.</summary>
+public record RecipeFitItem
+{
+    public int Rank { get; init; }
+    public Guid RecipeId { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public decimal Score { get; init; }
+    public decimal Calories { get; init; }
+    public decimal Protein { get; init; }
+    public decimal Carbs { get; init; }
+    public decimal Fat { get; init; }
+    public decimal? CaloriesLeftAfter { get; init; }
+    public decimal? ProteinLeftAfter { get; init; }
+    public decimal? CarbsLeftAfter { get; init; }
+    public decimal? FatLeftAfter { get; init; }
+}

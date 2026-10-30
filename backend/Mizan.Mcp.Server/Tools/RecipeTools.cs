@@ -32,6 +32,20 @@ public sealed class RecipeTools
         return await _api.GetAsync(qs, ct);
     }
 
+    [McpServerTool(Name = "rank_recipes_for_today", ReadOnly = true, Idempotent = true)]
+    [Description("The person's saved recipes, best first, by how well one serving fits what is left of the day's "
+        + "calorie and macro targets, with what each would leave. Use it to answer which recipe fits the rest of the day; "
+        + "the ranking is Mizan's, so report it rather than re-ranking.")]
+    public Task<string> RankRecipesForToday(
+        [Description("Day as YYYY-MM-DD; defaults to today in the person's time zone")] string? date = null,
+        [Description("How many recipes, 1 to 20 (default 5)")] int count = 5,
+        CancellationToken ct = default)
+    {
+        var qs = $"/api/Recipes/fit?count={Math.Clamp(count, 1, 20)}";
+        if (!string.IsNullOrWhiteSpace(date)) qs += $"&date={ToolArguments.ParseDate(date, nameof(date)):yyyy-MM-dd}";
+        return _api.GetAsync(qs, ct);
+    }
+
     [McpServerTool(Name = "get_recipe", ReadOnly = true, Idempotent = true)]
     [Description("Get full recipe details including ingredients, method and computed nutrition.")]
     public async Task<string> GetRecipe(

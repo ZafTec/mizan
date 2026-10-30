@@ -348,6 +348,29 @@ public static class AiToolCatalogue
             DataAxis.Planning, AiToolAccess.Read),
 
         new AiToolDefinition(
+            "rank_recipes_for_today",
+            "The user's saved recipes ranked, best first, by how well one serving fits what is left of today's targets, "
+            + "with what each would leave. Use it when they ask which recipe fits the rest of their day, and report the ranking as given.",
+            """
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" },
+                "count": { "type": "integer", "minimum": 1, "maximum": 20, "description": "How many recipes, default 5" }
+              },
+              "required": []
+            }
+            """,
+            (args, _) => new RankRecipesForDayQuery
+            {
+                Date = AiToolArgs.OptionalDate(args, "date"),
+                Count = AiToolArgs.OptionalInt(args, "count") ?? 5,
+            },
+            result => result is Contracts.Nutrition.RecipeFitResult fit ? RecipeFitText(fit) : "No ranking.",
+            DataAxis.Nutrition, AiToolAccess.Read),
+
+        new AiToolDefinition(
             "get_daily_totals",
             "The user's totals against their targets for one day. Use before answering anything about how their day is going.",
             """
@@ -453,4 +476,26 @@ public static class AiToolCatalogue
 
     public static AiToolDefinition? Find(string name) =>
         Chat.FirstOrDefault(tool => tool.Name == name);
+
+    /// <summary>The ranking in words: what is left, then each recipe with one serving and what it would leave.</summary>
+    private static string RecipeFitText(Contracts.Nutrition.RecipeFitResult fit)
+    {
+        static string Amounts(decimal? kcal, decimal? protein, decimal? carbs, decimal? fat) => string.Join(", ", new[]
+        {
+            kcal is { } k ? $"{k:0} kcal" : null,
+            protein is { } p ? $"P {p:0.#} g" : null,
+            carbs is { } c ? $"C {c:0.#} g" : null,
+            fat is { } f ? $"F {f:0.#} g" : null,
+        }.Where(x => x is not null));
+
+        if (fit.Recipes.Count == 0) return fit.Note ?? "Nothing to rank.";
+        var lines = new List<string>
+        {
+            $"{fit.Date:yyyy-MM-dd} left: {Amounts(fit.CaloriesLeft, fit.ProteinLeft, fit.CarbsLeft, fit.FatLeft)}. Ranked best first by Mizan:",
+        };
+        lines.AddRange(fit.Recipes.Select(r =>
+            $"{r.Rank}. {r.RecipeId} — {r.Title}: one serving {r.Calories:0} kcal, P{r.Protein:0.#} C{r.Carbs:0.#} F{r.Fat:0.#}; "
+            + $"leaves {Amounts(r.CaloriesLeftAfter, r.ProteinLeftAfter, r.CarbsLeftAfter, r.FatLeftAfter)}"));
+        return string.Join("\n", lines);
+    }
 }

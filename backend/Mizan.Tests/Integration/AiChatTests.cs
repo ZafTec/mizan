@@ -349,6 +349,51 @@ public class AiChatTests
         listed.IndexOf("Shiro", StringComparison.Ordinal).Should().BeLessThan(listed.IndexOf("Misir wot", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// N-02: asked which recipe fits the carbs left today, the assistant picked one far over the
+    /// protein left. Mizan now ranks the saved recipes by how well a serving fits what is left
+    /// (RecipeFit), and the assistant reads that ranking from a tool, as MCP and the API return it.
+    /// </summary>
+    [Fact]
+    public async Task TheAssistantReportsMizansRankingOfTheRecipesThatFitWhatIsLeftToday()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        var world = new PlanningWorld(_fixture);
+        (await client.PostAsJsonAsync("/api/Goals", new
+        {
+            GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 150m, TargetCarbsGrams = 250m, TargetFatGrams = 70m,
+        })).StatusCode.Should().Be(HttpStatusCode.Created);
+        // So far: 1500 kcal, 140 g protein, 100 g carbs, 50 g fat. The carbs are the gap.
+        var soFar = await _fixture.SeedFoodAsync("Day so far", 1500m, 140m, 100m, 50m);
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new
+        {
+            FoodId = soFar.Id, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "lunch", AmountGrams = 100m,
+        })).EnsureSuccessStatusCode();
+        async Task<Mizan.Domain.Entities.Recipe> OneServing(string title, decimal kcal, decimal protein, decimal carbs, decimal fat) =>
+            await world.RecipeAsync(userId, title, 1, false, (await _fixture.SeedFoodAsync(title + " base", kcal, protein, carbs, fat), 100m, "g", null));
+        var chicken = await OneServing("Chicken plate", 450m, 60m, 5m, 10m);
+        var rice = await OneServing("Rice and lentils", 480m, 15m, 90m, 8m);
+        var cake = await OneServing("Butter cake", 600m, 6m, 70m, 35m);
+
+        var fit = await client.GetFromJsonAsync<Mizan.Contracts.Nutrition.RecipeFitResult>("/api/Recipes/fit");
+        fit!.Recipes.Select(r => r.RecipeId).Should().Equal(rice.Id, cake.Id, chicken.Id);
+        (fit.CaloriesLeft, fit.ProteinLeft, fit.CarbsLeft, fit.FatLeft).Should().Be((500m, 10m, 150m, 20m));
+        (fit.Recipes[0].CarbsLeftAfter, fit.Recipes[0].ProteinLeftAfter).Should().Be((60m, -5m));
+
+        _fixture.Ai.CallTools(("rank_recipes_for_today", "{}"));
+        _fixture.Ai.Reply("Rice and lentils fits best.");
+
+        var turn = await SendAsync(client, null, "Which of my recipes fits the carbs I have left today?");
+
+        turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeTrue();
+        var ranking = _fixture.Ai.LastCall.Messages.First(m => m.Role == AiRole.Tool).Content;
+        ranking.Should().Contain("left: 500 kcal, P 10 g, C 150 g, F 20 g")
+            .And.Contain($"1. {rice.Id} — Rice and lentils: one serving 480 kcal, P15 C90 F8; leaves 20 kcal, P -5 g, C 60 g, F 12 g")
+            .And.Contain($"3. {chicken.Id} — Chicken plate");
+    }
+
     [Fact]
     public async Task MealSuggestionsAreGivenEveryTargetOfTheGoalAndWhatIsLeftToday()
     {

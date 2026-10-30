@@ -25,7 +25,7 @@ public static class McpToolScopes
         }
 
         // Food, nutrition and goals
-        Add(McpScopes.NutritionRead, "search_foods", "get_food", "get_food_diary", "get_daily_nutrition",
+        Add(McpScopes.NutritionRead, "search_foods", "get_food", "get_food_diary", "get_daily_nutrition", "rank_recipes_for_today",
             "get_nutrition_range", "get_nutrition_summary", "get_current_goal", "get_goal_history", "get_goal_progress",
             "get_food_price", "list_price_regions");
         Add(McpScopes.NutritionWrite, "create_food", "update_food", "delete_food", "log_day", "log_food", "log_meal",
