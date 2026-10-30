@@ -61,7 +61,8 @@ public class FeatureFlagTests
         var drafted = await neighbourClient.PostAsJsonAsync("/api/MealPlans/generate", Request());
         drafted.StatusCode.Should().Be(HttpStatusCode.OK, await drafted.Content.ReadAsStringAsync());
         var ledger = await _world.DbAsync(db => db.AiUsageLogs.AsNoTracking().ToListAsync());
-        ledger.Should().ContainSingle().Which.Should().Match<Domain.Entities.AiUsageLog>(l =>
+        // A draft that breaks a rule gets one repair call on the same line, so both rows are this household's.
+        ledger.Should().NotBeEmpty().And.OnlyContain(l =>
             l.UserId == neighbour && l.HouseholdId == nextDoor && l.Feature == AiFeatures.Planning);
 
         // The list says one household answers differently; the override is listed, and clearing it restores the default.

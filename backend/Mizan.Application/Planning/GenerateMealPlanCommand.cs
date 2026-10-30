@@ -163,43 +163,48 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         };
 
         var characters = prompt.SystemPrompt.Length + context.Text.Length + ask.Length;
-        var response = await _ai.CompleteAsync(
-            new AiMeteredCall(userId, null, AiFeatures.Planning, Math.Max(1000, characters / 4), prompt.VersionId),
-            completion,
-            cancellationToken);
+        var first = await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId, completion, characters, cancellationToken);
+        var attempt = first;
 
-        var draft = Parse(response.Content);
-        var foods = await ResolveFoodsAsync(userId, draft, context, cancellationToken);
-        var read = MealPlanDraftReader.Read(draft, request.DurationDays, context.Recipes, foods);
-
-        // A day without a food or recipe is held to nothing, so the draft is refused, not saved.
-        var emptyDays = DraftFoodCoverage.EmptyDays(
-            read.Entries.Select(e => (e.DayIndex, PlanRulesMapping.ParseEnum(e.Kind, PlanEntryKind.Text))), request.DurationDays);
-        if (emptyDays.Count > 0)
+        // One repair: the problems code found go back to the model once, as facts. The second call is
+        // metered on its own, so its reservation is settled whether it succeeds or fails.
+        if (first.Problems.Count > 0)
         {
-            var missing = read.Unresolved.Select(u => u.Text).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
-            _logger.LogInformation("A generated plan had {EmptyDays} days without foods; {Missing} names were not in the catalogue",
-                emptyDays.Count, missing.Count);
-            throw new PlanNeedsFoodsException(
-                DraftFoodCoverage.Message(emptyDays, request.DurationDays, missing), missing, emptyDays);
+            var repair = completion with
+            {
+                Messages =
+                [
+                    .. completion.Messages,
+                    new AiMessage(AiRole.Assistant, first.Content),
+                    new AiMessage(AiRole.User, RepairAsk(first.Problems)),
+                ],
+            };
+            try
+            {
+                var second = await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId, repair,
+                    characters + first.Content.Length, cancellationToken);
+                if (second.IsBetterThan(first)) attempt = second;
+            }
+            catch (Exception ex) when (ex is AiQuotaExceededException or AiUnavailableException)
+            {
+                // The first draft stands when it can; with empty days it is refused below.
+                _logger.LogInformation(ex, "The repair of a generated plan did not complete; keeping the first draft");
+            }
         }
 
-        var plan = await PlanFactory.BuildAsync(
-            _entries,
-            new CreateMealPlanRequest
-            {
-                Name = PlanName(request.Name ?? draft.Name, ceiling, several, rulesDto.Currency),
-                StartDate = request.StartDate,
-                DurationDays = request.DurationDays,
-                Rules = rulesDto,
-                Entries = read.Entries,
-                PrepSessions = read.PrepSessions,
-            },
-            userId,
-            householdId: null,
-            authoredBy: null,
-            PlanStatus.Draft,
-            cancellationToken);
+        // A day without a food or recipe is held to nothing, so the draft is refused, not saved.
+        if (attempt.EmptyDays.Count > 0)
+        {
+            _logger.LogInformation("A generated plan had {EmptyDays} days without foods; {Missing} names were not in the catalogue",
+                attempt.EmptyDays.Count, attempt.Missing.Count);
+            throw new PlanNeedsFoodsException(
+                DraftFoodCoverage.Message(attempt.EmptyDays, request.DurationDays, attempt.Missing), attempt.Missing, attempt.EmptyDays);
+        }
+
+        var draft = attempt.Draft;
+        var read = attempt.Read;
+        var response = attempt.Response;
+        var plan = attempt.Plan!;
         plan.GeneratedFrom = new PlanGeneration
         {
             PromptKey = AiPromptKeys.MealPlan,
@@ -227,6 +232,98 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             Unresolved = read.Unresolved,
             Note = string.IsNullOrWhiteSpace(draft.Note) ? null : Cut(draft.Note.Trim(), 300),
         };
+    }
+
+    /// <summary>
+    /// One metered call and what code makes of it: the draft read against the catalogue, the days left
+    /// without food, and, when every day has food, the unsaved plan with its rule violations.
+    /// </summary>
+    private async Task<DraftAttempt> AttemptAsync(
+        GenerateMealPlanCommand request,
+        PlanRulesDto rulesDto,
+        decimal? ceiling,
+        bool several,
+        MealPlanContext context,
+        ResolvedPrompt prompt,
+        Guid userId,
+        AiCompletionRequest completion,
+        int characters,
+        CancellationToken cancellationToken)
+    {
+        var response = await _ai.CompleteAsync(
+            new AiMeteredCall(userId, null, AiFeatures.Planning, Math.Max(1000, characters / 4), prompt.VersionId),
+            completion,
+            cancellationToken);
+
+        var draft = Parse(response.Content);
+        var foods = await ResolveFoodsAsync(userId, draft, context, cancellationToken);
+        var read = MealPlanDraftReader.Read(draft, request.DurationDays, context.Recipes, foods);
+        var emptyDays = DraftFoodCoverage.EmptyDays(
+            read.Entries.Select(e => (e.DayIndex, PlanRulesMapping.ParseEnum(e.Kind, PlanEntryKind.Text))), request.DurationDays);
+        var missing = read.Unresolved.Select(u => u.Text).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
+
+        if (emptyDays.Count > 0)
+        {
+            return new DraftAttempt(response, draft, read, emptyDays, missing, null, [],
+                [DraftFoodCoverage.Message(emptyDays, request.DurationDays, missing)]);
+        }
+
+        var plan = await PlanFactory.BuildAsync(
+            _entries,
+            new CreateMealPlanRequest
+            {
+                Name = PlanName(request.Name ?? draft.Name, ceiling, several, rulesDto.Currency),
+                StartDate = request.StartDate,
+                DurationDays = request.DurationDays,
+                Rules = rulesDto,
+                Entries = read.Entries,
+                PrepSessions = read.PrepSessions,
+            },
+            userId,
+            householdId: null,
+            authoredBy: null,
+            PlanStatus.Draft,
+            cancellationToken);
+        var violations = await _readModel.ViolationsAsync(plan, userId, cancellationToken);
+        var problems = violations
+            .Select(v => v.DayIndex is { } day
+                ? string.Create(CultureInfo.InvariantCulture, $"Day {day}{(v.Slot is null ? "" : $" {v.Slot}")}: {v.Message}")
+                : v.Message)
+            // Names that did not resolve ride along with a violation; alone they are text entries, not a repair.
+            .Concat(violations.Count == 0 ? [] : missing.Select(name => $"\"{name}\" is not in the catalogue; use a listed food or recipe."))
+            .Distinct()
+            .Take(30)
+            .ToList();
+        return new DraftAttempt(response, draft, read, emptyDays, missing, plan, violations, problems);
+    }
+
+    /// <summary>The problems in words, for the repair call. They are the checks' own messages; nothing is judged here.</summary>
+    private static string RepairAsk(IReadOnlyList<string> problems)
+    {
+        var text = new StringBuilder("The plan was checked and these problems were found:\n");
+        foreach (var problem in problems) text.Append("- ").Append(problem).Append('\n');
+        text.Append("Return the whole corrected plan in the same format. Keep what already meets the rules.");
+        return text.ToString();
+    }
+
+    private sealed record DraftAttempt(
+        AiCompletionResponse Response,
+        MealPlanDraftV1 Draft,
+        MealPlanDraftReader.Result Read,
+        IReadOnlyList<int> EmptyDays,
+        IReadOnlyList<string> Missing,
+        MealPlan? Plan,
+        IReadOnlyList<PlanViolation> Violations,
+        IReadOnlyList<string> Problems)
+    {
+        public string Content => Response.Content;
+
+        /// <summary>Fewer empty days first, then fewer rule violations; a tie keeps the first draft.</summary>
+        public bool IsBetterThan(DraftAttempt other) =>
+            EmptyDays.Count != other.EmptyDays.Count
+                ? EmptyDays.Count < other.EmptyDays.Count
+                : Violations.Count < other.Violations.Count
+                    || (Violations.Count == other.Violations.Count && Missing.Count < other.Missing.Count);
     }
 
     /// <summary>

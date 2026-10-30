@@ -145,6 +145,10 @@ public sealed class PlanReadModel
         };
     }
 
+    /// <summary>The plan's rule violations, the same <see cref="PlanRuleCheck"/> result the plan page shows. The plan need not be saved.</summary>
+    public async Task<IReadOnlyList<PlanViolation>> ViolationsAsync(MealPlan plan, Guid viewerId, CancellationToken cancellationToken) =>
+        (await ResolveAsync(plan, viewerId, cancellationToken)).Violations;
+
     private static EntryNutritionDto ToDto(EntryNutrition n) => new(n.Calories, n.ProteinGrams, n.CarbsGrams, n.FatGrams, n.FiberGrams);
 
     private static PlanViolationDto ToDto(PlanViolation v) => new(v.DayIndex, v.Slot, v.Rule, v.Message);

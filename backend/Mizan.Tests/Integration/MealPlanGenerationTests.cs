@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Ai;
+using Mizan.Application.Interfaces;
 using Mizan.Application.Planning;
 using Mizan.Contracts.Ai;
 using Mizan.Contracts.Planning;
@@ -44,8 +45,8 @@ public class MealPlanGenerationTests
         await PriceAsync(eggs, 200);
         await PriceAsync(lentils, 100);
         // The same answer for both budgets: one draft each, priced the same, judged against its own ceiling.
-        _fixture.Ai.Reply(TwoDays("Eggs", "Lentils"));
-        _fixture.Ai.Reply(TwoDays("Eggs", "Lentils"));
+        // Each draft breaks a rule, so each gets one repair call, and the model sends the same plan back.
+        for (var i = 0; i < 4; i++) _fixture.Ai.Reply(TwoDays("Eggs", "Lentils"));
 
         var response = await client.PostAsJsonAsync("/api/MealPlans/generate", new GenerateMealPlanRequest
         {
@@ -88,11 +89,14 @@ public class MealPlanGenerationTests
         tooTight.Violations.Select(v => v.Rule).Should().Contain(PlanRuleNames.BudgetOver);
 
         // Each ceiling was its own structured call on the planning line, and the model was shown prices, not asked for them.
-        _fixture.Ai.Calls.Should().HaveCount(2);
+        _fixture.Ai.Calls.Should().HaveCount(4);
         _fixture.Ai.Calls.Should().OnlyContain(c => c.ResponseSchema!.Name == "meal_plan_v1");
         _fixture.Ai.Calls[0].Messages.Should().Contain(m => m.Content.Contains("Eggs | 143 kcal") && m.Content.Contains("| 200"));
+        // The repair repeats the conversation, then the draft, then the checks' own findings.
+        _fixture.Ai.Calls[1].Messages[^2].Role.Should().Be(AiRole.Assistant);
+        _fixture.Ai.Calls[1].Messages[^1].Content.Should().StartWith("The plan was checked").And.Contain("Day 0").And.Contain("protein");
         var ledger = await LedgerAsync();
-        ledger.Should().HaveCount(2).And.OnlyContain(l => l.Feature == AiFeatures.Planning && l.Outcome == AiCallOutcome.Succeeded);
+        ledger.Should().HaveCount(4).And.OnlyContain(l => l.Feature == AiFeatures.Planning && l.Outcome == AiCallOutcome.Succeeded);
 
         // Both drafts are saved and listed as drafts of their owner.
         var drafts = await client.GetFromJsonAsync<Mizan.Application.Common.PagedResult<MealPlanSummaryDto>>("/api/MealPlans?status=Draft");
@@ -316,12 +320,7 @@ public class MealPlanGenerationTests
     {
         var (_, client) = await StartAsync();
         await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
-        _fixture.Ai.Reply("""
-            {"name":"Week","note":null,"prepSessions":[],"days":[
-              {"dayIndex":0,"entries":[{"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":120,"servings":null,"note":null,"prepSessionIndex":null}]},
-              {"dayIndex":1,"entries":[{"slot":"LUNCH","kind":"food","foodName":"Dragonfruit salad","recipeId":null,"grams":200,"servings":null,"note":null,"prepSessionIndex":null}]}
-            ]}
-            """);
+        _fixture.Ai.Reply(EggsThen("Dragonfruit salad"));
 
         var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request());
 
@@ -332,8 +331,58 @@ public class MealPlanGenerationTests
         problem.MissingFoods.Should().Equal("Dragonfruit salad");
         problem.Error.Should().StartWith("No draft was saved: the catalogue has no foods for day 2 of the plan. Not in the catalogue: Dragonfruit salad.");
         (await _world.DbAsync(db => db.MealPlans.CountAsync())).Should().Be(0);
-        (await LedgerAsync()).Should().ContainSingle().Which.Outcome.Should().NotBe(AiCallOutcome.Pending);
+        // Free has one planning request a day, so the repair is refused by the allowance and settled as refused.
+        (await LedgerAsync()).Select(l => l.Outcome).Should().BeEquivalentTo([AiCallOutcome.Succeeded, AiCallOutcome.Refused]);
+        _fixture.Ai.Calls.Should().ContainSingle();
     }
+
+    [Fact]
+    public async Task ADraftWithADayTheCatalogueLacks_IsRepairedOnce_AndTheRepairedDraftIsSaved()
+    {
+        var (_, client) = await StartAsync(pro: true);
+        await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        _fixture.Ai.Reply(EggsThen("Dragonfruit salad"));
+        _fixture.Ai.Reply(EggsThen("Eggs"));
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request());
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
+        draft.Plan.Days.Should().OnlyContain(d => PlanningWorld.Entries(d).Any(e => e.Kind == "Food"));
+        draft.Unresolved.Should().BeEmpty();
+        _fixture.Ai.Calls.Should().HaveCount(2);
+        _fixture.Ai.Calls[1].Messages[^1].Content.Should().Contain("day 2").And.Contain("Dragonfruit salad");
+        (await LedgerAsync()).Should().HaveCount(2).And.OnlyContain(l => l.Outcome == AiCallOutcome.Succeeded);
+        (await _world.DbAsync(db => db.MealPlans.CountAsync())).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task WhenTheRepairCallFails_TheFirstDraftStands_AndBothCallsAreSettled()
+    {
+        var (_, client) = await StartAsync(pro: true);
+        await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        _fixture.Ai.Reply(TwoDays("Eggs", "Eggs"));
+        _fixture.Ai.Fail("The provider timed out.");
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request() with
+        {
+            Rules = new PlanRulesDto { MacroMode = "HighProtein", TargetProtein = 300 },
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
+        draft.Violations.Select(v => v.Rule).Should().Contain(PlanRuleNames.ProteinUnder);
+        var ledger = await LedgerAsync();
+        ledger.Should().HaveCount(2).And.OnlyContain(l => l.Outcome != AiCallOutcome.Pending);
+        ledger.Count(l => l.Outcome == AiCallOutcome.Succeeded).Should().Be(1);
+    }
+
+    private static string EggsThen(string secondDay) => $$"""
+        {"name":"Week","note":null,"prepSessions":[],"days":[
+          {"dayIndex":0,"entries":[{"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":120,"servings":null,"note":null,"prepSessionIndex":null}]},
+          {"dayIndex":1,"entries":[{"slot":"LUNCH","kind":"food","foodName":"{{secondDay}}","recipeId":null,"grams":200,"servings":null,"note":null,"prepSessionIndex":null}]}
+        ]}
+        """;
 
     [Fact]
     public async Task AfterTheStarterFoodsAndStaplePrices_AKetoWeekHasFoodsEveryDay_StaysUnderItsCarbs_AndIsPriced()
