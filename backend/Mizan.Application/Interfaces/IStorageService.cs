@@ -11,8 +11,9 @@ public enum StorageFolder
 
     /// <summary>
     /// Photos sent to the assistant - a plate from the website or from
-    /// Telegram. Kept rather than discarded after analysis so the entry it
-    /// produced can be checked against the picture it came from.
+    /// Telegram. Kept after analysis so the entry it produced can be checked
+    /// against the picture; an analysis photo is removed 30 days on, or when
+    /// the person deletes it (AnalysisPhotos).
     /// </summary>
     Meals = 2,
 

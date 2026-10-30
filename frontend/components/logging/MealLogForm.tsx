@@ -20,7 +20,11 @@ import {
   defaultMealTypeForHour,
   formatMealType,
 } from "@/lib/utils/mealType";
-import type { FoodAnalysis, NutritionPer100g } from "@/lib/api/food-photo";
+import {
+  deleteAnalysisPhoto,
+  type FoodAnalysis,
+  type NutritionPer100g,
+} from "@/lib/api/food-photo";
 import {
   previewMeal,
   type MealPreviewLine,
@@ -124,6 +128,8 @@ export default function MealLogForm({
     source: "text" | "photo";
     confidence: number;
     note?: string | null;
+    imageUrl?: string | null;
+    photoDeleted?: boolean;
   } | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -195,6 +201,7 @@ export default function MealLogForm({
       source,
       confidence: analysis.confidence,
       note: analysis.note,
+      imageUrl: analysis.imageUrl,
     });
     setProposed((current) => [
       ...current,
@@ -209,6 +216,18 @@ export default function MealLogForm({
           per100g: food.per100g!,
         })),
     ]);
+  }
+
+  async function removePhoto(imageUrl: string) {
+    setError("");
+    try {
+      await deleteAnalysisPhoto(imageUrl);
+      setProposal((current) =>
+        current ? { ...current, imageUrl: null, photoDeleted: true } : current,
+      );
+    } catch (failure) {
+      setError(getErrorMessage(failure));
+    }
   }
 
   function addRecipe(recipe: RecipeResult) {
@@ -392,6 +411,23 @@ export default function MealLogForm({
                       Check the portions.
                       {proposal.note && (
                         <span className="mt-1 block">{proposal.note}</span>
+                      )}
+                      {proposal.photoDeleted ? (
+                        <span className="mt-1 block">Photo deleted.</span>
+                      ) : (
+                        proposal.imageUrl && (
+                          <span className="mt-1 block">
+                            The photo is kept for 30 days.{" "}
+                            <button
+                              type="button"
+                              className="underline underline-offset-2"
+                              disabled={busy}
+                              onClick={() => void removePhoto(proposal.imageUrl!)}
+                            >
+                              Delete it now
+                            </button>
+                          </span>
+                        )
                       )}
                     </span>
                   </p>

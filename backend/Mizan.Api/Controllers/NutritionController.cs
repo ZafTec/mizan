@@ -20,27 +20,24 @@ public class NutritionController : ControllerBase
     private readonly IMediator _mediator;
     private readonly INutritionAiService _aiService;
     private readonly ICurrentUserService _currentUser;
-    private readonly IStorageService _storage;
+    private readonly Mizan.Application.Ai.AnalysisPhotos _photos;
     private readonly IRemoteImageFetcher _images;
-    private readonly ILogger<NutritionController> _logger;
     private readonly Mizan.Application.Services.FoodAnalysisCatalogue _catalogue;
 
     public NutritionController(
         IMediator mediator,
         INutritionAiService aiService,
         ICurrentUserService currentUser,
-        IStorageService storage,
+        Mizan.Application.Ai.AnalysisPhotos photos,
         IRemoteImageFetcher images,
-        ILogger<NutritionController> logger,
         Mizan.Application.Services.FoodAnalysisCatalogue catalogue)
     {
         _catalogue = catalogue;
         _mediator = mediator;
         _aiService = aiService;
         _currentUser = currentUser;
-        _storage = storage;
+        _photos = photos;
         _images = images;
-        _logger = logger;
     }
 
     [HttpPost("log")]
@@ -128,7 +125,21 @@ public class NutritionController : ControllerBase
         // Stored after the analysis, not before: a photo the model could not
         // read is not worth keeping, and this way a storage outage costs the
         // picture rather than the whole request.
-        return result with { ImageUrl = await StoreAsync(imageBytes, contentType) };
+        return result with
+        {
+            ImageUrl = await _photos.StoreAsync(userId, imageBytes, contentType, ImageFormat.Extension(contentType), HttpContext.RequestAborted),
+        };
+    }
+
+    /// <summary>
+    /// Deletes a photo the person sent for an analysis, before its removal 30 days on
+    /// (docs/AI.md#logging-a-meal-from-words-or-a-photo). 404 when it is not theirs or is already gone.
+    /// </summary>
+    [HttpDelete("ai/photo")]
+    public async Task<IActionResult> DeleteAnalysisPhoto([FromQuery] string imageUrl, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new Mizan.Application.Ai.DeleteAnalysisPhotoCommand(imageUrl), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>
@@ -158,28 +169,4 @@ public class NutritionController : ControllerBase
     }
 
     public const int MaxDescriptionLength = 600;
-
-
-    private async Task<string?> StoreAsync(byte[] bytes, string contentType)
-    {
-        try
-        {
-            await using var stream = new MemoryStream(bytes);
-            var stored = await _storage.UploadAsync(new StorageUpload(
-                StorageFolder.Meals,
-                $"meal{ImageFormat.Extension(contentType)}",
-                contentType,
-                stream,
-                bytes.Length));
-
-            return stored.Url;
-        }
-        catch (Exception ex)
-        {
-            // The analysis is the answer; the photo is a record of it. Losing
-            // the second must not fail the first.
-            _logger.LogWarning(ex, "Could not store an analysed meal photo");
-            return null;
-        }
-    }
 }

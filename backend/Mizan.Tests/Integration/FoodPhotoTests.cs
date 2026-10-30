@@ -3,12 +3,17 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Mizan.Application.Ai;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Media;
 using Mizan.Contracts.Nutrition;
+using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Outbox;
 using Xunit;
 
 namespace Mizan.Tests.Integration;
@@ -213,6 +218,87 @@ public class FoodPhotoTests
         var response = await PostPhotoAsync(client);
 
         response.StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
+    }
+
+    /// <summary>
+    /// N-05: a photo sent for an analysis was kept for good. It is removed 30 days on, and the
+    /// person can delete it sooner; nobody else can.
+    /// </summary>
+    [Fact]
+    public async Task AnAnalysisPhoto_CanBeDeletedByItsOwner_AndIsRemovedThirtyDaysOn()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var store = new MemoryStorage();
+        await using var api = _fixture.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IStorageService>();
+            services.AddSingleton<IStorageService>(store);
+        }));
+        var (owner, _) = await ProUserAsync();
+        var (stranger, _) = await ProUserAsync();
+        HttpClient On(HttpClient session)
+        {
+            var client = api.CreateClient();
+            client.DefaultRequestHeaders.Add("Cookie", session.DefaultRequestHeaders.GetValues("Cookie"));
+            return client;
+        }
+        using var mine = On(owner);
+        using var theirs = On(stranger);
+
+        _fixture.Ai.Reply(GoodAnalysis);
+        var first = (await AnalyzeAsync(mine))!.ImageUrl!;
+        _fixture.Ai.Reply(GoodAnalysis);
+        var second = (await AnalyzeAsync(mine))!.ImageUrl!;
+        store.Keys.Should().HaveCount(2);
+
+        // Someone else cannot delete it, and the owner can, once.
+        (await theirs.DeleteAsync(Delete(first))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await mine.DeleteAsync(Delete(first))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await mine.DeleteAsync(Delete(first))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        store.Keys.Should().ContainSingle();
+
+        // The other is removed when its 30 days are up.
+        using (var scope = _fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+            var pending = await db.OutboxJobs.SingleAsync(j => j.Type == OutboxJobTypes.AnalysisPhotoExpiry && j.Status == OutboxJobStatus.Pending);
+            pending.RunAfter.Should().BeCloseTo(DateTime.UtcNow.AddDays(30), TimeSpan.FromMinutes(5));
+            pending.RunAfter = DateTime.UtcNow.AddMinutes(-1);
+            await db.SaveChangesAsync();
+        }
+        var dispatcher = api.Services.GetServices<IHostedService>().OfType<OutboxDispatcher>().Single();
+        while (await dispatcher.RunOnceAsync(CancellationToken.None)) { }
+        store.Keys.Should().BeEmpty();
+        (await mine.DeleteAsync(Delete(second))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    private static string Delete(string imageUrl) => $"/api/Nutrition/ai/photo?imageUrl={Uri.EscapeDataString(imageUrl)}";
+
+    /// <summary>Object storage in memory, at https://files.test/{key}.</summary>
+    private sealed class MemoryStorage : IStorageService
+    {
+        private const string Base = "https://files.test/";
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _keys = new();
+
+        public ICollection<string> Keys => _keys.Keys;
+
+        public Task<StoredObject> UploadAsync(StorageUpload upload, CancellationToken cancellationToken = default)
+        {
+            var key = $"meals/{Guid.NewGuid():N}.jpg";
+            _keys[key] = 0;
+            return Task.FromResult(new StoredObject(key, Base + key));
+        }
+
+        public Task DeleteAsync(string key, CancellationToken cancellationToken = default)
+        {
+            _keys.TryRemove(key, out _);
+            return Task.CompletedTask;
+        }
+
+        public Task<string> GetUrlAsync(string key, CancellationToken cancellationToken = default) => Task.FromResult(Base + key);
+
+        public Task<string?> TryGetKeyAsync(string? url, CancellationToken cancellationToken = default) =>
+            Task.FromResult(url is not null && url.StartsWith(Base, StringComparison.Ordinal) ? url[Base.Length..] : null);
     }
 
     private async Task<(HttpClient Client, Guid UserId)> ProUserAsync()

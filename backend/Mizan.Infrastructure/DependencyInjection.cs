@@ -159,6 +159,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxHandler, EvalRunJobHandler>();
         services.AddScoped<IOutboxHandler, PushJobHandler>();
         services.AddScoped<IOutboxHandler, EveningReminderJobHandler>();
+        services.AddScoped<IOutboxHandler, AnalysisPhotoExpiryJobHandler>();
         services.AddScoped<IOutboxHandler, TelegramMessageJobHandler>();
         services.AddScoped<IOutboxHandler, NotificationDeliveryJobHandler>();
 

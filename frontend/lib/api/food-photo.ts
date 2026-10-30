@@ -57,3 +57,14 @@ export const logMeal = (body: LogMealBody, idempotencyKey: string) =>
     body,
     headers: { "Idempotency-Key": idempotencyKey },
   });
+
+/**
+ * Deletes a photo sent for an analysis before its removal 30 days on. Only the
+ * person's own photo; another or one already gone is a 404.
+ */
+export async function deleteAnalysisPhoto(imageUrl: string): Promise<void> {
+  await clientApi<void>(
+    `/api/Nutrition/ai/photo?imageUrl=${encodeURIComponent(imageUrl)}`,
+    { method: "DELETE" },
+  );
+}

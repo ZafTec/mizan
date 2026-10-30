@@ -64,6 +64,9 @@ public static class OutboxJobTypes
     public const string EvalRun = "eval-run";
     public const string Push = "push";
     public const string EveningReminder = "evening-reminder";
+
+    /// <summary>Removes a food analysis photo when its retention ends.</summary>
+    public const string AnalysisPhotoExpiry = "analysis-photo-expiry";
     public const string TelegramMessage = "telegram-message";
     public const string NotificationDelivery = "notification-delivery";
 }

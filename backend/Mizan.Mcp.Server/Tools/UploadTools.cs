@@ -59,6 +59,14 @@ public sealed class UploadTools
             ct);
     }
 
+    [McpServerTool(Name = "delete_food_photo", Destructive = true, Idempotent = true)]
+    [Description("Deletes a photo sent to analyze_food_image, by the imageUrl it returned. Photos are removed "
+        + "30 days after the analysis anyway; this removes one now. Only the person's own analysis photos.")]
+    public Task<string> DeleteFoodPhoto(
+        [Description("The imageUrl analyze_food_image returned")] string imageUrl,
+        CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/Nutrition/ai/photo?imageUrl={Uri.EscapeDataString(imageUrl)}", ct);
+
     [McpServerTool(Name = "analyze_food_image")]
     [McpAppUi(ResourceUri = Mizan.Mcp.Server.Apps.MizanApps.FoodPhoto)]
     [Description(
