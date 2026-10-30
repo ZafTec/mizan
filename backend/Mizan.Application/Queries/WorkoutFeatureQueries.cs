@@ -130,14 +130,13 @@ public sealed class GetWorkoutStatsQueryHandler : IRequestHandler<GetWorkoutStat
                 .Select(workout =>
             {
                 var top = workout.Max(x => x.s.WeightKg ?? 0);
-                var rep = workout.OrderByDescending(x => x.s.WeightKg).First().s.Reps ?? 0;
                 var isPersonalRecord = top > 0 && (!priorBest.HasValue || top > priorBest.Value);
                 if (isPersonalRecord)
                 {
                     priorBest = top;
                     personalRecordCount++;
                 }
-                return new ExercisePoint(workout.Key.WorkoutDate, top, Mizan.Domain.OneRepMax.Estimate(top, rep), isPersonalRecord);
+                return new ExercisePoint(workout.Key.WorkoutDate, top, Mizan.Domain.OneRepMax.Best(workout.Select(x => (x.s.WeightKg, x.s.Reps))), isPersonalRecord);
             }).ToList();
             return new ExerciseStatsDto(group.Key.ExerciseId, group.Key.Name, points);
         }).ToList();

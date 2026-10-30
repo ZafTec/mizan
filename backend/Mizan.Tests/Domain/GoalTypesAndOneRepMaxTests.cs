@@ -32,4 +32,23 @@ public class OneRepMaxTests
     [InlineData(0, 10, 0.0)]
     public void Estimate_IsEpleyToOneDecimal(double weight, int reps, double expected) =>
         OneRepMax.Estimate((decimal)weight, reps).Should().Be((decimal)expected);
+
+    public static TheoryData<(decimal? WeightKg, int? Reps)[], decimal> Sessions => new()
+    {
+        // The retest: 50 kg for 5, 5 and 4 is 58.3 whichever set is read last.
+        { [(50m, 5), (50m, 5), (50m, 4)], 58.3m },
+        { [(50m, 4), (50m, 5), (50m, 5)], 58.3m },
+        { [(50m, 5), (50m, 4), (50m, 5)], 58.3m },
+        // A lighter set with more reps can estimate higher than the heaviest one.
+        { [(60m, 1), (50m, 10)], 66.7m },
+        { [(50m, 10), (60m, 1)], 66.7m },
+        // Sets without a weight or reps estimate nothing.
+        { [(null, 10), (40m, null)], 40.0m },
+        { [], 0m },
+    };
+
+    [Theory]
+    [MemberData(nameof(Sessions))]
+    public void Best_IsTheLargestEstimateInAnyOrder((decimal? WeightKg, int? Reps)[] sets, decimal expected) =>
+        OneRepMax.Best(sets).Should().Be(expected);
 }
