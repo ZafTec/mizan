@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { appToast } from "@/lib/toast";
 
@@ -147,6 +148,15 @@ export function AddAppGuide() {
             </button>
           ))}
         </div>
+
+        {client.id === "claude" && (
+          <p className="mb-3 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
+            The Mizan plugin adds the connector and its skills in one step.{" "}
+            <Link href="/profile/mcp/claude" className="underline">
+              Add Mizan to Claude
+            </Link>
+          </p>
+        )}
 
         <ol className="list-decimal space-y-2 pl-5 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-200">
           {client.steps.map((step) => (
