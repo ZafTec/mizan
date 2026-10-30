@@ -149,6 +149,7 @@ public class DeleteHouseholdCommandHandler : IRequestHandler<DeleteHouseholdComm
 
     public async Task<HouseholdDeletionResult> Handle(DeleteHouseholdCommand request, CancellationToken cancellationToken)
     {
+        _households.EnsureGrantCovers(request.HouseholdId);
         if (!await _households.CanAccessAsync(request.HouseholdId, cancellationToken))
             return new HouseholdDeletionResult { Status = HouseholdDeletionStatus.NotFound, Message = "Household not found." };
 

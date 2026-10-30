@@ -38,6 +38,7 @@ public class SetActiveHouseholdCommandHandler : IRequestHandler<SetActiveHouseho
     {
         if (request.HouseholdId.HasValue)
         {
+            _households.EnsureGrantCovers(request.HouseholdId);
             var isMember = await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken);
             if (!isMember)
             {

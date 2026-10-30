@@ -51,6 +51,7 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
 
     public async Task<InviteHouseholdMemberResult> Handle(InviteHouseholdMemberCommand request, CancellationToken cancellationToken)
     {
+        _households.EnsureGrantCovers(request.HouseholdId);
         var requester = await _households.CanAccessAsync(request.HouseholdId, cancellationToken)
             ? await _context.HouseholdMembers
                 .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.RequestingUserId, cancellationToken)

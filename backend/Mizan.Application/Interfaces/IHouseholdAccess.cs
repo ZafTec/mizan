@@ -21,6 +21,14 @@ public interface IHouseholdAccess
     /// </summary>
     Task<bool> CanAccessRecordAsync(Guid ownerId, Guid? householdId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Refuses a household write that a connected app's grant does not cover, naming the
+    /// permission: no household access at all, a household outside the selected ones, or (with
+    /// <paramref name="householdId"/> null) a new household, which only a grant over all
+    /// households could see afterwards. The web app is never refused here.
+    /// </summary>
+    void EnsureGrantCovers(Guid? householdId);
+
     /// <summary>Households the caller may use, as ids. Empty for an anonymous caller.</summary>
     Task<IReadOnlyList<Guid>> AccessibleIdsAsync(CancellationToken cancellationToken = default);
 }

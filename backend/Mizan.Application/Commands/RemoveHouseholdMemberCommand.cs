@@ -40,6 +40,7 @@ public class RemoveHouseholdMemberCommandHandler : IRequestHandler<RemoveHouseho
 
     public async Task<RemoveHouseholdMemberResult> Handle(RemoveHouseholdMemberCommand request, CancellationToken cancellationToken)
     {
+        _households.EnsureGrantCovers(request.HouseholdId);
         if (request.TargetUserId == request.ActingUserId)
         {
             return new RemoveHouseholdMemberResult { Success = false, Message = "Use 'leave household' to remove yourself." };

@@ -35,6 +35,7 @@ public class LeaveHouseholdCommandHandler : IRequestHandler<LeaveHouseholdComman
 
     public async Task<LeaveHouseholdResult> Handle(LeaveHouseholdCommand request, CancellationToken cancellationToken)
     {
+        _households.EnsureGrantCovers(request.HouseholdId);
         var membership = await _households.CanAccessAsync(request.HouseholdId, cancellationToken)
             ? await _context.HouseholdMembers
                 .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.UserId, cancellationToken)
