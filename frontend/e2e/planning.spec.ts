@@ -238,6 +238,15 @@ test("a shopping list reloads with the tick kept and clears what is checked", as
   await expect(page.getByTestId("items-left")).toHaveText("1 left of 3");
   await expect(page.locator("[data-hydrated]")).toBeVisible();
   await page.getByRole("button", { name: "Clear checked" }).click();
+  // Clearing asks first; Cancel leaves the ticked item where it is.
+  const clearDialog = page.getByRole("alertdialog", {
+    name: "Clear checked items?",
+  });
+  await clearDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(clearDialog).toBeHidden();
+  await expect(page.getByTestId("items-left")).toHaveText("1 left of 3");
+  await page.getByRole("button", { name: "Clear checked" }).click();
+  await clearDialog.getByRole("button", { name: "Clear checked" }).click();
   await expect(page.getByTestId("items-left")).toHaveText("1 left of 1");
   await expect(
     page.getByRole("checkbox", { name: /Greek yogurt/ }),
@@ -390,6 +399,10 @@ test("a person edits a plan: a new entry and a cooking session", async ({
   await page.getByRole("button", { name: "Save entry" }).click();
   await expect(page.getByText("Leftovers")).toBeVisible();
   await page.getByRole("button", { name: "Remove Leftovers" }).click();
+  await page
+    .getByRole("alertdialog", { name: "Remove Leftovers?" })
+    .getByRole("button", { name: "Remove" })
+    .click();
   await expect(page.getByText("Leftovers")).toHaveCount(0);
 
   const s = await state(context);
@@ -510,7 +523,9 @@ test.describe("templates", () => {
       name: "Delete Keto starter",
     });
     await deleteRow.click();
-    const dialog = page.getByRole("dialog", { name: "Delete Keto starter?" });
+    const dialog = page.getByRole("alertdialog", {
+      name: "Delete Keto starter?",
+    });
     await expect(dialog).toHaveAttribute("aria-modal", "true");
     const cancel = dialog.getByRole("button", { name: "Cancel" });
     const confirm = dialog.getByRole("button", { name: "Delete" });

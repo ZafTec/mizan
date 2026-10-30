@@ -37,7 +37,7 @@ import AiPermissionGate, {
   describeRequirement,
   grantRequirement,
 } from "@/components/ai/AiPermissionGate";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   deleteAiChatThread,
   getAiChatThread,
@@ -354,23 +354,16 @@ export default function AiChat({
     showChat();
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     const thread = deleting;
     if (!thread) return;
-    setDeleting(null);
-    startTransition(async () => {
-      try {
-        await deleteAiChatThread(thread.id);
-        setThreads((current) => current.filter((t) => t.id !== thread.id));
-        if (threadId === thread.id) {
-          loaded.current = null;
-          onThreadChange(null);
-          setMessages([]);
-        }
-      } catch (cause) {
-        setError(getErrorMessage(cause, "Could not delete that conversation."));
-      }
-    });
+    await deleteAiChatThread(thread.id);
+    setThreads((current) => current.filter((t) => t.id !== thread.id));
+    if (threadId === thread.id) {
+      loaded.current = null;
+      onThreadChange(null);
+      setMessages([]);
+    }
   }
 
   function attach(file: File | null) {
@@ -788,18 +781,19 @@ export default function AiChat({
 
       <Lightbox image={lightbox} onClose={() => setLightbox(null)} />
 
-      <ConfirmationModal
-        isOpen={deleting !== null}
+      <ConfirmDialog
+        open={deleting !== null}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
         title="Delete this conversation?"
-        message={
+        errorFallback="Could not delete that conversation."
+        description={
           deleting
             ? `"${deleting.title}" and its messages will be removed. This cannot be undone.`
             : ""
         }
-        confirmText="Delete"
-        isDanger
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
       />
     </div>
   );

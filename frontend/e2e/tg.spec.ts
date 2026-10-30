@@ -311,6 +311,10 @@ test("a person clears the ticked items from Telegram's main button", async ({
     .toMatchObject({ text: "Clear checked", visible: true, active: true });
 
   await pressMainButton(page);
+  await page
+    .getByRole("alertdialog", { name: "Clear checked items?" })
+    .getByRole("button", { name: "Clear checked" })
+    .click();
   await expect(page.getByRole("checkbox", { name: "Rolled oats" })).toHaveCount(
     0,
   );

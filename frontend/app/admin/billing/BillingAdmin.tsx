@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import { Pill } from "@/components/ui/data-table";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ModalShell } from "@/components/ModalShell";
 import {
   describeDeal,
@@ -87,6 +87,19 @@ export default function BillingAdmin({
         );
       }
     });
+  }
+
+  /** For a confirmation dialog: it shows the failure and stays open. */
+  async function act(work: () => Promise<unknown>, success: string) {
+    try {
+      await work();
+    } catch (error) {
+      throw new Error(
+        firstErrorMessage(error, "Paddle did not accept the change"),
+      );
+    }
+    appToast.success(success);
+    router.refresh();
   }
 
   return (
@@ -293,55 +306,61 @@ export default function BillingAdmin({
         }
       />
 
-      <ConfirmationModal
-        isOpen={archivePlan !== null}
+      <ConfirmDialog
+        open={archivePlan !== null}
         onClose={() => setArchivePlan(null)}
         onConfirm={() =>
           archivePlan &&
-          mutate(
+          act(
             () =>
               clientApi(`/api/admin/billing/plans/${archivePlan.id}/archive`, {
                 method: "POST",
               }),
             `${archivePlan.name} is off sale`,
-            () => setArchivePlan(null),
           )
         }
         title={`Take ${archivePlan?.name ?? "this plan"} off sale?`}
-        message={`New customers can no longer choose it. The ${archivePlan?.subscribers ?? 0} subscriber(s) on it keep renewing at their price.`}
-        confirmText="Archive plan"
-        isLoading={pending}
-        isDanger
+        description={`New customers can no longer choose it. The ${archivePlan?.subscribers ?? 0} subscriber(s) on it keep renewing at their price.`}
+        confirmLabel="Archive plan"
+        pendingLabel="Archiving…"
       />
 
-      <ConfirmationModal
-        isOpen={archiveDiscount !== null}
+      <ConfirmDialog
+        open={archiveDiscount !== null}
         onClose={() => setArchiveDiscount(null)}
         onConfirm={() =>
           archiveDiscount &&
-          mutate(
+          act(
             () =>
               clientApi(
                 `/api/admin/billing/discounts/${archiveDiscount.id}/archive`,
                 { method: "POST" },
               ),
             `${archiveDiscount.label} is archived`,
-            () => setArchiveDiscount(null),
           )
         }
         title={`Archive ${archiveDiscount?.label ?? "this discount"}?`}
-        message="Checkout stops applying it. Subscriptions that already have it keep it for the periods they were promised."
-        confirmText="Archive discount"
-        isLoading={pending}
-        isDanger
+        description="Checkout stops applying it. Subscriptions that already have it keep it for the periods they were promised."
+        confirmLabel="Archive discount"
+        pendingLabel="Archiving…"
       />
 
-      <ModalShell open={repricing !== null} onClose={() => setRepricing(null)}>
+      <ModalShell
+        open={repricing !== null}
+        onClose={() => setRepricing(null)}
+        title={repricing ? `New price for ${repricing.name}` : ""}
+        footer={
+          <FormActions
+            form="reprice-plan"
+            pending={pending}
+            submit="Change price"
+            onCancel={() => setRepricing(null)}
+          />
+        }
+      >
         {repricing && (
           <Reprice
             plan={repricing}
-            pending={pending}
-            onCancel={() => setRepricing(null)}
             onSave={(amountCents, trialDays) =>
               mutate(
                 () =>
@@ -357,12 +376,22 @@ export default function BillingAdmin({
         )}
       </ModalShell>
 
-      <ModalShell open={editing !== null} onClose={() => setEditing(null)}>
+      <ModalShell
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title={editing ? `Edit ${editing.name}` : ""}
+        footer={
+          <FormActions
+            form="edit-plan"
+            pending={pending}
+            submit="Save"
+            onCancel={() => setEditing(null)}
+          />
+        }
+      >
         {editing && (
           <EditPlan
             plan={editing}
-            pending={pending}
-            onCancel={() => setEditing(null)}
             onSave={(body) =>
               mutate(
                 () =>
@@ -648,15 +677,40 @@ function CreateDiscount({
   );
 }
 
+/** A dialog footer for a form in the body: the submit names the form. */
+function FormActions({
+  form,
+  pending,
+  submit,
+  onCancel,
+}: {
+  form: string;
+  pending: boolean;
+  submit: string;
+  onCancel: () => void;
+}) {
+  return (
+    <>
+      <button type="button" className="btn-ghost" onClick={onCancel}>
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form={form}
+        className="btn-primary"
+        disabled={pending}
+      >
+        {submit}
+      </button>
+    </>
+  );
+}
+
 function Reprice({
   plan,
-  pending,
-  onCancel,
   onSave,
 }: {
   plan: AdminBillingPlan;
-  pending: boolean;
-  onCancel: () => void;
   onSave: (amountCents: number, trialDays: number | null) => void;
 }) {
   const [price, setPrice] = useState((plan.amountCents / 100).toFixed(2));
@@ -666,15 +720,13 @@ function Reprice({
 
   return (
     <form
-      className="space-y-4 border border-charcoal-blue-200 bg-white p-6 dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8"
+      id="reprice-plan"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         onSave(toCents(price), trial ? Number(trial) : null);
       }}
     >
-      <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-        New price for {plan.name}
-      </h2>
       <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
         Creates a new price in Paddle and archives the current one. The{" "}
         {plan.subscribers} existing subscriber(s) keep paying{" "}
@@ -700,27 +752,15 @@ function Reprice({
           onChange={(e) => setTrial(e.target.value)}
         />
       </Field>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit" className="btn-primary" disabled={pending}>
-          Change price
-        </button>
-      </div>
     </form>
   );
 }
 
 function EditPlan({
   plan,
-  pending,
-  onCancel,
   onSave,
 }: {
   plan: AdminBillingPlan;
-  pending: boolean;
-  onCancel: () => void;
   onSave: (body: {
     name: string;
     description: string | null;
@@ -733,7 +773,8 @@ function EditPlan({
 
   return (
     <form
-      className="space-y-4 border border-charcoal-blue-200 bg-white p-6 dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8"
+      id="edit-plan"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         onSave({
@@ -743,9 +784,6 @@ function EditPlan({
         });
       }}
     >
-      <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-        Edit {plan.name}
-      </h2>
       <Field
         label="Name"
         helper="Mizan's label. Paddle keeps the name the price was created with."
@@ -777,14 +815,6 @@ function EditPlan({
           onChange={(e) => setSortOrder(e.target.value)}
         />
       </Field>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit" className="btn-primary" disabled={pending}>
-          Save
-        </button>
-      </div>
     </form>
   );
 }

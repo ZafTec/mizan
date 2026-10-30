@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Loading from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { ToggleRow } from "@/components/ui/toggle-row";
@@ -104,9 +104,6 @@ export function ReminderSettings({
     try {
       await status.track(() => deleteReminder(deleting.id));
       await reload();
-      setDeleting(null);
-    } catch (error) {
-      appToast.error(error, "Could not delete that reminder");
     } finally {
       setBusy(false);
     }
@@ -165,19 +162,19 @@ export function ReminderSettings({
           </Button>
         )}
       </div>
-      <ConfirmationModal
-        isOpen={deleting !== null}
+      <ConfirmDialog
+        open={deleting !== null}
         onClose={() => setDeleting(null)}
-        onConfirm={() => void remove()}
+        onConfirm={remove}
         title="Delete this reminder?"
-        message={
+        errorFallback="Could not delete that reminder"
+        description={
           deleting
             ? `"${deleting.title}" will stop and be removed. Turning it off keeps it instead.`
             : ""
         }
-        confirmText="Delete"
-        isLoading={busy}
-        isDanger
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
       />
     </div>
   );

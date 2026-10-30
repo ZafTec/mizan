@@ -16,6 +16,7 @@ import {
   type UsageScope,
 } from "@/lib/api/admin-platform";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 import { Select } from "@/components/ui/select";
 
 const LINE_LABEL: Record<string, string> = {
@@ -383,8 +384,6 @@ function OverrideEditor({
       await clearUsageLimit(scope, subject.subjectId, override.line ?? null);
       onChange(await getUsageLimitSubject(scope, subject.subjectId));
       appToast.success(`Removed the ${lineLabel(override.line)} override`);
-    } catch (caught) {
-      appToast.error(caught, "Could not remove the override");
     } finally {
       setBusy(false);
     }
@@ -423,15 +422,19 @@ function OverrideEditor({
               >
                 Edit
               </button>
-              <button
-                type="button"
+              <ConfirmButton
                 className="btn-ghost-destructive btn-sm min-h-11"
                 aria-label={`Remove the ${lineLabel(override.line)} override`}
                 disabled={busy}
-                onClick={() => remove(override)}
+                title={`Remove the ${lineLabel(override.line)} override for ${subject.name}?`}
+                description="The usage limits fall back to the plan's defaults."
+                confirmLabel="Remove override"
+                pendingLabel="Removing…"
+                errorFallback="Could not remove the override"
+                onConfirm={() => remove(override)}
               >
                 Remove
-              </button>
+              </ConfirmButton>
             </li>
           ))}
         </ul>

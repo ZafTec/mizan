@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import type { AdminJob } from "@/data/admin/jobs";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 
 /**
  * Retry and discard. Both only make sense on a job that has stopped, so
@@ -57,21 +58,22 @@ export default function JobActions({ job }: { job: AdminJob }) {
         </button>
       )}
       {deletable && (
-        <button
-          type="button"
+        <ConfirmButton
           disabled={pending}
-          onClick={() =>
-            act(
-              `/api/Admin/Jobs/${job.id}`,
-              "DELETE",
-              "Job discarded",
-              "Could not discard the job",
-            )
-          }
           className="text-xs text-destructive hover:underline disabled:opacity-50"
+          title="Discard this job?"
+          description="The job and its record are deleted and it will not run again."
+          confirmLabel="Discard job"
+          pendingLabel="Discarding…"
+          errorFallback="Could not discard the job"
+          onConfirm={async () => {
+            await clientApi(`/api/Admin/Jobs/${job.id}`, { method: "DELETE" });
+            appToast.success("Job discarded");
+            router.refresh();
+          }}
         >
           Discard
-        </button>
+        </ConfirmButton>
       )}
     </span>
   );

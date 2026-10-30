@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleRow } from "@/components/ui/toggle-row";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useProWall } from "@/components/billing/ProWall";
 import { isUpgradeRequired } from "@/lib/billing";
 import { appToast } from "@/lib/toast";
@@ -153,11 +153,8 @@ export default function TelegramSettingsPage() {
       setLink(next);
       setProfile(me);
       appToast.success("Telegram disconnected");
-    } catch (error) {
-      appToast.error(error, "Could not disconnect");
     } finally {
       setUnlinking(false);
-      setConfirmUnlink(false);
     }
   }
 
@@ -233,15 +230,16 @@ export default function TelegramSettingsPage() {
 
       {wall}
 
-      <ConfirmationModal
-        isOpen={confirmUnlink}
+      <ConfirmDialog
+        open={confirmUnlink}
         onClose={() => setConfirmUnlink(false)}
         onConfirm={onUnlink}
         title="Disconnect Telegram?"
-        message="The bot stops responding in that chat. Nothing you have logged is affected, and you can reconnect any time."
-        confirmText="Disconnect"
-        isLoading={unlinking}
-        isDanger
+        description="The bot stops responding in that chat. Nothing you have logged is affected, and you can reconnect any time."
+        confirmLabel="Disconnect"
+        pendingLabel="Disconnecting…"
+        pending={unlinking}
+        errorFallback="Could not disconnect"
       />
     </div>
   );

@@ -12,9 +12,7 @@ import {
   LogOut,
 } from "lucide-react";
 import type { User } from "@/lib/auth";
-import { signOut } from "@/lib/auth-client";
-import { appToast } from "@/lib/toast";
-import { clearAppearanceCookie } from "@/lib/appearance-cookie";
+import { SignOutDialog } from "@/components/SignOutDialog";
 import { dateInTimeZone, isLogDate } from "@/lib/log-date";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
@@ -101,7 +99,7 @@ export default function AppShell({
   const [accountOpen, setAccountOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [logOptions, setLogOptions] = useState<LogEntryOptions>({});
-  const [signingOut, setSigningOut] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [feedback, setFeedback] = useState<GamificationFeedback>({});
   const activeSession = pathname === "/workout/active";
   const legacyMeal = searchParams.get("log") === "meal";
@@ -146,18 +144,6 @@ export default function AppShell({
       router.replace(`${pathname}${next.size ? `?${next}` : ""}`, {
         scroll: false,
       });
-    }
-  }
-  async function logout() {
-    setSigningOut(true);
-    try {
-      await signOut();
-      clearAppearanceCookie();
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      appToast.error(error, "Could not sign out");
-      setSigningOut(false);
     }
   }
 
@@ -324,15 +310,17 @@ export default function AppShell({
                     </Link>
                   ))}
                   <button
-                    onClick={logout}
-                    disabled={signingOut}
+                    onClick={() => {
+                      setAccountOpen(false);
+                      setConfirmSignOut(true);
+                    }}
                     className={cn(
                       ACCOUNT_LINK,
                       "mt-1 border-t text-destructive hover:bg-danger-wash hover:text-destructive",
                     )}
                   >
                     <LogOut size={16} />
-                    {signingOut ? "Signing out…" : "Sign out"}
+                    Sign out
                   </button>
                 </PopoverContent>
               </Popover>
@@ -378,6 +366,10 @@ export default function AppShell({
           initialDate={legacyMeal ? logDate : (logOptions.date ?? logDate)}
           initialMealType={logOptions.mealType}
           initialRecipe={logOptions.recipe}
+        />
+        <SignOutDialog
+          open={confirmSignOut}
+          onClose={() => setConfirmSignOut(false)}
         />
       </div>
     </ShellPanels>

@@ -152,6 +152,14 @@ test("a person drafts with the keyboard on a phone and discards the draft", asyn
   });
   await discard.focus();
   await page.keyboard.press("Enter");
+  // The confirmation opens on its keep button, so Enter alone discards nothing.
+  const confirmDiscard = page.getByRole("alertdialog", {
+    name: /Discard/,
+  });
+  await expect(
+    confirmDiscard.getByRole("button", { name: "Keep draft" }),
+  ).toBeFocused();
+  await confirmDiscard.getByRole("button", { name: "Discard" }).click();
 
   const status = section.getByRole("status");
   await expect(status).toBeAttached();

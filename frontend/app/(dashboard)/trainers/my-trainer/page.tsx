@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
 import { ApiError } from "@/lib/api";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 
 interface MyTrainerDto {
   relationshipId: string;
@@ -52,6 +53,7 @@ export default function MyTrainerPage() {
     }
   }
 
+  // The confirmation dialog shows a failure itself and stays open.
   async function endRelationship() {
     if (!trainer) return;
     setSaving(true);
@@ -64,8 +66,6 @@ export default function MyTrainerPage() {
         },
       );
       setTrainer(null);
-    } catch (error) {
-      console.error("Failed to end relationship:", error);
     } finally {
       setSaving(false);
     }
@@ -324,14 +324,18 @@ export default function MyTrainerPage() {
                 Send Message
               </Link>
             ) : null)}
-          <button
-            type="button"
-            className="btn-secondary w-full"
+          <ConfirmButton
+            className="btn-secondary-destructive w-full"
             disabled={saving}
-            onClick={endRelationship}
+            title={`End coaching with ${trainer.trainerName ?? "your trainer"}?`}
+            description="Your trainer immediately loses access to everything you shared. To work together again, one of you sends a new request."
+            confirmLabel="End relationship"
+            pendingLabel="Ending…"
+            errorFallback="Could not end the relationship"
+            onConfirm={endRelationship}
           >
             End Relationship
-          </button>
+          </ConfirmButton>
         </div>
       </div>
     </div>

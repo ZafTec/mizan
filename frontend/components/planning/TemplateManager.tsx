@@ -1,10 +1,10 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import { ModalShell } from "@/components/ModalShell";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   createTemplate,
   deleteTemplate,
@@ -50,7 +50,6 @@ export default function TemplateManager({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Template | null>(null);
-  const [removing, startRemoving] = useTransition();
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -79,19 +78,12 @@ export default function TemplateManager({
     }
   };
 
-  const remove = () => {
+  const remove = async () => {
     const template = deleting;
     if (!template) return;
-    startRemoving(async () => {
-      try {
-        await deleteTemplate(template.id);
-        appToast.success(`${template.name ?? "Template"} deleted`);
-        setDeleting(null);
-        router.refresh();
-      } catch (caught) {
-        appToast.error(caught, "Could not delete the template");
-      }
-    });
+    await deleteTemplate(template.id);
+    appToast.success(`${template.name ?? "Template"} deleted`);
+    router.refresh();
   };
 
   return (
@@ -252,38 +244,15 @@ export default function TemplateManager({
         )}
       </section>
 
-      <ModalShell
+      <ConfirmDialog
         open={deleting !== null}
         onClose={() => setDeleting(null)}
-        labelledBy={`${id}-delete`}
-      >
-        <div className="card w-full max-w-md space-y-4 p-5">
-          <h2 id={`${id}-delete`} className="text-base font-semibold">
-            Delete {deleting?.name ?? "this template"}?
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Plans already made from it keep their copy.
-          </p>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="btn-ghost min-h-11"
-              autoFocus
-              onClick={() => setDeleting(null)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn-danger min-h-11"
-              disabled={removing}
-              onClick={remove}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </ModalShell>
+        title={`Delete ${deleting?.name ?? "this template"}?`}
+        description="The template is removed. Plans already made from it keep their copy."
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete the template"
+        onConfirm={remove}
+      />
     </div>
   );
 }

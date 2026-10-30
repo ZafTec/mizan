@@ -3,16 +3,14 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import { listSessions, signOut, useSession } from "@/lib/auth-client";
-import { clearAppearanceCookie } from "@/lib/appearance-cookie";
+import { listSessions, useSession } from "@/lib/auth-client";
+import { SignOutDialog } from "@/components/SignOutDialog";
 import {
   getProfileObservations,
   type ProfileObservations,
 } from "@/lib/api/profile";
 import { useSubscription } from "@/lib/hooks/useSubscription";
-import { appToast } from "@/lib/toast";
 
 const monthYear = (value: string) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -30,11 +28,10 @@ const plural = (count: number, one: string) =>
  */
 export default function ProfilePage() {
   const { data: session, isPending } = useSession();
-  const router = useRouter();
   const { subscription } = useSubscription();
   const [facts, setFacts] = useState<ProfileObservations | null>(null);
   const [sessionCount, setSessionCount] = useState<number | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -117,18 +114,6 @@ export default function ProfilePage() {
     },
   ];
 
-  async function logout() {
-    setSigningOut(true);
-    try {
-      await signOut();
-      clearAppearanceCookie();
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      appToast.error(error, "Could not sign out");
-      setSigningOut(false);
-    }
-  }
 
   return (
     <div
@@ -234,12 +219,15 @@ export default function ProfilePage() {
 
       <button
         type="button"
-        onClick={logout}
-        disabled={signingOut}
+        onClick={() => setConfirmSignOut(true)}
         className="text-link self-start text-sm"
       >
-        {signingOut ? "Signing out…" : "Sign out"}
+        Sign out
       </button>
+      <SignOutDialog
+        open={confirmSignOut}
+        onClose={() => setConfirmSignOut(false)}
+      />
     </div>
   );
 }

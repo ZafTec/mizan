@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { adminRemoveHouseholdMember } from "@/data/admin/household";
 import type { AdminHouseholdDetail } from "@/lib/api/admin-ops";
 import { appToast } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 
 export default function AdminMemberRow({
   householdId,
@@ -14,27 +14,14 @@ export default function AdminMemberRow({
   member: AdminHouseholdDetail["members"][number];
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const label = member.name ?? member.email;
 
-  const handleRemove = () => {
-    if (
-      !window.confirm(
-        `Remove ${member.name ?? member.email} from this household?`,
-      )
-    )
-      return;
-    startTransition(async () => {
-      const result = await adminRemoveHouseholdMember(
-        householdId,
-        member.userId,
-      );
-      if (result.success) {
-        appToast.success("Member removed.");
-        router.refresh();
-      } else {
-        appToast.error(result.message ?? "Could not remove member.");
-      }
-    });
+  const handleRemove = async () => {
+    const result = await adminRemoveHouseholdMember(householdId, member.userId);
+    if (!result.success)
+      throw new Error(result.message ?? "Could not remove member.");
+    appToast.success("Member removed.");
+    router.refresh();
   };
 
   return (
@@ -60,14 +47,17 @@ export default function AdminMemberRow({
           })}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={handleRemove}
-        disabled={pending}
+      <ConfirmButton
         className="btn-ghost-destructive h-8"
+        title={`Remove ${label} from this household?`}
+        description="They lose access to the household's shared plans and shopping lists. Their own log is not affected."
+        confirmLabel="Remove member"
+        pendingLabel="Removing…"
+        errorFallback="Could not remove member."
+        onConfirm={handleRemove}
       >
         Remove
-      </button>
+      </ConfirmButton>
     </li>
   );
 }

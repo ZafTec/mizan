@@ -687,7 +687,7 @@ test("A person deletes a whole logged recipe only after confirming", async ({
   const meals = page.getByRole("region", { name: "Meals" });
   await meals.getByText("Misir wat").click();
   await meals.getByRole("button", { name: "Delete whole recipe" }).click();
-  const dialog = page.getByRole("dialog");
+  const dialog = page.getByRole("alertdialog");
   await expect(dialog).toContainText("every ingredient row");
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
@@ -699,10 +699,10 @@ test("A person deletes a whole logged recipe only after confirming", async ({
 
   await meals.getByRole("button", { name: "Delete whole recipe" }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Delete recipe" })
     .click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("alertdialog")).toBeHidden();
   await expect(meals.getByText("Misir wat")).toHaveCount(0);
   await noOverflow(page);
   const state = await fixtureState(context);

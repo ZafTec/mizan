@@ -8,7 +8,7 @@ import {
   updateAdminUser,
 } from "@/lib/api/admin-users";
 import { useRouter } from "next/navigation";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ModalShell } from "@/components/ModalShell";
 import { appToast } from "@/lib/toast";
 import { Select } from "@/components/ui/select";
@@ -137,40 +137,17 @@ export function UserActions({ user }: { user: User }) {
     }
   }
 
+  // The confirmation dialogs show a failure themselves and stay open.
   async function handleDeleteUser() {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await deleteAdminUser(user.id);
-
-      appToast.success("User deleted");
-      router.push("/admin/users");
-    } catch (err) {
-      appToast.error(err, "Failed to delete user");
-      setError(err instanceof Error ? err.message : "Failed to delete user");
-      setIsLoading(false);
-    }
+    await deleteAdminUser(user.id);
+    appToast.success("User deleted");
+    router.push("/admin/users");
   }
 
   async function handleRevokeAllSessions() {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await revokeAdminUserSessions(user.id);
-
-      appToast.success("All sessions revoked");
-      setShowRevokeSessionsConfirm(false);
-      router.refresh();
-    } catch (err) {
-      appToast.error(err, "Failed to revoke sessions");
-      setError(
-        err instanceof Error ? err.message : "Failed to revoke sessions",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    await revokeAdminUserSessions(user.id);
+    appToast.success("All sessions revoked");
+    router.refresh();
   }
 
   return (
@@ -270,23 +247,26 @@ export function UserActions({ user }: { user: User }) {
         onCancel={() => setShowPasswordDialog(false)}
       />
 
-      <DeleteConfirmDialog
+      <ConfirmDialog
         open={showDeleteConfirm}
-        isLoading={isLoading}
-        userName={user.name || user.email}
+        onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteUser}
-        onCancel={() => setShowDeleteConfirm(false)}
+        title={`Delete ${user.name || user.email}?`}
+        description="The account and everything it logged are deleted. This cannot be undone."
+        confirmLabel="Delete permanently"
+        pendingLabel="Deleting…"
+        errorFallback="Failed to delete user"
       />
 
-      <ConfirmationModal
-        isOpen={showRevokeSessionsConfirm}
+      <ConfirmDialog
+        open={showRevokeSessionsConfirm}
         onClose={() => setShowRevokeSessionsConfirm(false)}
         onConfirm={handleRevokeAllSessions}
-        title="Revoke all sessions"
-        message="This will sign the user out on every device."
-        confirmText="Revoke sessions"
-        isDanger
-        isLoading={isLoading}
+        title="Revoke all of this user's sessions?"
+        description="They are signed out on every device and have to sign in again."
+        confirmLabel="Revoke sessions"
+        pendingLabel="Revoking…"
+        errorFallback="Failed to revoke sessions"
       />
     </div>
   );
@@ -328,73 +308,72 @@ function BanDialog({
   }
 
   return (
-    <ModalShell open={open} onClose={close}>
-      <div className="card w-full space-y-4 p-5">
-        <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Suspend account
-        </h3>
-        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          The person cannot sign in until the suspension ends or is lifted.
-        </p>
-        <div className="space-y-4">
-          <div>
-            <label className="label" htmlFor="suspend-reason">
-              Reason
-            </label>
-            <textarea
-              id="suspend-reason"
-              value={reason}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (touched) setTouched(false);
-              }}
-              className="input"
-              rows={3}
-              placeholder="Why is this account being suspended?"
-            />
-            {touched && (
-              <p className="mt-1.5 text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
-                A reason is required.
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="label" htmlFor="suspend-ends">
-              Ends (optional)
-            </label>
-            <input
-              id="suspend-ends"
-              type="datetime-local"
-              value={ends}
-              onChange={(e) => setEnds(e.target.value)}
-              className="input"
-              aria-describedby="suspend-ends-hint"
-            />
-            <p
-              id="suspend-ends-hint"
-              className="mt-1 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400"
-            >
-              Leave empty to suspend until someone lifts it.
+    <ModalShell
+      open={open}
+      onClose={close}
+      title="Suspend account"
+      description="The person cannot sign in until the suspension ends or is lifted."
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={close}
+            disabled={isLoading}
+            className="btn-ghost"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={isLoading}
+            className="btn-danger"
+          >
+            {isLoading ? "Suspending…" : "Suspend"}
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="label" htmlFor="suspend-reason">
+            Reason
+          </label>
+          <textarea
+            id="suspend-reason"
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value);
+              if (touched) setTouched(false);
+            }}
+            className="input"
+            rows={3}
+            placeholder="Why is this account being suspended?"
+          />
+          {touched && (
+            <p className="mt-1.5 text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
+              A reason is required.
             </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={close}
-              disabled={isLoading}
-              className="btn-ghost flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={isLoading}
-              className="btn-danger flex-1"
-            >
-              {isLoading ? "Suspending…" : "Suspend"}
-            </button>
-          </div>
+          )}
+        </div>
+        <div>
+          <label className="label" htmlFor="suspend-ends">
+            Ends (optional)
+          </label>
+          <input
+            id="suspend-ends"
+            type="datetime-local"
+            value={ends}
+            onChange={(e) => setEnds(e.target.value)}
+            className="input"
+            aria-describedby="suspend-ends-hint"
+          />
+          <p
+            id="suspend-ends-hint"
+            className="mt-1 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400"
+          >
+            Leave empty to suspend until someone lifts it.
+          </p>
         </div>
       </div>
     </ModalShell>
@@ -419,45 +398,46 @@ function RoleDialog({
   );
 
   return (
-    <ModalShell open={open} onClose={onCancel}>
-      <div className="card w-full space-y-4 p-5">
-        <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Change role
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="new-role" className="label">
-              New role
-            </label>
-            <Select
-              id="new-role"
-              value={role}
-              onChange={(next) => setRole(next as Role)}
-              options={[
-                { value: "user", label: "User" },
-                { value: "trainer", label: "Trainer" },
-                { value: "admin", label: "Admin" },
-              ]}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isLoading}
-              className="btn-ghost flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => onConfirm(role)}
-              disabled={isLoading}
-              className="btn-primary flex-1"
-            >
-              {isLoading ? "Updating…" : "Update role"}
-            </button>
-          </div>
+    <ModalShell
+      open={open}
+      onClose={onCancel}
+      title="Change role"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="btn-ghost"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(role)}
+            disabled={isLoading}
+            className="btn-primary"
+          >
+            {isLoading ? "Updating…" : "Update role"}
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="new-role" className="label">
+            New role
+          </label>
+          <Select
+            id="new-role"
+            value={role}
+            onChange={(next) => setRole(next as Role)}
+            options={[
+              { value: "user", label: "User" },
+              { value: "trainer", label: "Trainer" },
+              { value: "admin", label: "Admin" },
+            ]}
+          />
         </div>
       </div>
     </ModalShell>
@@ -487,105 +467,57 @@ function PasswordDialog({
   }
 
   return (
-    <ModalShell open={open} onClose={close}>
-      <div className="card w-full space-y-4 p-5">
-        <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Set password
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="label">New password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input"
-              placeholder="Enter new password…"
-            />
-          </div>
-          <div>
-            <label className="label">Confirm password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input"
-              placeholder="Confirm password…"
-            />
-          </div>
-          {mismatch && (
-            <p className="text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
-              Passwords do not match.
-            </p>
-          )}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={close}
-              disabled={isLoading}
-              className="btn-ghost flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => onConfirm(password)}
-              disabled={isLoading || !password || mismatch}
-              className="btn-primary flex-1"
-            >
-              {isLoading ? "Saving…" : "Set password"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </ModalShell>
-  );
-}
-
-function DeleteConfirmDialog({
-  open,
-  isLoading,
-  userName,
-  onConfirm,
-  onCancel,
-}: {
-  open: boolean;
-  isLoading: boolean;
-  userName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <ModalShell open={open} onClose={onCancel}>
-      <div className="card w-full space-y-4 p-5">
-        <h3 className="text-base font-semibold text-burnt-peach-700 dark:text-burnt-peach-400">
-          Delete user
-        </h3>
-        <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-          Are you sure you want to delete{" "}
-          <strong className="text-charcoal-blue-900 dark:text-charcoal-blue-50">
-            {userName}
-          </strong>
-          ? This cannot be undone.
-        </p>
-        <div className="flex gap-2">
+    <ModalShell
+      open={open}
+      onClose={close}
+      title="Set password"
+      footer={
+        <>
           <button
             type="button"
-            onClick={onCancel}
+            onClick={close}
             disabled={isLoading}
-            className="btn-ghost flex-1"
+            className="btn-ghost"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={onConfirm}
-            disabled={isLoading}
-            className="btn-danger flex-1"
+            onClick={() => onConfirm(password)}
+            disabled={isLoading || !password || mismatch}
+            className="btn-primary"
           >
-            {isLoading ? "Deleting…" : "Delete permanently"}
+            {isLoading ? "Saving…" : "Set password"}
           </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="label">New password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input"
+            placeholder="Enter new password…"
+          />
         </div>
+        <div>
+          <label className="label">Confirm password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input"
+            placeholder="Confirm password…"
+          />
+        </div>
+        {mismatch && (
+          <p className="text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
+            Passwords do not match.
+          </p>
+        )}
       </div>
     </ModalShell>
   );

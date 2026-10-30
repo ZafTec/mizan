@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   createPriceSource,
   deletePriceSource,
@@ -271,13 +271,9 @@ export default function PriceSources({
 
   const remove = async () => {
     if (!deleting) return;
-    try {
-      await deletePriceSource(deleting.id);
-      appToast.success(`${deleting.name} deleted`);
-      router.refresh();
-    } catch (error) {
-      appToast.error(error, "Could not delete the source");
-    }
+    await deletePriceSource(deleting.id);
+    appToast.success(`${deleting.name} deleted`);
+    router.refresh();
   };
 
   return (
@@ -405,11 +401,14 @@ export default function PriceSources({
           )}
         </ul>
       )}
-      <DeleteConfirmModal
-        isOpen={deleting !== null}
+      <ConfirmDialog
+        open={deleting !== null}
         onClose={() => setDeleting(null)}
         onConfirm={remove}
-        itemName={deleting?.name}
+        title={`Delete ${deleting?.name ?? "this source"}?`}
+        description="The price source is removed. This cannot be undone."
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete the source"
       />
     </section>
   );

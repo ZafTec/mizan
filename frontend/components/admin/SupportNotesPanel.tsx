@@ -11,6 +11,7 @@ import {
 } from "@/lib/api/admin-ops";
 import { fieldErrors, supportNoteSchema } from "@/lib/admin-ops/schema";
 import { appToast } from "@/lib/toast";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 function when(value: string) {
   return new Date(value).toLocaleString("en-GB", {
@@ -38,6 +39,7 @@ export default function SupportNotesPanel({
   initialNotes: SupportNote[];
 }) {
   const [notes, setNotes] = useState(initialNotes);
+  const [deleting, setDeleting] = useState<SupportNote | null>(null);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; body: string } | null>(
@@ -88,15 +90,13 @@ export default function SupportNotesPanel({
     }
   };
 
+  // The confirmation dialog shows a failure itself and stays open.
   const remove = async (note: SupportNote) => {
-    if (!window.confirm("Delete this note for every administrator?")) return;
     setBusy(true);
     try {
       await deleteSupportNote(note.id);
       await reload();
       appToast.success("Note deleted");
-    } catch (failure) {
-      appToast.error(failure, "Could not delete the note");
     } finally {
       setBusy(false);
     }
@@ -224,7 +224,7 @@ export default function SupportNotesPanel({
                       type="button"
                       className="text-xs text-destructive hover:underline"
                       disabled={busy}
-                      onClick={() => remove(note)}
+                      onClick={() => setDeleting(note)}
                     >
                       Delete
                     </button>
@@ -235,6 +235,16 @@ export default function SupportNotesPanel({
           ))}
         </ul>
       )}
+      <ConfirmDialog
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        title="Delete this note?"
+        description="The note is deleted for every administrator. This cannot be undone."
+        confirmLabel="Delete note"
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete the note"
+        onConfirm={() => (deleting ? remove(deleting) : undefined)}
+      />
     </section>
   );
 }

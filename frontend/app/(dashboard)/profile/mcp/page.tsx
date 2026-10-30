@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -133,19 +133,19 @@ export default function McpPage() {
         />
       )}
 
-      <ConfirmationModal
-        isOpen={removing !== null}
+      <ConfirmDialog
+        open={removing !== null}
         onClose={() => setRemoving(null)}
         onConfirm={async () => {
-          if (removing && (await disconnect(removing.id!))) {
-            appToast.success(`${removing.clientName} disconnected`);
-            setRemoving(null);
-          }
+          if (!removing) return;
+          if (!(await disconnect(removing.id!)))
+            throw new Error("Could not disconnect the app");
+          appToast.success(`${removing.clientName} disconnected`);
         }}
         title={`Disconnect ${removing?.clientName ?? "this app"}?`}
-        message="It loses access on its next request. You can connect it again later."
-        confirmText="Disconnect"
-        isDanger
+        description="It loses access on its next request. You can connect it again later."
+        confirmLabel="Disconnect"
+        pendingLabel="Disconnecting…"
       />
     </div>
   );

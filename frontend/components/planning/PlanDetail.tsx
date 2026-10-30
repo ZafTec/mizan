@@ -32,7 +32,7 @@ import {
 import { DRAFTED_BY_ASSISTANT, isGenerated } from "@/lib/planning/draft";
 import { appToast } from "@/lib/toast";
 import { useMainButton } from "@/lib/tg/useMainButton";
-import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import DraftActions from "./DraftActions";
 import LogPlanEntryButton from "./LogPlanEntryButton";
 import {
@@ -292,14 +292,10 @@ export default function PlanDetail({
   );
 
   const remove = async () => {
-    try {
-      await deleteMealPlan(plan.id);
-      appToast.success(`${name} deleted`);
-      router.push("/meal-plan");
-      router.refresh();
-    } catch (error) {
-      appToast.error(error, "Could not delete the plan");
-    }
+    await deleteMealPlan(plan.id);
+    appToast.success(`${name} deleted`);
+    router.push("/meal-plan");
+    router.refresh();
   };
 
   return (
@@ -562,11 +558,15 @@ export default function PlanDetail({
         Make shopping list
       </button>
 
-      <DeleteConfirmModal
-        isOpen={confirmDelete}
+      <ConfirmDialog
+        open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         onConfirm={remove}
-        itemName={name}
+        title={`Delete ${name}?`}
+        description="The plan and every meal planned in it are removed. This cannot be undone."
+        confirmLabel="Delete plan"
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete the plan"
       />
     </div>
   );

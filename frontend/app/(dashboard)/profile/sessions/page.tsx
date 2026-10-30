@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { appToast } from "@/lib/toast";
 
 type Session = SessionSummary;
@@ -46,12 +46,8 @@ export default function ProfileSessionsPage() {
       await revokeSession(sessionId);
       appToast.success("Session revoked");
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-    } catch (error) {
-      console.error("Failed to revoke session:", error);
-      appToast.error(error, "Failed to revoke session");
     } finally {
       setRevoking(null);
-      setSessionToRevoke(null);
     }
   }
 
@@ -64,12 +60,8 @@ export default function ProfileSessionsPage() {
       await Promise.all(others.map((s) => revokeSession(s.id)));
       appToast.success("All other sessions revoked");
       await fetchSessions();
-    } catch (error) {
-      console.error("Failed to revoke other sessions:", error);
-      appToast.error(error, "Failed to revoke other sessions");
     } finally {
       setRevoking(null);
-      setConfirmRevokeAll(false);
     }
   }
 
@@ -250,28 +242,28 @@ export default function ProfileSessionsPage() {
         </div>
       </div>
 
-      <ConfirmationModal
-        isOpen={!!sessionToRevoke}
+      <ConfirmDialog
+        open={!!sessionToRevoke}
         onClose={() => setSessionToRevoke(null)}
         onConfirm={() =>
-          sessionToRevoke && handleRevokeSession(sessionToRevoke)
+          sessionToRevoke ? handleRevokeSession(sessionToRevoke) : undefined
         }
-        title="Revoke Session"
-        message="Are you sure you want to revoke this session?"
-        confirmText="Revoke Session"
-        isDanger
-        isLoading={!!sessionToRevoke && revoking === sessionToRevoke}
+        title="Revoke this session?"
+        description="That device is signed out on its next request and has to sign in again."
+        confirmLabel="Revoke session"
+        pendingLabel="Revoking…"
+        errorFallback="Failed to revoke session"
       />
 
-      <ConfirmationModal
-        isOpen={confirmRevokeAll}
+      <ConfirmDialog
+        open={confirmRevokeAll}
         onClose={() => setConfirmRevokeAll(false)}
         onConfirm={handleRevokeAllOther}
-        title="Revoke All Other Sessions"
-        message="This will sign you out everywhere except this device."
-        confirmText="Revoke Sessions"
-        isDanger
-        isLoading={revoking === "all"}
+        title="Revoke all other sessions?"
+        description="Every device except this one is signed out and has to sign in again."
+        confirmLabel="Revoke sessions"
+        pendingLabel="Revoking…"
+        errorFallback="Failed to revoke other sessions"
       />
     </div>
   );

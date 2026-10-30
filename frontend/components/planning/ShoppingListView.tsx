@@ -19,7 +19,7 @@ import {
 import { confidenceLabel, formatMoney, itemCount } from "@/lib/prices/format";
 import { appToast, getErrorMessage } from "@/lib/toast";
 import { useMainButton } from "@/lib/tg/useMainButton";
-import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SharedTitle } from "@/components/motion/DirectionalTransition";
 import { rowMotion } from "@/components/motion/list";
 import { changeList } from "@/components/motion/changeList";
@@ -176,6 +176,10 @@ export default function ShoppingListView({
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<ShoppingListItem | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   // Ticks before hydration would be lost; the page says when it listens.
   const [hydrated, setHydrated] = useState(false);
@@ -246,13 +250,10 @@ export default function ShoppingListView({
     await reload();
   };
 
+  // The confirmation dialogs show a failure themselves and stay open.
   const remove = async (item: ShoppingListItem) => {
-    try {
-      await deleteShoppingListItem(item.id);
-      await reload();
-    } catch (error) {
-      appToast.error(error, "Could not remove the item");
-    }
+    await deleteShoppingListItem(item.id);
+    await reload();
   };
 
   const clearChecked = async () => {
@@ -263,8 +264,6 @@ export default function ShoppingListView({
         `${result.removed} ${result.removed === 1 ? "item" : "items"} cleared`,
       );
       await reload();
-    } catch (error) {
-      appToast.error(error, "Could not clear the list");
     } finally {
       setBusy(false);
     }
@@ -273,7 +272,7 @@ export default function ShoppingListView({
   // In Telegram, clearing the ticked items sits on the main button too.
   useMainButton(
     embedded && list.canEdit && checked > 0
-      ? { text: "Clear checked", busy, onClick: () => void clearChecked() }
+      ? { text: "Clear checked", busy, onClick: () => setConfirmClear(true) }
       : null,
   );
 
@@ -293,14 +292,10 @@ export default function ShoppingListView({
   };
 
   const removeList = async () => {
-    try {
-      await deleteShoppingList(list.id);
-      appToast.success(`${title} deleted`);
-      router.push("/meal-plan/shopping-list");
-      router.refresh();
-    } catch (error) {
-      appToast.error(error, "Could not delete the list");
-    }
+    await deleteShoppingList(list.id);
+    appToast.success(`${title} deleted`);
+    router.push("/meal-plan/shopping-list");
+    router.refresh();
   };
 
   const itemForm = (item: ShoppingListItem) => ({
@@ -421,7 +416,7 @@ export default function ShoppingListView({
               type="button"
               className="btn-ghost btn-sm min-h-9"
               disabled={busy || checked === 0}
-              onClick={clearChecked}
+              onClick={() => setConfirmClear(true)}
             >
               Clear checked
             </button>
@@ -518,7 +513,7 @@ export default function ShoppingListView({
                             type="button"
                             className="btn-ghost-destructive btn-sm min-h-9"
                             aria-label={`Delete ${item.itemName}`}
-                            onClick={() => remove(item)}
+                            onClick={() => setDeletingItem(item)}
                           >
                             Delete
                           </button>
@@ -551,11 +546,34 @@ export default function ShoppingListView({
           </button>
         ))}
 
-      <DeleteConfirmModal
-        isOpen={confirmDelete}
+      <ConfirmDialog
+        open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         onConfirm={removeList}
-        itemName={title}
+        title={`Delete ${title}?`}
+        description="The list and every item on it are removed. This cannot be undone."
+        confirmLabel="Delete list"
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete the list"
+      />
+      <ConfirmDialog
+        open={confirmClear}
+        onClose={() => setConfirmClear(false)}
+        onConfirm={clearChecked}
+        title="Clear checked items?"
+        description={`The ${checked} ticked ${checked === 1 ? "item is" : "items are"} removed from this list.`}
+        confirmLabel="Clear checked"
+        pendingLabel="Clearing…"
+        errorFallback="Could not clear the list"
+      />
+      <ConfirmDialog
+        open={deletingItem !== null}
+        onClose={() => setDeletingItem(null)}
+        onConfirm={() => (deletingItem ? remove(deletingItem) : undefined)}
+        title={`Delete ${deletingItem?.itemName ?? "this item"}?`}
+        description="It is removed from this list."
+        pendingLabel="Deleting…"
+        errorFallback="Could not remove the item"
       />
     </div>
   );

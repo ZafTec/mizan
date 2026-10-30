@@ -4,73 +4,36 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { appToast } from "@/lib/toast";
 
 export default function DeleteMeasurementButton({ id }: { id: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await clientApi(`/api/BodyMeasurements/${id}`, { method: "DELETE" });
-      setOpen(false);
-      appToast.success("Measurement deleted");
-      router.refresh();
-    } catch (error) {
-      appToast.error(error, "Failed to delete measurement");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="icon-button-destructive"
-          aria-label="Delete measurement"
-        >
-          <Trash2 size={15} aria-hidden="true" />
-        </button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Measurement</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this measurement? This action cannot
-            be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={isDeleting}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Deleting…" : "Delete"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <button
+        type="button"
+        className="icon-button-destructive"
+        aria-label="Delete measurement"
+        onClick={() => setOpen(true)}
+      >
+        <Trash2 size={15} aria-hidden="true" />
+      </button>
+      <ConfirmDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Delete this measurement?"
+        description="Every value recorded in this measurement is removed. This cannot be undone."
+        pendingLabel="Deleting…"
+        errorFallback="Failed to delete measurement"
+        onConfirm={async () => {
+          await clientApi(`/api/BodyMeasurements/${id}`, { method: "DELETE" });
+          appToast.success("Measurement deleted");
+          router.refresh();
+        }}
+      />
+    </>
   );
 }

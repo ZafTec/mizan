@@ -95,6 +95,12 @@ test("an administrator turns plan drafting off for one household and prices off 
   await overrides
     .getByRole("button", { name: "Remove the override for Green gate" })
     .click();
+  await page
+    .getByRole("alertdialog", {
+      name: /Remove the .* override for Green gate\?/,
+    })
+    .getByRole("button", { name: "Remove override" })
+    .click();
   await expect(
     planning.getByText("Every household follows the default."),
   ).toBeVisible();

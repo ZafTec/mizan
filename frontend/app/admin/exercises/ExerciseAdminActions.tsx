@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 import ExerciseEditor, { type EditableExercise } from "./ExerciseEditor";
 
 export default function ExerciseAdminActions({
@@ -40,12 +41,23 @@ export default function ExerciseAdminActions({
           Promote
         </button>
       )}
-      <button
+      <ConfirmButton
         className="btn-ghost-destructive btn-sm"
-        onClick={() => run(`/api/Exercises/${exercise.id}`, "DELETE")}
+        aria-label={`Delete ${exercise.name}`}
+        title={`Delete ${exercise.name}?`}
+        description="The exercise is removed from the catalogue. This cannot be undone."
+        confirmLabel="Delete exercise"
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete exercise"
+        onConfirm={async () => {
+          await clientApi(`/api/Exercises/${exercise.id}`, {
+            method: "DELETE",
+          });
+          router.refresh();
+        }}
       >
         Delete
-      </button>
+      </ConfirmButton>
       {editing && (
         <ExerciseEditor
           exercise={exercise}

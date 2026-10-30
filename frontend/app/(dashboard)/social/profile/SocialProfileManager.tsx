@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 import type { FollowDto, SocialProfileDto } from "@/types/social";
 
 export default function SocialProfileManager() {
@@ -113,9 +114,17 @@ export default function SocialProfileManager() {
               >
                 Copy
               </button>
-              <button className="btn-ghost btn-sm" onClick={rotate}>
+              <ConfirmButton
+                className="btn-ghost-destructive btn-sm"
+                title="Reset your share link?"
+                description="The current link stops working for anyone who has it. You get a new link to share."
+                confirmLabel="Reset link"
+                pendingLabel="Resetting…"
+                errorFallback="Could not reset the link"
+                onConfirm={rotate}
+              >
                 Reset
-              </button>
+              </ConfirmButton>
             </div>
           </div>
         )}

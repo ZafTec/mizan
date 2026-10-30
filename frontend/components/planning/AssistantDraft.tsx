@@ -116,13 +116,9 @@ export default function AssistantDraft({ today }: { today: string }) {
     }
   };
 
+  // The confirmation dialog shows a failure itself and stays open.
   const discard = async (planId: string) => {
-    try {
-      await discardDraft(planId);
-    } catch (caught) {
-      setError(getErrorMessage(caught, "Could not discard the draft."));
-      return;
-    }
+    await discardDraft(planId);
     const rest = (result?.drafts ?? []).filter(
       (item) => item.plan.id !== planId,
     );

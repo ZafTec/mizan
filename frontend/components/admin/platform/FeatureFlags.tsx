@@ -13,6 +13,7 @@ import {
   type FeatureFlagOverride,
 } from "@/lib/api/admin-platform";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 import Switch from "./Switch";
 
 /**
@@ -155,8 +156,6 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
     try {
       await clearFeatureFlagOverride(flag.key, override.householdId);
       await afterWrite(`${override.householdName} follows the default again`);
-    } catch (caught) {
-      appToast.error(caught, "Could not remove the override");
     } finally {
       setBusy(null);
     }
@@ -218,15 +217,19 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
                   set(override.householdId, override.householdName, enabled)
                 }
               />
-              <button
-                type="button"
+              <ConfirmButton
                 className="btn-ghost-destructive btn-sm min-h-11"
                 aria-label={`Remove the override for ${override.householdName}`}
                 disabled={busy !== null}
-                onClick={() => clear(override)}
+                title={`Remove the ${flag.key} override for ${override.householdName}?`}
+                description="The household follows the flag's default again."
+                confirmLabel="Remove override"
+                pendingLabel="Removing…"
+                errorFallback="Could not remove the override"
+                onConfirm={() => clear(override)}
               >
                 Remove
-              </button>
+              </ConfirmButton>
             </li>
           ))}
         </ul>

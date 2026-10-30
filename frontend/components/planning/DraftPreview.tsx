@@ -8,6 +8,7 @@ import { planDates, slotLabel } from "@/lib/planning/rules";
 import { dayLabel } from "./PlanDetail";
 import PlanCostTable from "./PlanCostTable";
 import PlanDayEntries from "./PlanDayEntries";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 /**
  * One draft the assistant made, as the generate call answered it: the days
@@ -24,22 +25,13 @@ export default function DraftPreview({
   headingRef?: React.Ref<HTMLHeadingElement>;
   onDiscard: (planId: string) => Promise<void>;
 }) {
-  const [discarding, setDiscarding] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const { plan } = draft;
   const name = plan.name || "Meal plan";
   const headingId = `draft-${plan.id}`;
   const dayOf = (index: number) => {
     const day = plan.days.find((candidate) => candidate.dayIndex === index);
     return day ? dayLabel(day) : `Day ${index + 1}`;
-  };
-
-  const discard = async () => {
-    setDiscarding(true);
-    try {
-      await onDiscard(plan.id);
-    } finally {
-      setDiscarding(false);
-    }
   };
 
   return (
@@ -127,14 +119,24 @@ export default function DraftPreview({
         </Link>
         <button
           type="button"
-          className="btn-ghost min-h-11 flex-1 sm:flex-none"
-          disabled={discarding}
+          className="btn-ghost-destructive min-h-11 flex-1 sm:flex-none"
           aria-label={`Discard ${name}`}
-          onClick={discard}
+          onClick={() => setConfirming(true)}
         >
-          {discarding ? "Discarding…" : "Discard"}
+          Discard
         </button>
       </div>
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title={`Discard ${name}?`}
+        description="The draft is declined and kept under past plans. Nothing is added to your week."
+        confirmLabel="Discard"
+        pendingLabel="Discarding…"
+        cancelLabel="Keep draft"
+        errorFallback="Could not discard the draft."
+        onConfirm={() => onDiscard(plan.id)}
+      />
     </article>
   );
 }

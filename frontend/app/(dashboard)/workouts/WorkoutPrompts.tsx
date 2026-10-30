@@ -4,38 +4,57 @@ import Image from "next/image";
 import { useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export function ResumePrompt({
   onResume,
   onDiscard,
 }: {
   onResume: () => void;
-  onDiscard: () => void;
+  onDiscard: () => unknown;
 }) {
+  const [confirming, setConfirming] = useState(false);
   return (
-    <div className="card flex flex-col items-center gap-4 p-5 sm:flex-row">
-      <Image
-        src="/illustrations/resume-workout.svg"
-        alt=""
-        width={128}
-        height={104}
-        className="h-auto w-32"
+    <>
+      <div className="card flex flex-col items-center gap-4 p-5 sm:flex-row">
+        <Image
+          src="/illustrations/resume-workout.svg"
+          alt=""
+          width={128}
+          height={104}
+          className="h-auto w-32"
+        />
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold">Resume workout?</h2>
+          <p className="text-sm text-charcoal-blue-500">
+            Your most recent in-progress sets were saved.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn-primary" onClick={onResume}>
+            Resume
+          </button>
+          <button
+            type="button"
+            className="btn-ghost-destructive"
+            onClick={() => setConfirming(true)}
+          >
+            Discard
+          </button>
+        </div>
+      </div>
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title="Discard this workout?"
+        description="The sets you recorded in the unfinished session are deleted. Workouts you already finished are not affected."
+        confirmLabel="Discard"
+        pendingLabel="Discarding…"
+        cancelLabel="Keep it"
+        errorFallback="Could not discard the workout"
+        onConfirm={onDiscard}
       />
-      <div className="flex-1">
-        <h2 className="text-lg font-semibold">Resume workout?</h2>
-        <p className="text-sm text-charcoal-blue-500">
-          Your most recent in-progress sets were saved.
-        </p>
-      </div>
-      <div className="flex gap-2">
-        <button className="btn-primary" onClick={onResume}>
-          Resume
-        </button>
-        <button className="btn-ghost" onClick={onDiscard}>
-          Discard
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 

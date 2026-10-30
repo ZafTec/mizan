@@ -23,7 +23,7 @@ import {
 } from "@/lib/billing";
 import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ModalShell } from "@/components/ModalShell";
 
 const PRO_PERKS = [
@@ -380,24 +380,21 @@ function Subscribed({
   }
 
   async function cancel() {
-    const result = await run(
-      "cancel",
-      () =>
-        clientApi<MySubscription>("/api/Subscriptions/cancel", {
-          method: "POST",
-        }),
-      "Could not cancel",
-    );
-    setConfirmCancel(false);
-    if (result) {
-      await onChanged();
-      appToast.success(
-        "Subscription canceled",
-        result.cancelsAt
-          ? `You keep Pro until ${formatDate(result.cancelsAt)}.`
-          : undefined,
-      );
+    let result: MySubscription;
+    try {
+      result = await clientApi<MySubscription>("/api/Subscriptions/cancel", {
+        method: "POST",
+      });
+    } catch (error) {
+      throw new Error(firstErrorMessage(error, "Could not cancel"));
     }
+    await onChanged();
+    appToast.success(
+      "Subscription canceled",
+      result.cancelsAt
+        ? `You keep Pro until ${formatDate(result.cancelsAt)}.`
+        : undefined,
+    );
   }
 
   async function resume() {
@@ -582,24 +579,44 @@ function Subscribed({
         </div>
       )}
 
-      <ConfirmationModal
-        isOpen={confirmCancel}
+      <ConfirmDialog
+        open={confirmCancel}
         onClose={() => setConfirmCancel(false)}
         onConfirm={cancel}
         title="Cancel Pro?"
-        message={`Nothing more is charged. You keep Pro until ${nextBilled ?? periodEnd ?? "the end of the period you paid for"}, then the account returns to Free. Everything you have logged stays.`}
-        confirmText="Cancel subscription"
-        isLoading={busy === "cancel"}
-        isDanger
+        description={`Nothing more is charged. You keep Pro until ${nextBilled ?? periodEnd ?? "the end of the period you paid for"}, then the account returns to Free. Everything you have logged stays.`}
+        confirmLabel="Cancel subscription"
+        pendingLabel="Cancelling…"
+        cancelLabel="Keep Pro"
       />
 
-      <ModalShell open={preview !== null} onClose={() => setPreview(null)}>
+      <ModalShell
+        open={preview !== null}
+        onClose={() => setPreview(null)}
+        title={preview ? `Switch to ${preview.plan.name}?` : ""}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="btn-ghost"
+            >
+              Not now
+            </button>
+            <button
+              type="button"
+              onClick={confirmSwitch}
+              disabled={busy !== null}
+              className="btn-primary"
+            >
+              {busy === "switch" ? <Loading size="sm" /> : "Confirm switch"}
+            </button>
+          </>
+        }
+      >
         {preview && (
-          <div className="border border-charcoal-blue-200 bg-white p-6 dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
-            <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-              Switch to {preview.plan.name}?
-            </h2>
-            <dl className="mt-4 space-y-2 text-sm">
+          <div>
+            <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-charcoal-blue-600 dark:text-charcoal-blue-400">
                   {preview.preview.dueNowCents < 0
@@ -635,23 +652,6 @@ function Subscribed({
               The time left on your current plan is credited. Taxes are included
               where they apply.
             </p>
-            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={() => setPreview(null)}
-                className="btn-ghost"
-              >
-                Not now
-              </button>
-              <button
-                type="button"
-                onClick={confirmSwitch}
-                disabled={busy !== null}
-                className="btn-primary"
-              >
-                {busy === "switch" ? <Loading size="sm" /> : "Confirm switch"}
-              </button>
-            </div>
           </div>
         )}
       </ModalShell>

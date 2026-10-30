@@ -4,12 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import { appToast, getErrorMessage } from "@/lib/toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function RecipeActions({
   recipeId,
@@ -150,49 +145,21 @@ export default function RecipeActions({
           </button>
         </div>
       )}
-      <Dialog
+      <ConfirmDialog
         open={deleting}
-        onOpenChange={(open) => {
-          if (!pending) setDeleting(open);
+        onClose={() => setDeleting(false)}
+        title="Delete this recipe?"
+        description="The saved recipe is removed. Meals you already logged from it keep their recorded nutrition."
+        confirmLabel="Delete recipe"
+        pendingLabel="Deleting…"
+        cancelLabel="Keep recipe"
+        errorFallback="Could not delete recipe"
+        onConfirm={async () => {
+          await clientApi(`/api/Recipes/${recipeId}`, { method: "DELETE" });
+          router.push("/recipes");
+          router.refresh();
         }}
-      >
-        <DialogContent>
-          <DialogTitle>Delete this recipe?</DialogTitle>
-          <DialogDescription>
-            Your previous meal entries keep their recorded nutrition. The saved
-            recipe will be removed.
-          </DialogDescription>
-          <div className="flex justify-end gap-3">
-            <button
-              className="btn-secondary"
-              disabled={pending}
-              onClick={() => setDeleting(false)}
-            >
-              Keep recipe
-            </button>
-            <button
-              className="btn-danger"
-              disabled={pending}
-              onClick={async () => {
-                setPending(true);
-                try {
-                  await clientApi(`/api/Recipes/${recipeId}`, {
-                    method: "DELETE",
-                  });
-                  router.push("/recipes");
-                  router.refresh();
-                } catch (cause) {
-                  appToast.error(cause, "Could not delete recipe");
-                } finally {
-                  setPending(false);
-                }
-              }}
-            >
-              {pending ? "Deleting…" : "Delete recipe"}
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      />
     </div>
   );
 }

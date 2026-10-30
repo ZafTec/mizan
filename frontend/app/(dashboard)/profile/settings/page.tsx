@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import Loading from "@/components/Loading";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useImageUpload } from "@/components/ImageUpload";
 import { AiSettings } from "@/components/ai/AiSettings";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
@@ -670,17 +670,13 @@ function DataSection() {
   }
 
   async function remove() {
-    setShowModal(false);
     setDeleting(true);
     try {
       await deleteAccount();
       window.location.href = "/";
     } catch (error) {
-      appToast.error(
-        error,
-        "Account deletion failed. Sign in again and try once more.",
-      );
       setDeleting(false);
+      throw error;
     }
   }
 
@@ -760,16 +756,17 @@ function DataSection() {
           </form>
         )}
       </div>
-      <ConfirmationModal
-        isOpen={showModal}
+      <ConfirmDialog
+        open={showModal}
         onClose={() => setShowModal(false)}
         onConfirm={remove}
         title="Delete account permanently?"
-        message="All your meals, recipes, workouts, and progress will be erased. This cannot be undone."
-        confirmText="Yes, delete my account"
-        cancelText="Keep account"
-        isDanger
-        isLoading={deleting}
+        description="All your meals, recipes, workouts, and progress will be erased. This cannot be undone."
+        confirmLabel="Yes, delete my account"
+        pendingLabel="Deleting…"
+        cancelLabel="Keep account"
+        pending={deleting}
+        errorFallback="Account deletion failed. Sign in again and try once more."
       />
     </Section>
   );

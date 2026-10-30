@@ -67,6 +67,10 @@ test("an administrator edits a setting, is told why a value is refused, and clea
   await expect(port.getByRole("alert")).toHaveCount(0);
 
   await port.getByRole("button", { name: "Clear SMTP port" }).click();
+  await page
+    .getByRole("alertdialog", { name: "Clear SMTP port?" })
+    .getByRole("button", { name: "Clear setting" })
+    .click();
   await expect(port.getByTestId("setting-value")).toHaveText("587");
   await expect(port).toContainText("Default");
   await expect(page.getByText("SMTP port uses the default again")).toBeVisible();

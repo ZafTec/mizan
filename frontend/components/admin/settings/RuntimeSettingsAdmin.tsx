@@ -13,6 +13,7 @@ import {
   type RuntimeSettings,
 } from "@/lib/api/admin-settings";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 import { Select } from "@/components/ui/select";
 
 const SOURCE: Record<string, { label: string; tone: PillTone }> = {
@@ -135,8 +136,6 @@ function SettingRow({
       onChange(await clearRuntimeSetting(setting.key));
       appToast.success(`${setting.label} uses the default again`);
       close();
-    } catch (caught) {
-      appToast.error(caught, `Could not clear ${setting.label}`);
     } finally {
       setBusy(false);
     }
@@ -185,15 +184,19 @@ function SettingRow({
           </button>
         )}
         {setting.source === "database" && (
-          <button
-            type="button"
-            className="btn-ghost btn-sm min-h-9"
+          <ConfirmButton
+            className="btn-ghost-destructive btn-sm min-h-9"
             aria-label={`Clear ${setting.label}`}
             disabled={busy}
-            onClick={clear}
+            title={`Clear ${setting.label}?`}
+            description="The saved value is deleted and the setting uses its environment or built-in default again."
+            confirmLabel="Clear setting"
+            pendingLabel="Clearing…"
+            errorFallback={`Could not clear ${setting.label}`}
+            onConfirm={clear}
           >
             Clear
-          </button>
+          </ConfirmButton>
         )}
       </div>
       {editing && (

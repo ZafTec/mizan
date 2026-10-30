@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -167,32 +170,34 @@ export default function CampaignControls({
             </DialogDescription>
           </DialogHeader>
           {confirm && (
-            <div className="space-y-4">
-              <p
-                role="status"
-                className="border border-charcoal-blue-200 p-3 text-sm dark:border-charcoal-blue-700"
-              >
-                {isEvent ? "The audience reaches " : "It goes to "}
-                <strong className="tabular-nums" data-testid="confirm-count">
-                  {confirm.reachable}{" "}
-                  {confirm.reachable === 1 ? "person" : "people"}
-                </strong>{" "}
-                now ({confirm.label}).
-              </p>
-              {!isEvent && confirm.reachable === 0 && (
-                <p className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400">
-                  Nobody in that audience can receive it.
-                </p>
-              )}
-              {error && (
+            <>
+              <DialogBody className="space-y-4">
                 <p
-                  role="alert"
-                  className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
+                  role="status"
+                  className="border border-charcoal-blue-200 p-3 text-sm dark:border-charcoal-blue-700"
                 >
-                  {error}
+                  {isEvent ? "The audience reaches " : "It goes to "}
+                  <strong className="tabular-nums" data-testid="confirm-count">
+                    {confirm.reachable}{" "}
+                    {confirm.reachable === 1 ? "person" : "people"}
+                  </strong>{" "}
+                  now ({confirm.label}).
                 </p>
-              )}
-              <div className="flex flex-wrap justify-end gap-2">
+                {!isEvent && confirm.reachable === 0 && (
+                  <p className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400">
+                    Nobody in that audience can receive it.
+                  </p>
+                )}
+                {error && (
+                  <p
+                    role="alert"
+                    className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
+                  >
+                    {error}
+                  </p>
+                )}
+              </DialogBody>
+              <DialogFooter>
                 <button
                   type="button"
                   className="btn-ghost"
@@ -209,40 +214,27 @@ export default function CampaignControls({
                 >
                   {busy ? "Starting…" : `Start for ${confirm.reachable}`}
                 </button>
-              </div>
-            </div>
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={cancelling} onOpenChange={setCancelling}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel “{campaign.name}”?</DialogTitle>
-            <DialogDescription>
-              Nothing queued goes out, and it cannot be started again.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              className="btn-ghost"
-              disabled={busy}
-              onClick={() => setCancelling(false)}
-            >
-              Keep it
-            </button>
-            <button
-              type="button"
-              className="btn-danger"
-              disabled={busy}
-              onClick={() => step("cancel", "Cancelled")}
-            >
-              Cancel campaign
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={cancelling}
+        onClose={() => setCancelling(false)}
+        title={`Cancel “${campaign.name}”?`}
+        description="Nothing queued goes out, and it cannot be started again."
+        confirmLabel="Cancel campaign"
+        pendingLabel="Cancelling…"
+        cancelLabel="Keep it"
+        errorFallback="Could not change it"
+        onConfirm={async () => {
+          await changeCampaign(campaign.id, "cancel");
+          appToast.success("Cancelled");
+          router.refresh();
+        }}
+      />
     </div>
   );
 }

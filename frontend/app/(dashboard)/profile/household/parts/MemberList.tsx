@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import {
   removeHouseholdMember,
   respondToInvitation,
@@ -9,6 +8,7 @@ import {
   type PendingInviteAdminDto,
 } from "@/data/household";
 import { appToast } from "@/lib/toast";
+import { ConfirmButton } from "@/components/ConfirmDialog";
 
 export function MemberList({
   householdId,
@@ -22,32 +22,22 @@ export function MemberList({
   canManage: boolean;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
 
-  const handleRemove = (userId: string, name: string | null | undefined) => {
-    if (!window.confirm(`Remove ${name ?? "this member"} from the household?`))
-      return;
-    startTransition(async () => {
-      const result = await removeHouseholdMember(householdId, userId);
-      if (result.success) {
-        appToast.success("Member removed.");
-        router.refresh();
-      } else {
-        appToast.error(result.message ?? "Could not remove member.");
-      }
-    });
+  // The confirmation dialogs show a failure themselves and stay open.
+  const handleRemove = async (userId: string) => {
+    const result = await removeHouseholdMember(householdId, userId);
+    if (!result.success)
+      throw new Error(result.message ?? "Could not remove member.");
+    appToast.success("Member removed.");
+    router.refresh();
   };
 
-  const handleRevoke = (invitationId: string) => {
-    startTransition(async () => {
-      const result = await respondToInvitation(invitationId, "revoke");
-      if (result.success) {
-        appToast.success("Invitation revoked.");
-        router.refresh();
-      } else {
-        appToast.error(result.message ?? "Could not revoke invitation.");
-      }
-    });
+  const handleRevoke = async (invitationId: string) => {
+    const result = await respondToInvitation(invitationId, "revoke");
+    if (!result.success)
+      throw new Error(result.message ?? "Could not revoke invitation.");
+    appToast.success("Invitation revoked.");
+    router.refresh();
   };
 
   return (
@@ -67,14 +57,17 @@ export function MemberList({
               </p>
             </div>
             {canManage && m.role !== "owner" && (
-              <button
-                type="button"
+              <ConfirmButton
                 className="btn-ghost-destructive h-8"
-                onClick={() => handleRemove(m.userId, m.name)}
-                disabled={pending}
+                title={`Remove ${m.name ?? m.email ?? "this member"} from the household?`}
+                description="They lose access to the household's shared recipes, meal plans and shopping lists. Their own log is not affected."
+                confirmLabel="Remove member"
+                pendingLabel="Removing…"
+                errorFallback="Could not remove member."
+                onConfirm={() => handleRemove(m.userId)}
               >
                 Remove
-              </button>
+              </ConfirmButton>
             )}
           </li>
         ))}
@@ -101,14 +94,17 @@ export function MemberList({
                   </p>
                 </div>
                 {canManage && (
-                  <button
-                    type="button"
+                  <ConfirmButton
                     className="btn-ghost-destructive h-8"
-                    onClick={() => handleRevoke(inv.id)}
-                    disabled={pending}
+                    title={`Revoke the invitation to ${inv.invitedName ?? inv.invitedEmail}?`}
+                    description="The invitation link stops working. You can invite them again later."
+                    confirmLabel="Revoke invitation"
+                    pendingLabel="Revoking…"
+                    errorFallback="Could not revoke invitation."
+                    onConfirm={() => handleRevoke(inv.id)}
                   >
                     Revoke
-                  </button>
+                  </ConfirmButton>
                 )}
               </li>
             ))}

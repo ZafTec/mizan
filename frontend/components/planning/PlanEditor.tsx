@@ -40,6 +40,7 @@ import type { PickerItem } from "@/components/logging/logging";
 import RulesFields from "./RulesFields";
 import { dayLabel } from "./PlanDetail";
 import { Select } from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type EntryDraft = {
   dayIndex: number;
@@ -472,6 +473,11 @@ export default function PlanEditor({
   const [sessionEditing, setSessionEditing] = useState<
     { kind: "new" } | { kind: "session"; session: PrepSession } | null
   >(null);
+  const [removing, setRemoving] = useState<
+    | { kind: "entry"; entry: PlanEntry }
+    | { kind: "session"; session: PrepSession }
+    | null
+  >(null);
   const day = plan.days.find((d) => d.dayIndex === dayIndex) ?? plan.days[0];
   const isTemplate = plan.kind === "Template";
   const planName = plan.name || (isTemplate ? "Template" : "Meal plan");
@@ -556,14 +562,11 @@ export default function PlanEditor({
     await reload();
   };
 
+  // The confirmation dialog shows a failure itself and stays open.
   const removeEntry = async (entry: PlanEntry) => {
-    try {
-      await removePlanEntry(plan.id, entry.id);
-      appToast.success(`${entryTitle(entry)} removed`);
-      await reload();
-    } catch (error) {
-      appToast.error(error, "Could not remove the entry");
-    }
+    await removePlanEntry(plan.id, entry.id);
+    appToast.success(`${entryTitle(entry)} removed`);
+    await reload();
   };
 
   const submitSession = async (value: {
@@ -585,13 +588,9 @@ export default function PlanEditor({
   };
 
   const removeSession = async (session: PrepSession) => {
-    try {
-      await removePrepSession(plan.id, session.id);
-      appToast.success(`${session.title} removed`);
-      await reload();
-    } catch (error) {
-      appToast.error(error, "Could not remove the session");
-    }
+    await removePrepSession(plan.id, session.id);
+    appToast.success(`${session.title} removed`);
+    await reload();
   };
 
   const dayDate = day?.date ?? today;
@@ -802,7 +801,7 @@ export default function PlanEditor({
                         type="button"
                         className="btn-ghost-destructive btn-sm min-h-9"
                         aria-label={`Remove ${entryTitle(entry)}`}
-                        onClick={() => removeEntry(entry)}
+                        onClick={() => setRemoving({ kind: "entry", entry })}
                       >
                         Remove
                       </button>
@@ -887,7 +886,7 @@ export default function PlanEditor({
                   type="button"
                   className="btn-ghost-destructive btn-sm min-h-9"
                   aria-label={`Remove ${session.title}`}
-                  onClick={() => removeSession(session)}
+                  onClick={() => setRemoving({ kind: "session", session })}
                 >
                   Remove
                 </button>
@@ -896,6 +895,35 @@ export default function PlanEditor({
           )}
         </ul>
       </section>
+
+      <ConfirmDialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        title={
+          removing?.kind === "session"
+            ? `Remove ${removing.session.title}?`
+            : `Remove ${removing ? entryTitle(removing.entry) : "this entry"}?`
+        }
+        description={
+          removing?.kind === "session"
+            ? "The prep session is removed from this plan."
+            : "The entry is removed from this day of the plan."
+        }
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        errorFallback={
+          removing?.kind === "session"
+            ? "Could not remove the session"
+            : "Could not remove the entry"
+        }
+        onConfirm={() =>
+          removing?.kind === "session"
+            ? removeSession(removing.session)
+            : removing
+              ? removeEntry(removing.entry)
+              : undefined
+        }
+      />
     </div>
   );
 }

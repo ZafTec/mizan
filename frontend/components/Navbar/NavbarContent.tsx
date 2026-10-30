@@ -3,13 +3,10 @@
 import type { User } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
-import { signOut } from "@/lib/auth-client";
-import { appToast } from "@/lib/toast";
-import { clearAppearanceCookie } from "@/lib/appearance-cookie";
+import { SignOutDialog } from "@/components/SignOutDialog";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
@@ -97,7 +94,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const primaryItems: NavItem[] = [
     { href: "/ingredients", label: "Foods", icon: "search" },
@@ -179,18 +175,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [menuOpen, userMenuOpen]);
 
-  async function handleLogout() {
-    try {
-      clearAppearanceCookie();
-      await signOut();
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error("Logout failed:", error);
-      appToast.error(error, "Failed to sign out");
-    }
-  }
-
   function closeMenu() {
     setMenuOpen(false);
   }
@@ -212,48 +196,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
   return (
     <>
-      {showLogoutModal &&
-        createPortal(
-          <div
-            className="animate-overlay-in fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/35 p-4 backdrop-blur-sm"
-            onClick={() => setShowLogoutModal(false)}
-          >
-            <div
-              className="animate-modal-in card w-full max-w-sm p-6"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="mb-5 flex items-start gap-4">
-                <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-12 w-12"></span>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                    Sign out
-                  </h3>
-                  <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                    Your session will end on this device immediately.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowLogoutModal(false)}
-                  className="btn-secondary flex-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowLogoutModal(false);
-                    handleLogout();
-                  }}
-                  className="btn-danger flex-1"
-                >
-                  Sign out
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      <SignOutDialog
+        open={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+      />
 
       <div className="flex items-center gap-2" data-testid="navbar">
         <nav className="hidden items-center gap-1 md:flex">

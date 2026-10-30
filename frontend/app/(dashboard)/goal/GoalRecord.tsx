@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import ConfirmationModal from "@/components/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import type { components } from "@/types/api.generated";
@@ -35,21 +35,24 @@ export default function GoalRecord({
   const [goal, setGoal] = useState<Goal | null>(null);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [pending, setPending] = useState<Pending | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      const [current, history] = await Promise.all([
+  const load = useCallback(
+    () =>
+      Promise.all([
         clientApi<Goal | null>("/api/Goals"),
         clientApi<History>("/api/Goals/progress?days=90"),
-      ]);
-      setGoal(current ?? null);
-      setCheckIns([...(history?.progressEntries ?? [])].reverse());
-    } catch {
-      setGoal(null);
-      setCheckIns([]);
-    }
-  }, []);
+      ]).then(
+        ([current, history]) => {
+          setGoal(current ?? null);
+          setCheckIns([...(history?.progressEntries ?? [])].reverse());
+        },
+        () => {
+          setGoal(null);
+          setCheckIns([]);
+        },
+      ),
+    [],
+  );
 
   useEffect(() => {
     void load();
@@ -57,25 +60,17 @@ export default function GoalRecord({
 
   const confirm = async () => {
     if (!pending) return;
-    setDeleting(true);
-    try {
-      if (pending.kind === "goal") {
-        await clientApi(`/api/Goals/${pending.id}`, { method: "DELETE" });
-        appToast.success("Goal deleted");
-        onGoalDeleted();
-      } else {
-        await clientApi(`/api/Goals/progress/${pending.id}`, {
-          method: "DELETE",
-        });
-        appToast.success("Check-in deleted");
-      }
-      await load();
-    } catch (error) {
-      appToast.error(error, "Could not delete it. Try again.");
-    } finally {
-      setDeleting(false);
-      setPending(null);
+    if (pending.kind === "goal") {
+      await clientApi(`/api/Goals/${pending.id}`, { method: "DELETE" });
+      appToast.success("Goal deleted");
+      onGoalDeleted();
+    } else {
+      await clientApi(`/api/Goals/progress/${pending.id}`, {
+        method: "DELETE",
+      });
+      appToast.success("Check-in deleted");
     }
+    await load();
   };
 
   if (!goal) return null;
@@ -142,19 +137,19 @@ export default function GoalRecord({
         </ul>
       )}
 
-      <ConfirmationModal
-        isOpen={pending !== null}
+      <ConfirmDialog
+        open={pending !== null}
         onClose={() => setPending(null)}
         onConfirm={confirm}
         title={pending?.kind === "goal" ? "Delete this goal?" : "Delete this check-in?"}
-        message={
+        description={
           pending?.kind === "goal"
             ? "The goal and all its check-ins are removed. You will have no daily targets until you set a new goal."
             : `The check-in for ${pending ? dateLabel(pending.date) : ""} is removed. Your diary is not changed.`
         }
-        confirmText="Delete"
-        isDanger
-        isLoading={deleting}
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        errorFallback="Could not delete it. Try again."
       />
     </section>
   );

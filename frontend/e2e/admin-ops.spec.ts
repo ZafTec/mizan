@@ -298,11 +298,14 @@ test("household search finds a household by a member's email, and its detail kee
   await added.getByRole("button", { name: "Save" }).click();
   await expect(notes).toContainText("Called, list is shared now.");
 
-  page.once("dialog", (dialog) => dialog.accept());
   await notes
     .getByRole("listitem")
     .filter({ hasText: "Called, list is shared now." })
     .getByRole("button", { name: "Delete" })
+    .click();
+  await page
+    .getByRole("alertdialog", { name: "Delete this note?" })
+    .getByRole("button", { name: "Delete note" })
     .click();
   await expect(notes).not.toContainText("Called, list is shared now.");
 
