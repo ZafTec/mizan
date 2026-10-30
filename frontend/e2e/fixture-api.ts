@@ -230,6 +230,8 @@ type FixtureState = {
   telegram: TelegramState;
   goal: typeof goal | null;
   checkIns: components["schemas"]["GoalProgressEntryDto"][];
+  /** Analysis photos the person deleted before their 30 days were up. */
+  deletedPhotos: string[];
 };
 type FixtureNotification = components["schemas"]["NotificationDto"];
 type FixtureReminder = components["schemas"]["ReminderDto"];
@@ -390,6 +392,48 @@ const analysis = {
   confidence: 0.7,
   note: "Assumed two eggs and one slice.",
 };
+// A photo estimate as POST /api/Nutrition/ai/analyze-image answers it: one food the API matched to the
+// person's recipe (logged as that recipe), one estimate, and the stored photo's address.
+const plateUrl = "https://files.fixture.test/meals/plate.jpg";
+const photoAnalysis: components["schemas"]["FoodAnalysisResult"] = {
+  foods: [
+    {
+      name: "Yogurt and oats",
+      recipeId: "33333333-3333-4333-8333-333333333333",
+      servings: 1.5,
+      source: "recipe",
+      portionGrams: 375,
+      calories: 584,
+      protein: 40,
+      carbs: 62,
+      fat: 20,
+    },
+    { ...analysis.foods[1], source: "estimate" },
+  ],
+  totalCalories: 774,
+  confidence: 0.8,
+  note: null,
+  imageUrl: plateUrl,
+};
+// GET /api/Trainers/available: the other people with the trainer role, without their email.
+const trainers: components["schemas"]["TrainerPublicDto"][] = [
+  {
+    id: "7a000000-0000-4000-8000-000000000001",
+    name: "Sam Rivera",
+    image: null,
+    bio: null,
+    specialties: "Strength",
+    clientCount: 3,
+  },
+  {
+    id: "7a000000-0000-4000-8000-000000000002",
+    name: null,
+    image: null,
+    bio: null,
+    specialties: null,
+    clientCount: 0,
+  },
+];
 const states = new Map<string, FixtureState>();
 function initialState(empty = false): FixtureState {
   return {
@@ -488,6 +532,7 @@ function initialState(empty = false): FixtureState {
     failures: [],
     writeFailures: {},
     unhandled: [],
+    deletedPhotos: [],
     writes: [],
     connections: empty
       ? []
@@ -1260,6 +1305,25 @@ const server = Bun.serve({
             400,
           );
     }
+    if (path === "/api/Nutrition/ai/analyze-image" && method === "POST") {
+      if (!state.pro)
+        return json(
+          { errorCode: "upgrade_required", error: "This is part of Pro." },
+          402,
+        );
+      const form = await request.formData();
+      state.writes.push({ path, body: { image: Boolean(form.get("image")) } });
+      return json(photoAnalysis);
+    }
+    if (path === "/api/Nutrition/ai/photo" && method === "DELETE") {
+      // DeleteAnalysisPhotoCommand: the caller's own photo, once; anything else is a 404.
+      const imageUrl = parameter(url, "imageUrl");
+      if (imageUrl !== plateUrl || state.deletedPhotos.includes(imageUrl))
+        return json({ error: "Photo not found" }, 404);
+      state.deletedPhotos.push(imageUrl);
+      state.writes.push({ path, body: { imageUrl } });
+      return json(null, 204);
+    }
     if (path === "/api/Ai/threads" && method === "GET")
       return json(
         state.threads.map(({ id, title, updatedAt }) => ({
@@ -1655,6 +1719,43 @@ const server = Bun.serve({
       json,
     );
     if (planned) return planned;
+    if (path === "/api/Trainers/available" && method === "GET")
+      return json({
+        items: trainers,
+        totalCount: trainers.length,
+        page: 1,
+        pageSize: 20,
+        totalPages: 1,
+      });
+    if (path === "/api/Recipes/fit" && method === "GET") {
+      // RankRecipesForDayQuery, as fixed numbers: the fixture ranks nothing itself.
+      const ranked: components["schemas"]["RecipeFitResult"] = {
+        date: parameter(url, "date") ?? today,
+        caloriesLeft: 640,
+        proteinLeft: 40,
+        carbsLeft: null,
+        fatLeft: null,
+        note: state.recipes.length ? null : "You have no recipes to rank yet.",
+        // Only a recipe with known nutrition can be ranked; the imported stew has none.
+        recipes: state.recipes.length
+          ? [
+              {
+                rank: 1,
+                recipeId: "33333333-3333-4333-8333-333333333333",
+                title: "Yogurt and oats",
+                score: 0.6,
+                calories: 389,
+                protein: 26.5,
+                carbs: 41,
+                fat: 13.5,
+                caloriesLeftAfter: 251,
+                proteinLeftAfter: 13.5,
+              },
+            ]
+          : [],
+      };
+      return json(ranked);
+    }
     if (path === "/api/Trainers/my-trainer")
       return json({ error: "No active trainer relationship found" }, 404);
     if (path === "/api/Goals" && method === "GET")

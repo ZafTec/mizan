@@ -122,9 +122,9 @@ test.describe("logging a meal with the assistant", () => {
     await page.getByRole("button", { name: "Log a recipe" }).click();
 
     const view = page.getByRole("region", { name: "Log from a recipe" });
-    await expect(view.getByRole("group", { name: "Favorites" })).toContainText(
-      "Yogurt and oats",
-    );
+    await expect(
+      view.getByRole("group", { name: "Fits what is left" }),
+    ).toContainText("Yogurt and oats");
     await expect(
       view.getByRole("group", { name: "All recipes" }),
     ).toContainText("Imported lentil stew");
