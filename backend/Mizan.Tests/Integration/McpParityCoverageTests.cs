@@ -175,7 +175,7 @@ public class McpParityCoverageTests
         var wrong = new List<string>();
         foreach (var (tool, calls) in ToolCallsByTool())
         {
-            if (!McpServer::Mizan.Mcp.Server.Authorization.McpToolScopes.TryGet(tool, out var scope))
+            if (!Mizan.Contracts.Mcp.McpToolScopes.TryGet(tool, out var scope))
             {
                 wrong.Add($"{tool}: no scope");
                 continue;

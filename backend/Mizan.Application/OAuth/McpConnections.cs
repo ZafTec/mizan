@@ -1,3 +1,4 @@
+using Mizan.Contracts.Tools;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
@@ -72,7 +73,8 @@ public class ListMcpConnectionsQueryHandler : IRequestHandler<ListMcpConnections
             VerifiedHost = g.Client.VerifiedHost,
             LogoUri = g.Client.LogoUri,
             IsFirstParty = g.Client.IsFirstParty,
-            Scopes = g.Scopes,
+            // Shown as the seven areas, whatever the grant was stored in (docs/MCP.md).
+            Scopes = ToolAreas.FromScopes(g.Scopes),
             HouseholdMode = g.HouseholdMode,
             Households = g.HouseholdIds
                 .Where(names.ContainsKey)
@@ -124,7 +126,8 @@ public class UpdateMcpConnectionCommandHandler : IRequestHandler<UpdateMcpConnec
             var scopes = McpScopes.Normalize(request.Scopes, _currentUser.IsInRole("admin"));
             if (scopes.Count == 0)
                 throw new DomainValidationException("Keep at least one permission, or disconnect the app.");
-            if (scopes.Any(s => !McpScopes.Allows(grant.Scopes, s)))
+            var ceiling = ToolAreas.FromScopes(grant.Scopes);
+            if (scopes.Any(s => !ceiling.Contains(s) && !McpScopes.Allows(grant.Scopes, s)))
                 throw new DomainValidationException("A connection can only lose access here. To add access, connect the app again.");
             grant.Scopes = scopes;
         }

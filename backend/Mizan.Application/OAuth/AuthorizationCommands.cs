@@ -1,3 +1,4 @@
+using Mizan.Contracts.Tools;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
@@ -132,12 +133,7 @@ public static class McpScopeCatalog
 {
     public static List<ScopeGroupView> For(bool isAdmin) => McpScopes.Groups
         .Where(g => !g.Value.AdminOnly || isAdmin)
-        .Select(g => g.Key switch
-        {
-            "ai" => new ScopeGroupView("ai", g.Value.Title, g.Value.Description, false, McpScopes.AiUse, null),
-            "admin" => new ScopeGroupView("admin", g.Value.Title, g.Value.Description, false, McpScopes.Admin, null),
-            _ => new ScopeGroupView(g.Key, g.Value.Title, g.Value.Description, g.Value.HasWrite, $"{g.Key}:read", g.Value.HasWrite ? $"{g.Key}:write" : null),
-        })
+        .Select(g => new ScopeGroupView(g.Key, g.Value.Title, g.Value.Description, g.Value.HasWrite, $"{g.Key}:read", g.Value.HasWrite ? $"{g.Key}:write" : null))
         .ToList();
 }
 
@@ -190,6 +186,7 @@ public class GetAuthorizationRequestQueryHandler : IRequestHandler<GetAuthorizat
             .Where(g => g.UserId == userId && g.ClientId == client.Id && g.RevokedAt == null)
             .Select(g => new ExistingGrantView(g.Scopes, g.HouseholdMode, g.HouseholdIds))
             .FirstOrDefaultAsync(cancellationToken);
+        if (existing is not null) existing = existing with { Scopes = ToolAreas.FromScopes(existing.Scopes) };
 
         var redirectHost = Uri.TryCreate(request.RedirectUri, UriKind.Absolute, out var uri)
             ? (string.IsNullOrEmpty(uri.Host) ? uri.Scheme + ":" : uri.Host)
@@ -197,8 +194,12 @@ public class GetAuthorizationRequestQueryHandler : IRequestHandler<GetAuthorizat
 
         return new AuthorizationRequestView(
             client.Name, client.Source, client.VerifiedHost, client.LogoUri, client.ClientUri, redirectHost,
-            request.Audience, request.RequestedScopes, groups, households, existing, client.IsFirstParty, request.ExpiresAt);
+            request.Audience, AsAreas(request.RequestedScopes), groups, households, existing, client.IsFirstParty, request.ExpiresAt);
     }
+
+    /// <summary>A client asking in the older scopes is shown the areas they read as; "full" stays as it is.</summary>
+    private static IReadOnlyList<string> AsAreas(IReadOnlyList<string> requested) =>
+        requested.Count == 0 || requested.Contains(McpScopes.Full) ? requested : ToolAreas.FromScopes(requested);
 }
 
 /// <summary>The user's answer on the consent screen. Approving creates or replaces the grant and issues a code.</summary>
@@ -249,7 +250,7 @@ public class DecideAuthorizationCommandHandler : IRequestHandler<DecideAuthoriza
         // A user may grant less than was asked for, never more.
         if (request.RequestedScopes.Count > 0 && !request.RequestedScopes.Contains(McpScopes.Full))
         {
-            var allowed = McpScopes.Normalize(request.RequestedScopes, isAdmin);
+            var allowed = McpScopes.Normalize(ToolAreas.FromScopes(request.RequestedScopes).Concat(request.RequestedScopes), isAdmin);
             scopes = scopes.Where(s => allowed.Contains(s) || McpScopes.Allows(request.RequestedScopes, s)).ToList();
         }
 

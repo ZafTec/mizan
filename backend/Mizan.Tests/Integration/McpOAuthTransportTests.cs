@@ -167,7 +167,7 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         McpToolScopes.All.Values.Should().OnlyContain(scope => McpScopes.All.Contains(scope));
 
         // The list above hides a tool that has no scope, so the source is checked too: every [McpServerTool] in the server has a row.
-        var registered = typeof(McpToolScopes).Assembly.GetTypes()
+        var registered = typeof(McpServer::Mizan.Mcp.Server.Services.BackendApiClient).Assembly.GetTypes()
             .SelectMany(type => type.GetMethods())
             .Select(method => method.GetCustomAttribute<McpServerToolAttribute>()?.Name)
             .Where(name => name is not null)

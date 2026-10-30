@@ -1,9 +1,9 @@
-using Mizan.Contracts.Mcp;
 
-namespace Mizan.Mcp.Server.Authorization;
+
+namespace Mizan.Contracts.Mcp;
 
 /// <summary>
-/// The scope each tool needs. A connected app sees and can call only the tools
+/// The scope each legacy MCP tool needs (Mcp:Toolset=legacy). A connected app sees and can call only the tools
 /// its grant covers. A tool missing from this table is refused, and a test
 /// fails if any registered tool is missing, so a new tool cannot ship open.
 /// </summary>

@@ -54,7 +54,7 @@ builder.Services.AddAuthentication(options =>
         {
             Resource = publicUrl,
             AuthorizationServers = { authorizationServer },
-            ScopesSupported = McpScopes.All.Where(scope => scope != McpScopes.Admin).ToList(),
+            ScopesSupported = McpScopes.All.Where(scope => !McpScopes.IsAdminScope(scope)).ToList(),
             ResourceName = "Mizan",
             BearerMethodsSupported = { "header" },
         };
@@ -501,7 +501,7 @@ IResult ProtectedResource() => Results.Json(new Dictionary<string, object>
 {
     ["resource"] = publicUrl,
     ["authorization_servers"] = new[] { authorizationServer },
-    ["scopes_supported"] = McpScopes.All.Where(scope => scope != McpScopes.Admin).ToArray(),
+    ["scopes_supported"] = McpScopes.All.Where(scope => !McpScopes.IsAdminScope(scope)).ToArray(),
     ["bearer_methods_supported"] = new[] { "header" },
     ["resource_name"] = "Mizan",
 });

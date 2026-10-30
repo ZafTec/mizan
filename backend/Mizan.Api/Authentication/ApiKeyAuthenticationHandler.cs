@@ -109,7 +109,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 }
 
                 var isAdminUser = string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase);
-                var scopes = isAdminUser ? grant.Scopes : grant.Scopes.Where(s => s != McpScopes.Admin).ToList();
+                var scopes = isAdminUser ? grant.Scopes : grant.Scopes.Where(s => !McpScopes.IsAdminScope(s)).ToList();
                 claims.Add(new Claim(GrantClaims.GrantId, grant.Id.ToString()));
                 claims.Add(new Claim(GrantClaims.Client, grant.ClientId.ToString()));
                 claims.Add(new Claim(GrantClaims.Scopes, string.Join(' ', scopes)));

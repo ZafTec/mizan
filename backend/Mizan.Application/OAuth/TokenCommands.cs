@@ -248,7 +248,7 @@ public class IntrospectOAuthTokenQueryHandler : IRequestHandler<IntrospectOAuthT
             l => l.UserId == grant.UserId && l.Success && l.Kind != "prompt" && l.Timestamp >= monthStart, cancellationToken);
 
         // Admin stays tied to the account's current role, not to what it was at consent time.
-        var scopes = status.Role == "admin" ? grant.Scopes : grant.Scopes.Where(s => s != McpScopes.Admin).ToList();
+        var scopes = status.Role == "admin" ? grant.Scopes : grant.Scopes.Where(s => !McpScopes.IsAdminScope(s)).ToList();
 
         return new OAuthIntrospection
         {
