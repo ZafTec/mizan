@@ -19,7 +19,14 @@ public sealed record MealPlanContext(
     string Region,
     string Currency,
     IReadOnlyList<string> IncludedAxes,
-    GoalTargets? Goal = null);
+    GoalTargets? Goal = null)
+{
+    /// <summary>
+    /// What code may put in a line's place to bring the cost down: the offered foods with a price,
+    /// per gram, and the recipes whose every ingredient is priced, per serving.
+    /// </summary>
+    public IReadOnlyList<BudgetRepair.Option> Options { get; init; } = [];
+}
 
 /// <summary>
 /// Builds the context of a plan generation. What is personal comes through
@@ -77,28 +84,40 @@ public sealed class MealPlanContextBuilder
 
         var personal = axes.Contains(DataAxis.Planning);
         var recipes = new Dictionary<Guid, string>();
+        var options = new List<BudgetRepair.Option>();
         if (personal)
         {
             included.Add("planning");
             var households = await _households.AccessibleIdsAsync(cancellationToken);
-            var rows = await _context.Recipes.AsNoTracking()
+            var rows = await _context.Recipes.AsNoTracking().Include(r => r.Ingredients)
                 .Where(r => r.UserId == userId || (r.HouseholdId != null && households.Contains(r.HouseholdId.Value)))
                 .OrderByDescending(r => r.UpdatedAt)
                 .Take(MaxRecipes)
-                .Select(r => new { r.Id, r.Title, r.Servings })
                 .ToListAsync(cancellationToken);
             if (rows.Count > 0)
             {
                 var perServing = await RecipeNutritionLookup.ForRecipesAsync(_context, rows.Select(r => r.Id).ToList(), cancellationToken);
-                text.Append("## Your recipes (recipeId | title | serves | per serving)\n");
+                var servingCosts = await ServingCostsAsync(rows, region, cancellationToken);
+                text.Append(CultureInfo.InvariantCulture, $"## Your recipes (recipeId | title | serves | per serving | cost per serving in {currency})\n");
                 foreach (var row in rows)
                 {
                     recipes[row.Id] = row.Title;
                     text.Append(CultureInfo.InvariantCulture, $"{row.Id} | {Clean(row.Title)} | {row.Servings} | ");
-                    text.Append(perServing.TryGetValue(row.Id, out var n)
+                    var known = perServing.TryGetValue(row.Id, out var n);
+                    text.Append(known
                         ? string.Create(CultureInfo.InvariantCulture, $"{n.Calories:0} kcal, P {n.ProteinGrams:0} g, C {n.CarbsGrams:0} g, F {n.FatGrams:0} g")
                         : "nutrition unknown");
+                    var cost = servingCosts[row.Id];
+                    text.Append(" | ").Append(cost.PricedItems == 0
+                        ? "no price"
+                        : cost.PricedItems < cost.TotalItems
+                            ? string.Create(CultureInfo.InvariantCulture, $"at least {cost.Total:0.##} ({cost.PricedItems} of {cost.TotalItems} ingredients priced)")
+                            : string.Create(CultureInfo.InvariantCulture, $"{cost.Total:0.##}"));
                     text.Append('\n');
+                    // Only a fully priced recipe may replace a line: a partial price would look cheaper than it is.
+                    if (known && cost.PricedItems > 0 && cost.PricedItems == cost.TotalItems)
+                        options.Add(new BudgetRepair.Option(BudgetRepair.ItemKind.Recipe, row.Id, row.Title,
+                            new EntryNutrition(n.Calories, n.ProteinGrams, n.CarbsGrams, n.FatGrams, n.FiberGrams), cost.Total));
                 }
                 text.Append('\n');
             }
@@ -118,6 +137,11 @@ public sealed class MealPlanContextBuilder
                     ? string.Create(CultureInfo.InvariantCulture, $"{quote.PricePerGram * 100m:0.##}")
                     : "no price");
                 text.Append('\n');
+                if (quote is not null && quote.PricePerGram > 0)
+                    options.Add(new BudgetRepair.Option(BudgetRepair.ItemKind.Food, food.Id, food.Name,
+                        new EntryNutrition(food.CaloriesPer100g / 100m, food.ProteinPer100g / 100m, food.CarbsPer100g / 100m,
+                            food.FatPer100g / 100m, (food.FiberPer100g ?? 0m) / 100m),
+                        quote.PricePerGram));
             }
             text.Append('\n');
         }
@@ -132,7 +156,25 @@ public sealed class MealPlanContextBuilder
                 text.Append("## Never use\n").Append(string.Join("\n", forbidden.Select(Clean))).Append("\n\n");
         }
 
-        return new MealPlanContext(text.ToString(), recipes, foods, region.Code, currency, included, goalTargets);
+        return new MealPlanContext(text.ToString(), recipes, foods, region.Code, currency, included, goalTargets) { Options = options };
+    }
+
+    /// <summary>
+    /// One serving of each recipe costed as a plan entry is (<see cref="PlanCosting"/>), so the
+    /// figure the model reads is the one the draft's cost table will show.
+    /// </summary>
+    private async Task<Dictionary<Guid, CostSummary>> ServingCostsAsync(
+        IReadOnlyList<Recipe> recipes, PriceRegionInfo region, CancellationToken cancellationToken)
+    {
+        var foodIds = recipes.SelectMany(r => r.Ingredients).Where(i => i.FoodId != null).Select(i => i.FoodId!.Value).Distinct().ToList();
+        var foods = foodIds.Count == 0
+            ? new Dictionary<Guid, Food>()
+            : await _context.Foods.AsNoTracking().Where(f => foodIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, cancellationToken);
+        var quotes = await _prices.QuotesAsync(foods.Values, region, cancellationToken);
+        var byId = recipes.ToDictionary(r => r.Id);
+        return recipes.ToDictionary(r => r.Id, r => PlanCosting.Cost(
+            [new PlanEntry { Id = Guid.NewGuid(), Kind = PlanEntryKind.Recipe, RecipeId = r.Id, Servings = 1m }],
+            1, byId, foods, quotes, region.Currency).Summary);
     }
 
     /// <summary>

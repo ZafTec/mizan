@@ -163,10 +163,10 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         };
 
         var characters = prompt.SystemPrompt.Length + context.Text.Length + ask.Length;
-        var calorieTarget = MacroTargets.Resolve(baseRules, context.Goal).Calories.Value;
-        var attempt = await ScaleAsync(
+        var targets = MacroTargets.Resolve(baseRules, context.Goal);
+        var attempt = await RepairInCodeAsync(
             await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId, completion, characters, cancellationToken),
-            request, rulesDto, ceiling, several, calorieTarget, userId, cancellationToken);
+            request, rulesDto, ceiling, several, targets, context, userId, cancellationToken);
 
         // Up to two repairs: what code found and the day totals go back to the model as facts. Each
         // call is metered on its own, so its reservation is settled whether it succeeds or fails. A
@@ -180,10 +180,10 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             DraftAttempt next;
             try
             {
-                next = await ScaleAsync(
+                next = await RepairInCodeAsync(
                     await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId,
                         completion with { Messages = conversation.ToList() }, characters, cancellationToken),
-                    request, rulesDto, ceiling, several, calorieTarget, userId, cancellationToken);
+                    request, rulesDto, ceiling, several, targets, context, userId, cancellationToken);
             }
             catch (Exception ex) when (ex is AiQuotaExceededException or AiUnavailableException)
             {
@@ -226,8 +226,10 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         var cost = await _costing.CostAsync(plan, userId, cancellationToken);
         var detail = await _readModel.BuildAsync(plan, userId, canEdit: true, cancellationToken);
         // The note is the checks' verdict, not the model's: a model's "within budget" is not evidence.
+        var currency = rulesDto.Currency ?? detail.Currency;
         var summary = DraftSummary.Describe(
-            attempt.Violations, detail.WeeklyCost, ceiling, rulesDto.Currency ?? detail.Currency, read.Unresolved.Count, attempt.ScaledDays);
+            attempt.Violations, detail.WeeklyCost, ceiling, currency, read.Unresolved.Count, attempt.ScaledDays,
+            BudgetReason(cost, ceiling, targets, context, currency, request.DurationDays), attempt.BudgetChanges);
 
         return new GeneratedPlanDto
         {
@@ -242,6 +244,91 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     }
 
     private const int MaxRepairs = 2;
+
+    /// <summary>
+    /// Why the draft is over its budget, when it is: the floor the targets put on the cost when that
+    /// floor is above the budget (<see cref="BudgetRepair.LowerBound"/>), and the lines that cost most.
+    /// </summary>
+    private static string? BudgetReason(PlanCostDto cost, decimal? ceiling, PlanTargets targets, MealPlanContext context, string? currency, int durationDays)
+    {
+        if (ceiling is not { } budget || cost.WeeklyTotal <= budget) return null;
+        var bound = BudgetRepair.LowerBound(context.Options, RepairTargets(targets));
+        var drivers = BudgetRepair.CostDrivers(
+            cost.Items.Where(i => i.Cost is not null).Select(i => (i.Name, PlanCostCalculator.PerWeek(i.Cost!.Value, durationDays))), currency);
+        return DraftSummary.BudgetReason(bound is { } b ? Math.Round(b.DailyCost * 7m, 2) : null, bound?.Basis, budget, drivers, currency);
+    }
+
+    private static BudgetRepair.Targets RepairTargets(PlanTargets targets) =>
+        new(targets.Calories.Value, targets.Protein.Value, targets.MaxCarbs.Value);
+
+    /// <summary>What code repairs before the model is asked again: portions on days over their calories, then the cost.</summary>
+    private async Task<DraftAttempt> RepairInCodeAsync(
+        DraftAttempt attempt,
+        GenerateMealPlanCommand request,
+        PlanRulesDto rulesDto,
+        decimal? ceiling,
+        bool several,
+        PlanTargets targets,
+        MealPlanContext context,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var scaled = await ScaleAsync(attempt, request, rulesDto, ceiling, several, targets.Calories.Value, userId, cancellationToken);
+        return await CutCostAsync(scaled, request, rulesDto, ceiling, several, targets, context, userId, cancellationToken);
+    }
+
+    /// <summary>
+    /// The deterministic budget repair (<see cref="BudgetRepair"/>): the costliest lines are swapped
+    /// for cheaper offered foods or saved recipes of the same role, or cut, while each day keeps
+    /// its targets. The repaired draft is checked again and kept only when it is better.
+    /// </summary>
+    private async Task<DraftAttempt> CutCostAsync(
+        DraftAttempt attempt,
+        GenerateMealPlanCommand request,
+        PlanRulesDto rulesDto,
+        decimal? ceiling,
+        bool several,
+        PlanTargets targets,
+        MealPlanContext context,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        // A budget violation is only raised when the budget and the prices share a currency.
+        if (attempt.Detail is not { TotalCost: { } total } detail || attempt.Plan is null || ceiling is not { } budget
+            || !attempt.Violations.Any(v => v.Rule == PlanRuleNames.BudgetOver)) return attempt;
+
+        var shown = detail.Days.SelectMany(d => d.Slots).SelectMany(s => s.Entries).ToDictionary(e => e.Id);
+        var lines = new List<BudgetRepair.Line>();
+        foreach (var (entry, index) in attempt.Plan.Entries.Select((e, i) => (e, i)))
+        {
+            if (!shown.TryGetValue(entry.Id, out var dto) || dto.Cost is not { } lineCost || dto.Nutrition is not { } n) continue;
+            var nutrition = new EntryNutrition(n.Calories, n.ProteinGrams, n.CarbsGrams, n.FatGrams, n.FiberGrams);
+            if (entry is { Kind: PlanEntryKind.Food, FoodId: { } foodId, Grams: { } grams })
+                lines.Add(new BudgetRepair.Line(index, entry.DayIndex, BudgetRepair.ItemKind.Food, foodId, dto.FoodName ?? "a food", grams, nutrition, lineCost));
+            else if (entry is { Kind: PlanEntryKind.Recipe, RecipeId: { } recipeId })
+                lines.Add(new BudgetRepair.Line(index, entry.DayIndex, BudgetRepair.ItemKind.Recipe, recipeId, dto.RecipeTitle ?? "a recipe", entry.Servings ?? 1m, nutrition, lineCost));
+        }
+        var days = detail.Days.ToDictionary(d => d.DayIndex,
+            d => new EntryNutrition(d.Totals.Calories, d.Totals.ProteinGrams, d.Totals.CarbsGrams, d.Totals.FatGrams, d.Totals.FiberGrams));
+
+        var changes = BudgetRepair.Repair(lines, days, context.Options, RepairTargets(targets), total, budget * request.DurationDays / 7m);
+        if (changes.Count == 0) return attempt;
+
+        var entries = attempt.Read.Entries.ToList();
+        foreach (var change in changes)
+        {
+            var entry = entries[change.Index];
+            var swapped = change.Name != change.ReplacedName;
+            var notes = swapped ? Cut($"In place of {change.ReplacedName}, to keep to the budget.", 1000) : entry.Notes;
+            entries[change.Index] = change.Kind == BudgetRepair.ItemKind.Food
+                ? entry with { Kind = nameof(PlanEntryKind.Food), FoodId = change.ItemId, Grams = change.Amount, RecipeId = null, Servings = null, Notes = notes }
+                : entry with { Kind = nameof(PlanEntryKind.Recipe), RecipeId = change.ItemId, Servings = change.Amount, FoodId = null, Grams = null, Notes = notes };
+        }
+        var repaired = await EvaluateAsync(request, rulesDto, ceiling, several, attempt.Response, attempt.Draft,
+            attempt.Read with { Entries = entries }, attempt.ScaledDays, userId, cancellationToken);
+        repaired = repaired with { BudgetChanges = attempt.BudgetChanges + changes.Count };
+        return repaired.IsBetterThan(attempt) ? repaired : attempt;
+    }
 
     /// <summary>
     /// One metered call and what code makes of it: the draft read against the catalogue, the days left
@@ -404,12 +491,22 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     {
         public string Content => Response.Content;
 
-        /// <summary>Fewer empty days first, then fewer rule violations; a tie keeps the first draft.</summary>
-        public bool IsBetterThan(DraftAttempt other) =>
-            EmptyDays.Count != other.EmptyDays.Count
-                ? EmptyDays.Count < other.EmptyDays.Count
-                : Violations.Count < other.Violations.Count
-                    || (Violations.Count == other.Violations.Count && Missing.Count < other.Missing.Count);
+        /// <summary>Lines code swapped or cut for the budget on the way to this draft.</summary>
+        public int BudgetChanges { get; init; }
+
+        /// <summary>
+        /// Fewer empty days first, then fewer rule violations, then fewer unknown names; when both are
+        /// over budget and otherwise even, the cheaper one. A tie keeps the first draft.
+        /// </summary>
+        public bool IsBetterThan(DraftAttempt other)
+        {
+            if (EmptyDays.Count != other.EmptyDays.Count) return EmptyDays.Count < other.EmptyDays.Count;
+            if (Violations.Count != other.Violations.Count) return Violations.Count < other.Violations.Count;
+            if (Missing.Count != other.Missing.Count) return Missing.Count < other.Missing.Count;
+            return OverBudget && other.OverBudget && Detail?.WeeklyCost < other.Detail?.WeeklyCost;
+        }
+
+        private bool OverBudget => Violations.Any(v => v.Rule == PlanRuleNames.BudgetOver);
     }
 
     /// <summary>

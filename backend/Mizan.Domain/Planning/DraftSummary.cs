@@ -17,19 +17,24 @@ public static class DraftSummary
     /// <param name="weeklyBudget">The weekly ceiling, in <paramref name="currency"/>.</param>
     /// <param name="unresolvedLines">Lines saved as text because the catalogue does not have them.</param>
     /// <param name="scaledDays">Days whose portions code scaled to the calorie target.</param>
+    /// <param name="budgetReason">Why the budget is not met, from <see cref="BudgetReason"/>; added to the budget line.</param>
+    /// <param name="budgetChanges">Lines code swapped or cut to bring the cost down.</param>
     public static Summary Describe(
         IReadOnlyList<PlanViolation> violations,
         decimal? weeklyCost,
         decimal? weeklyBudget,
         string? currency,
         int unresolvedLines,
-        IReadOnlyCollection<int> scaledDays)
+        IReadOnlyCollection<int> scaledDays,
+        string? budgetReason = null,
+        int budgetChanges = 0)
     {
         var unmet = new List<string>();
         foreach (var violation in violations)
         {
             var line = violation.Rule == PlanRuleNames.BudgetOver && weeklyCost is { } cost && weeklyBudget is { } budget
                 ? $"Budget not met: {Money.Format(cost, currency)} a week against {Money.Format(budget, currency)}."
+                    + (string.IsNullOrWhiteSpace(budgetReason) ? "" : " " + budgetReason)
                 : violation.DayIndex is { } day
                     ? string.Create(CultureInfo.InvariantCulture, $"Day {day + 1}{(violation.Slot is null ? "" : $" {violation.Slot.ToLowerInvariant()}")}: {violation.Message}")
                     : violation.Message;
@@ -49,6 +54,12 @@ public static class DraftSummary
                 ? $"Portions on day {days} were scaled to the calorie target."
                 : $"Portions on days {days} were scaled to the calorie target.");
         }
+        if (budgetChanges > 0)
+        {
+            parts.Add(budgetChanges == 1
+                ? "1 costly line was swapped or cut to lower the cost."
+                : string.Create(CultureInfo.InvariantCulture, $"{budgetChanges} costly lines were swapped or cut to lower the cost."));
+        }
         if (unresolvedLines > 0)
         {
             parts.Add(unresolvedLines == 1
@@ -56,6 +67,21 @@ public static class DraftSummary
                 : string.Create(CultureInfo.InvariantCulture, $"{unresolvedLines} lines are not in the catalogue and are saved as text to review."));
         }
         return new Summary(string.Join(" ", parts), unmet);
+    }
+
+    /// <summary>
+    /// Why a draft is over its budget, in one or two sentences: when even the cheapest way to meet
+    /// the targets with what was offered costs more than the budget, that floor; and the lines that
+    /// cost most. Null when there is nothing to say.
+    /// </summary>
+    /// <param name="lowerBoundWeekly">The weekly floor from <see cref="BudgetRepair.LowerBound"/>, times seven.</param>
+    public static string? BudgetReason(decimal? lowerBoundWeekly, string? basis, decimal? weeklyBudget, string? drivers, string? currency)
+    {
+        var parts = new List<string>();
+        if (lowerBoundWeekly is { } floor && weeklyBudget is { } budget && floor > budget && !string.IsNullOrWhiteSpace(basis))
+            parts.Add($"Meeting {basis} with the priced foods and your recipes costs at least {Money.Format(floor, currency)} a week.");
+        if (!string.IsNullOrWhiteSpace(drivers)) parts.Add(drivers);
+        return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 }
 

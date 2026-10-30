@@ -388,11 +388,11 @@ public class MealPlanGenerationTests
         var (_, client) = await StartAsync(pro: true);
         var eggs = await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
         await PriceAsync(eggs, 200);
-        // 858 kcal a day: even halved it is over 300 kcal, so the first draft is not scaled.
+        // 858 kcal a day: halved it is still over 300 kcal but cheaper, so both days are scaled to
+        // 300 g, then cut to 190 g for the budget, within a tenth of the calorie target. The week
+        // still costs ETB 266.00.
         _fixture.Ai.Reply(EggsOnly(600, 600, note: "Within budget and on target."));
-        // Day 0 is scaled to 210 g (300 kcal); the week still costs ETB 287.00.
-        _fixture.Ai.Reply(EggsOnly(400, 200, note: "Within budget and on target."));
-        // The same again does not improve the draft, so the repairs end.
+        // The repair comes back, after code's own repairs, to the same draft, so the repairs end.
         _fixture.Ai.Reply(EggsOnly(400, 200, note: "Within budget and on target."));
 
         var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request() with
@@ -404,19 +404,92 @@ public class MealPlanGenerationTests
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
         draft.Plan.Status.Should().Be("Draft");
-        Entries(draft.Plan).Select(e => e.Grams).Should().Equal(210m, 200m);
-        draft.Unmet.Should().Equal("Budget not met: ETB 287.00 a week against ETB 100.00.");
-        draft.Note.Should().Be("1 rule is not met; the draft is saved for review. Portions on day 1 were scaled to the calorie target.");
+        Entries(draft.Plan).Select(e => e.Grams).Should().Equal(190m, 190m);
+        draft.Unmet.Should().Equal("Budget not met: ETB 266.00 a week against ETB 100.00. "
+            + "Meeting the 300 kcal target with the priced foods and your recipes costs at least ETB 264.34 a week. "
+            + "Most of the cost: Eggs (ETB 266.00 a week).");
+        draft.Note.Should().Be("1 rule is not met; the draft is saved for review. Portions on days 1, 2 were scaled to the calorie target. "
+            + "2 costly lines were swapped or cut to lower the cost.");
 
-        _fixture.Ai.Calls.Should().HaveCount(3);
+        _fixture.Ai.Calls.Should().HaveCount(2);
         _fixture.Ai.Calls[0].Messages.Should().Contain(m => m.Content.Contains("price per 100 g in ETB") && m.Content.Contains("Eggs | 143 kcal") && m.Content.Contains("| 20\n"));
-        _fixture.Ai.Calls[2].Messages[^1].Content.Should()
-            .Contain("calorie target on these days: 0.")
-            .And.Contain("Day 0: 300 kcal").And.Contain("running total ETB 42.00")
-            .And.Contain("Day 1: 286 kcal").And.Contain("running total ETB 82.00")
-            .And.Contain("A week of this plan costs ETB 287.00 against a budget of ETB 100.00.");
+        _fixture.Ai.Calls[1].Messages[^1].Content.Should()
+            .Contain("calorie target on these days: 0, 1.")
+            .And.Contain("Day 0: 272 kcal").And.Contain("running total ETB 38.00")
+            .And.Contain("Day 1: 272 kcal").And.Contain("running total ETB 76.00")
+            .And.Contain("A week of this plan costs ETB 266.00 against a budget of ETB 100.00.");
         var ledger = await LedgerAsync();
-        ledger.Should().HaveCount(3).And.OnlyContain(l => l.Outcome == AiCallOutcome.Succeeded);
+        ledger.Should().HaveCount(2).And.OnlyContain(l => l.Outcome == AiCallOutcome.Succeeded);
+    }
+
+    /// <summary>
+    /// M-01 retest: a high-protein draft at 2,100 kcal cost three times its budget, most of it in
+    /// tilapia. Code now swaps the costliest lines for cheaper offered foods of the same role before
+    /// the model is asked again, and a budget it still cannot meet says why. The model reads what a
+    /// serving of each saved recipe costs.
+    /// </summary>
+    [Fact]
+    public async Task ADraftOverItsBudget_HasItsCostliestLinesSwappedInCode_AndATooTightBudgetSaysWhy()
+    {
+        var (me, client) = await StartAsync(pro: true);
+        await _fixture.GrantAiConsentAsync(me);
+        var tilapia = await _world.FoodAsync("Tilapia", 96, 20, 0, 1.7m);
+        var soy = await _world.FoodAsync("Soy chunks", 345, 52, 33, 0.5m);
+        var lentils = await _world.FoodAsync("Lentils", 116, 9, 20, 0.4m);
+        await PriceAsync(tilapia, 900);
+        await PriceAsync(soy, 60);
+        await PriceAsync(lentils, 100);
+        // Four servings of 200 g lentils each: ETB 20.00 a serving.
+        var misir = await _world.RecipeAsync(me, "Misir wot", 4, isPublic: false, (lentils, 800m, "g", null));
+        var day = (int d) => $$"""
+            {"dayIndex":{{d}},"entries":[
+              {"slot":"LUNCH","kind":"food","foodName":"Tilapia","recipeId":null,"grams":600,"servings":null,"note":"Grilled","prepSessionIndex":null},
+              {"slot":"DINNER","kind":"food","foodName":"Lentils","recipeId":null,"grams":800,"servings":null,"note":null,"prepSessionIndex":null},
+              {"slot":"BREAKFAST","kind":"recipe","foodName":null,"recipeId":"{{misir.Id}}","grams":null,"servings":2,"note":null,"prepSessionIndex":null}]}
+            """;
+        var reply = $$"""{"name":"Protein week","note":"Within budget.","prepSessions":[],"days":[{{day(0)}},{{day(1)}},{{day(2)}}]}""";
+        // The first budget is met by code's swaps, so no repair call; the second is not, so one repair
+        // call, whose same answer does not improve the draft.
+        for (var i = 0; i < 3; i++) _fixture.Ai.Reply(reply);
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", new GenerateMealPlanRequest
+        {
+            StartDate = new DateOnly(2026, 11, 3),
+            DurationDays = 3,
+            Rules = new PlanRulesDto { MacroMode = "HighProtein", TargetCalories = 2100, Currency = "ETB" },
+            BudgetCeilings = [1500, 200],
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var drafts = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts;
+        drafts.Should().HaveCount(2);
+
+        // ETB 4,620.00 a week as written. Each day's 600 g tilapia (ETB 540.00) became 165 g soy
+        // chunks at the same calories (ETB 9.90), which keeps the 158 g protein target.
+        var met = drafts[0];
+        Entries(met.Plan).Where(e => e.Slot == "LUNCH").Should().OnlyContain(e =>
+            e.FoodId == soy.Id && e.Grams == 165m && e.Notes == "In place of Tilapia, to keep to the budget.");
+        met.Plan.WeeklyCost.Should().Be(909.30m);
+        met.Violations.Should().BeEmpty();
+        met.Unmet.Should().BeEmpty();
+        met.Note.Should().Be("Meets every rule of the plan. 3 costly lines were swapped or cut to lower the cost.");
+
+        // ETB 200.00 cannot be met: even the cheapest kcal offered (soy chunks) costs more than that
+        // for 90% of 2,100 kcal a day. The draft is still saved, flagged, with the cost drivers.
+        var tight = drafts[1];
+        tight.Plan.Status.Should().Be("Draft");
+        tight.Violations.Select(v => v.Rule).Should().Contain(PlanRuleNames.BudgetOver);
+        tight.Unmet.Should().ContainSingle(l => l.StartsWith("Budget not met: ")).Which.Should()
+            .Contain("against ETB 200.00.")
+            .And.Contain("Meeting the 2100 kcal target with the priced foods and your recipes costs at least ETB 230.09 a week.")
+            .And.Contain("Most of the cost: Lentils (");
+
+        // The model read each recipe's cost per serving, worked out as the plan's cost table works it out.
+        _fixture.Ai.Calls.Should().HaveCount(3);
+        _fixture.Ai.Calls[0].Messages.Should().Contain(m =>
+            m.Content.Contains("cost per serving in ETB") && m.Content.Contains($"{misir.Id} | Misir wot | 4 | 232 kcal") && m.Content.Contains("| 20\n"));
+        var ledger = await LedgerAsync();
+        ledger.Should().HaveCount(3).And.OnlyContain(l => l.Feature == AiFeatures.Planning && l.Outcome == AiCallOutcome.Succeeded);
     }
 
     private static IEnumerable<PlanEntryDto> Entries(MealPlanDetailDto plan) =>
