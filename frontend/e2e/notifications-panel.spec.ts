@@ -208,9 +208,14 @@ test("on a tablet the notifications are a drawer over the page, which keeps its 
   await expect(
     drawer.getByRole("button", { name: /Achievement 1/ }),
   ).toBeFocused();
-  const box = await drawer.boundingBox();
-  expect(box?.width).toBe(420);
-  expect((box?.x ?? 0) + (box?.width ?? 0)).toBe(775);
+  // The drawer slides in, so its edge settles on the viewport's within a subpixel.
+  await expect
+    .poll(async () => {
+      const box = await drawer.boundingBox();
+      return Math.round((box?.x ?? 0) + (box?.width ?? 0));
+    })
+    .toBe(775);
+  expect((await drawer.boundingBox())?.width).toBe(420);
   expect((await main.boundingBox())?.width).toBe(before);
   expect(
     await page.evaluate(
