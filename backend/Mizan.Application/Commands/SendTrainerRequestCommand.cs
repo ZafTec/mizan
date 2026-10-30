@@ -42,11 +42,8 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
         }
 
         var trainerExists = await _context.Users
-            .AnyAsync(
-                u => u.Id == request.TrainerId
-                    && !u.Banned
-                    && (u.Role == "trainer" || u.Role == "admin"),
-                cancellationToken);
+            .Where(Queries.AvailableTrainers.Rule)
+            .AnyAsync(u => u.Id == request.TrainerId, cancellationToken);
 
         if (!trainerExists)
         {

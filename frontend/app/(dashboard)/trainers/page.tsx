@@ -87,11 +87,9 @@ export default function TrainersPage() {
 
   const filteredTrainers = trainers.filter((trainer) => {
     const query = debouncedQuery.toLowerCase();
-    const trainerEmail = trainer.email?.toLowerCase() ?? "";
     const specialties = trainer.specialties?.toLowerCase() ?? "";
     return (
       trainer.name?.toLowerCase().includes(query) ||
-      trainerEmail.includes(query) ||
       specialties.includes(query)
     );
   });
@@ -120,7 +118,7 @@ export default function TrainersPage() {
           <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400" />
           <input
             type="text"
-            placeholder="Search trainers by name, email, or specialty..."
+            placeholder="Search trainers by name or specialty..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input pl-10 w-full"
@@ -141,14 +139,14 @@ export default function TrainersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTrainers.map((trainer) => (
             <div
-              key={trainer.id || trainer.email || "trainer-card"}
+              key={trainer.id}
               className="card p-6"
             >
               <div className="flex flex-col items-center text-center mb-4">
                 {trainer.image ? (
                   <Image
                     src={trainer.image}
-                    alt={trainer.name || trainer.email || "Trainer"}
+                    alt={trainer.name || "Trainer"}
                     width={80}
                     height={80}
                     className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-charcoal-blue-900 mb-3"
@@ -156,18 +154,13 @@ export default function TrainersPage() {
                 ) : (
                   <div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-charcoal-blue-900 mb-3">
                     <span className="text-2xl font-bold text-white">
-                      {(trainer.email || "?").charAt(0).toUpperCase()}
+                      {(trainer.name || "?").charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
                 <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">
-                  {trainer.name ||
-                    trainer.email?.split("@")[0] ||
-                    "Unknown trainer"}
+                  {trainer.name || "Unnamed trainer"}
                 </h3>
-                <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-2">
-                  {trainer.email}
-                </p>
                 <div className="flex items-center gap-2 text-xs text-charcoal-blue-600 dark:text-charcoal-blue-400">
                   <span>{trainer.clientCount || 0} clients</span>
                 </div>
