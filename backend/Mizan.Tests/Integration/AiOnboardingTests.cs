@@ -140,7 +140,8 @@ public class AiOnboardingTests
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         _fixture.Ai.Calls.Count.Should().Be(4);
         _fixture.Ai.LastCall.Tools.Should().BeEmpty();
-        (await MeasurementCountAsync(userId)).Should().Be(3);
+        // Three rounds ran the tool three times; one weight a day keeps them in one row.
+        (await MeasurementCountAsync(userId)).Should().Be(1);
     }
 
     [Fact]

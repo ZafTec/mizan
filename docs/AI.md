@@ -89,7 +89,7 @@ On the web the assistant is a side panel in the app shell (`components/ai/Assist
 
 ### Planning tools and typed cards
 
-Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call.
+Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call. `search_recipes` (also on `DataAxis.Planning`, read) finds the person's own and household recipes by name with nutrition per serving, and `log_meal` takes its `recipeId` and servings, so a dish the person cooks is logged with the recipe's own nutrition instead of an estimate.
 
 ### App context
 

@@ -287,6 +287,36 @@ public class AiChatTests
         (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.PendingContext.Should().BeNull();
     }
 
+    /// <summary>
+    /// The live finding: the assistant looked the person's own dish up in the food catalogue, found
+    /// nothing and logged an estimate. It now finds the recipe and logs it with the recipe's nutrition.
+    /// </summary>
+    [Fact]
+    public async Task TheAssistantFindsThePersonsRecipe_AndLogsItWithTheRecipesOwnNutrition()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: true);
+        var world = new PlanningWorld(_fixture);
+        var lentils = await world.FoodAsync("Red lentils", 116, 9, 20, 0.4m);
+        var stew = await world.RecipeAsync(userId, "Mesir wot", 2, false, (lentils, 400m, "g", null));
+        // Someone else's public recipe is not one of the person's.
+        var (other, _) = await world.PersonAsync("other");
+        await world.RecipeAsync(other, "Mesir wot deluxe", 2, true, (lentils, 400m, "g", null));
+
+        _fixture.Ai.CallTools(("search_recipes", """{"query":"mesir"}"""));
+        _fixture.Ai.CallTools(("log_meal", $$"""{"recipeId":"{{stew.Id}}","servings":1,"mealType":"LUNCH"}"""));
+        _fixture.Ai.Reply("Logged a serving of your mesir wot.");
+
+        var turn = await SendAsync(client, null, "I had a bowl of my mesir wot for lunch");
+
+        turn.Performed.Should().HaveCount(2).And.OnlyContain(p => p.Succeeded);
+        var lookup = _fixture.Ai.LastCall.Messages.First(m => m.Role == AiRole.Tool).Content;
+        lookup.Should().Contain(stew.Id.ToString()).And.Contain("232 kcal").And.NotContain("deluxe");
+        var diary = await _fixture.GetFoodDiaryEntriesByUserId(userId);
+        diary.Should().ContainSingle().Which.Calories.Should().Be(232m);
+    }
+
     [Fact]
     public async Task MealSuggestionsAreGivenEveryTargetOfTheGoalAndWhatIsLeftToday()
     {

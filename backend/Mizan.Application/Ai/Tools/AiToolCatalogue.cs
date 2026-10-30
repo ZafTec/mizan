@@ -114,12 +114,15 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "log_meal",
-            "Record something the user says they ate, with the macros they gave you or your best estimate.",
+            "Record something the user says they ate. For one of their recipes (search_recipes), pass recipeId and servings "
+            + "and leave the macros out: the recipe's own nutrition is used. Otherwise pass a name with the macros they gave you or your best estimate.",
             """
             {
               "type": "object",
               "additionalProperties": false,
               "properties": {
+                "recipeId": { "type": "string", "description": "A recipe id from search_recipes" },
+                "servings": { "type": "number", "description": "Recipe servings eaten, defaults to 1" },
                 "name": { "type": "string" },
                 "mealType": { "type": "string", "enum": ["BREAKFAST", "LUNCH", "DINNER", "SNACK", "DRINK"] },
                 "calories": { "type": "number" },
@@ -128,16 +131,17 @@ public static class AiToolCatalogue
                 "fatGrams": { "type": "number" },
                 "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" }
               },
-              "required": ["name", "calories"]
+              "required": []
             }
             """,
             (args, _) => new CreateFoodDiaryEntryCommand
             {
-                Name = AiToolArgs.RequiredString(args, "name"),
+                RecipeId = AiToolArgs.OptionalGuid(args, "recipeId"),
+                Name = AiToolArgs.OptionalString(args, "name"),
                 MealType = MealTypes.Normalize(AiToolArgs.OptionalString(args, "mealType")),
                 EntryDate = AiToolArgs.OptionalDate(args, "date"),
-                Servings = 1,
-                Calories = AiToolArgs.RequiredDecimal(args, "calories"),
+                Servings = AiToolArgs.OptionalDecimal(args, "servings") ?? 1,
+                Calories = AiToolArgs.OptionalDecimal(args, "calories"),
                 ProteinGrams = AiToolArgs.OptionalDecimal(args, "proteinGrams"),
                 CarbsGrams = AiToolArgs.OptionalDecimal(args, "carbsGrams"),
                 FatGrams = AiToolArgs.OptionalDecimal(args, "fatGrams"),
@@ -303,6 +307,33 @@ public static class AiToolCatalogue
                     + $"P{f.ProteinPer100g} C{f.CarbsPer100g} F{f.FatPer100g}"))
                 : "No foods matched that.",
             DataAxis.Nutrition, AiToolAccess.Read),
+
+        new AiToolDefinition(
+            "search_recipes",
+            "Look up the user's own recipes, and their household's, by name, with nutrition per serving. "
+            + "Search here before search_foods when they name a dish they cook; log one with log_meal and its recipeId.",
+            """
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": { "query": { "type": "string" } },
+              "required": ["query"]
+            }
+            """,
+            (args, _) => new GetRecipesQuery
+            {
+                SearchTerm = AiToolArgs.RequiredString(args, "query"),
+                IncludePublic = false,
+                PageSize = 10,
+            },
+            result => result is Common.PagedResult<RecipeDto> recipes && recipes.Items.Count > 0
+                ? string.Join("\n", recipes.Items.Select(r =>
+                    $"{r.Id} — {r.Title} ({r.Servings} servings)"
+                    + (r.Nutrition is { CaloriesPerServing: { } kcal } n
+                        ? $" - per serving {kcal:0} kcal, P{n.ProteinGrams:0.#} C{n.CarbsGrams:0.#} F{n.FatGrams:0.#}"
+                        : " - no nutrition yet")))
+                : "None of their recipes matched that.",
+            DataAxis.Planning, AiToolAccess.Read),
 
         new AiToolDefinition(
             "get_daily_totals",
