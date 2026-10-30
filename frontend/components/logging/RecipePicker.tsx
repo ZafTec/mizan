@@ -3,6 +3,11 @@
 import { useEffect, useId, useState } from "react";
 import { Heart, History, Plus, Search } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
+import {
+  recipesThatFit,
+  type RecipeFitItem,
+  type RecipeFitResult,
+} from "@/lib/api/meals";
 import type { RecipeResult } from "./logging";
 
 type Section = {
@@ -10,17 +15,47 @@ type Section = {
   title: string;
   icon: typeof Heart | null;
   recipes: RecipeResult[];
+  /** A line under each title in place of the per-serving figures, by recipe id. */
+  details?: Record<string, string>;
 };
 
+/** A ranked recipe as the picker hands it on: the recipe and one serving's figures, all from the API. */
+function fitRecipe(item: RecipeFitItem): RecipeResult {
+  return {
+    id: item.recipeId,
+    title: item.title,
+    nutrition: {
+      caloriesPerServing: item.calories,
+      proteinGrams: item.protein,
+      carbsGrams: item.carbs,
+      fatGrams: item.fat,
+    },
+  };
+}
+
+/** "360 kcal / serving · leaves 280 kcal", or "… · 160 kcal over" where the API reports the day already past it. */
+function fitDetail(item: RecipeFitItem): string {
+  const serving = `${Math.round(item.calories)} kcal / serving`;
+  const after = item.caloriesLeftAfter;
+  if (after == null) return serving;
+  return after < 0
+    ? `${serving} · ${Math.round(-after)} kcal over`
+    : `${serving} · leaves ${Math.round(after)} kcal`;
+}
+
 /**
- * Logging from a recipe has its own view, so a long list does not push the meal off the screen. Favorites come
- * first, then the recipes this person logs most, then everything else. Choosing one adds it to the meal and goes
+ * Logging from a recipe has its own view, so a long list does not push the meal off the screen. The recipes that
+ * best fit what is left of the meal's day come first, in the order GET /api/Recipes/fit ranks them; then
+ * favorites, the recipes this person logs most, and everything else. Choosing one adds it to the meal and goes
  * straight back.
  */
 export default function RecipePicker({
+  date,
   onPick,
   onBack,
 }: {
+  /** The meal's day, which the ranking measures what is left against. */
+  date?: string;
   onPick: (recipe: RecipeResult) => void;
   onBack: () => void;
 }) {
@@ -31,6 +66,23 @@ export default function RecipePicker({
   const [results, setResults] = useState<RecipeResult[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [fit, setFit] = useState<RecipeFitResult | null>(null);
+
+  useEffect(() => {
+    if (!date) return;
+    let active = true;
+    recipesThatFit(date)
+      .then((result) => {
+        if (active) setFit(result);
+      })
+      .catch(() => {
+        // The ranking is a head start; the lists below still work without it.
+        if (active) setFit(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [date, attempt]);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +134,18 @@ export default function RecipePicker({
       return true;
     });
 
+  // Only without a search: the ranking answers "what should I have", a search already knows.
+  const fitRows = term ? [] : take((fit?.recipes ?? []).map(fitRecipe));
+  if (fitRows.length)
+    sections.push({
+      key: "fit",
+      title: "Fits what is left",
+      icon: null,
+      recipes: fitRows,
+      details: Object.fromEntries(
+        (fit?.recipes ?? []).map((item) => [item.recipeId, fitDetail(item)]),
+      ),
+    });
   const favoriteRows = take(
     favorites.map((recipe) => ({ ...recipe, isFavorited: true })),
   );
@@ -214,13 +278,19 @@ export default function RecipePicker({
                         {recipe.title}
                       </span>
                       <span className="mt-0.5 block text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                        {recipe.nutrition?.caloriesPerServing == null
-                          ? "Nutrition unavailable"
-                          : `${Math.round(recipe.nutrition.caloriesPerServing)} kcal / serving`}
-                        {recipe.nutrition?.proteinGrams != null &&
-                          ` · ${Math.round(recipe.nutrition.proteinGrams)} g protein`}
-                        {(recipe.timesLogged ?? 0) > 0 &&
-                          ` · Logged ${recipe.timesLogged} ${recipe.timesLogged === 1 ? "time" : "times"}`}
+                        {section.details ? (
+                          section.details[recipe.id]
+                        ) : (
+                          <>
+                            {recipe.nutrition?.caloriesPerServing == null
+                              ? "Nutrition unavailable"
+                              : `${Math.round(recipe.nutrition.caloriesPerServing)} kcal / serving`}
+                            {recipe.nutrition?.proteinGrams != null &&
+                              ` · ${Math.round(recipe.nutrition.proteinGrams)} g protein`}
+                            {(recipe.timesLogged ?? 0) > 0 &&
+                              ` · Logged ${recipe.timesLogged} ${recipe.timesLogged === 1 ? "time" : "times"}`}
+                          </>
+                        )}
                       </span>
                     </span>
                     <Plus

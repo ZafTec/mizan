@@ -203,10 +203,24 @@ export default function MealLogForm({
       note: analysis.note,
       imageUrl: analysis.imageUrl,
     });
+    // A food the API matched to one of the person's recipes is logged as that recipe, at the servings it
+    // proposed, so the diary gets the recipe's own nutrition rather than an estimate.
+    const recipes = analysis.foods.filter(
+      (food) => food.source === "recipe" && food.recipeId && food.servings,
+    );
+    setSelected((current) => [
+      ...current,
+      ...recipes.map((food) => ({
+        key: crypto.randomUUID(),
+        item: recipeItem({ id: food.recipeId!, title: food.name }),
+        amount: String(food.servings),
+      })),
+    ]);
     setProposed((current) => [
       ...current,
       // A food the model gave no weight for cannot be scaled, so it is not offered as a row.
       ...analysis.foods
+        .filter((food) => !recipes.includes(food))
         .filter((food) => food.per100g && food.portionGrams > 0)
         .map((food) => ({
           key: crypto.randomUUID(),
@@ -336,7 +350,11 @@ export default function MealLogForm({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {view === "recipes" && (
-        <RecipePicker onPick={addRecipe} onBack={() => setView("meal")} />
+        <RecipePicker
+          date={date}
+          onPick={addRecipe}
+          onBack={() => setView("meal")}
+        />
       )}
       <div hidden={view === "recipes"} className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 scroll-py-6 space-y-5 overflow-y-auto overscroll-contain pb-5">
@@ -400,7 +418,7 @@ export default function MealLogForm({
                 className="space-y-2"
               >
                 <h3 className="text-sm font-semibold">Your meal</h3>
-                {proposal && proposed.length > 0 && (
+                {proposal && (
                   <p className="flex items-start gap-2 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
                     <span>
                       Estimated from{" "}

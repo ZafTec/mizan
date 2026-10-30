@@ -16,3 +16,15 @@ export const previewMeal = (lines: MealPreviewLine[]) =>
     method: "POST",
     body: { lines } satisfies Schemas["PreviewMealQuery"],
   });
+
+export type RecipeFitResult = Schemas["RecipeFitResult"];
+export type RecipeFitItem = Schemas["RecipeFitItem"];
+
+/**
+ * The person's saved recipes, best first, by how well one serving fits what is
+ * left of the day's targets. The ranking and every figure are the API's.
+ */
+export const recipesThatFit = (date: string, count = 3) =>
+  clientApi<RecipeFitResult>(
+    `/api/Recipes/fit?${new URLSearchParams({ date, count: String(count) })}`,
+  );
