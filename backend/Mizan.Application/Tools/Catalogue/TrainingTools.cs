@@ -338,9 +338,10 @@ public static class TrainingTools
         action == NamedWorkoutAction.Update ? args.RequiredGuid("workoutId") : null,
         args.OptionalString("name"),
         args.OptionalDate("date"),
-        args.OptionalInt("durationMinutes"),
-        args.OptionalDecimal("bodyweightKg"),
-        args.OptionalInt("caloriesBurned"),
+        // A zero duration, bodyweight or calorie count is one the person did not give.
+        args.OptionalInt("durationMinutes") is > 0 and var minutes ? minutes : null,
+        args.OptionalDecimal("bodyweightKg") is > 0 and var bodyweight ? bodyweight : null,
+        args.OptionalInt("caloriesBurned") is > 0 and var burned ? burned : null,
         args.OptionalString("notes"),
         args.OptionalGuid("templateId"),
         args.As<List<NamedWorkoutExercise>>("exercises") ?? throw new DomainValidationException("'exercises' is required: the exercises with their sets."));

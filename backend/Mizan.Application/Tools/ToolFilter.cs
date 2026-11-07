@@ -138,6 +138,41 @@ public static class ToolFilter
             ["additionalProperties"] = false,
         };
         if (required.Count > 0) root["required"] = required;
+        OptionalMayBeNull(root);
         return root;
+    }
+
+    /// <summary>
+    /// Every property an object does not require also takes null, at any depth. A client that fills
+    /// every property (as strict tool calling does) then sends null for what it does not mean, not a
+    /// zero or an empty string that reads as a value.
+    /// </summary>
+    private static void OptionalMayBeNull(JsonObject schema)
+    {
+        if (schema["properties"] is JsonObject properties)
+        {
+            var required = (schema["required"] as JsonArray)?.Select(r => r?.GetValue<string>()).ToHashSet() ?? [];
+            foreach (var (name, property) in properties.ToList())
+            {
+                if (property is not JsonObject child) continue;
+                OptionalMayBeNull(child);
+                if (!required.Contains(name)) TakesNull(child);
+            }
+        }
+        if (schema["items"] is JsonObject items) OptionalMayBeNull(items);
+    }
+
+    private static void TakesNull(JsonObject schema)
+    {
+        switch (schema["type"])
+        {
+            case JsonValue single when single.GetValue<string>() != "null":
+                schema["type"] = new JsonArray(single.GetValue<string>(), "null");
+                break;
+            case JsonArray types when !types.Any(t => t?.GetValue<string>() == "null"):
+                types.Add("null");
+                break;
+        }
+        if (schema["enum"] is JsonArray values && !values.Any(v => v is null)) values.Add(null);
     }
 }

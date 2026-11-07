@@ -84,6 +84,28 @@ public class TaskToolStoryTests
     }
 
     [Fact]
+    public async Task AConnectedApp_ReadsThePersonsOwnRecipes_EvenWhenItFillsUnusedArgumentsWithEmptyValues()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var user = Guid.NewGuid();
+        await _fixture.SeedUserAsync(user, $"u-{user:N}@example.com");
+        await _fixture.SeedRecipeAsync(user, "Lentil soup", "Red lentils", 4, 30);
+        using var app = AppClient(user, await GrantAsync(user, [McpScopes.NutritionRead]));
+
+        // A model often sends every argument of the schema; an empty string or the zero id means it left one out.
+        var found = await CallAsync(app, "find_food", new
+        {
+            kind = "recipe",
+            query = "lentil",
+            recipeId = Guid.Empty,
+            foodId = "",
+        });
+
+        found.GetProperty("isError").GetBoolean().Should().BeFalse(found.ToString());
+        found.GetProperty("text").GetString().Should().Contain("Lentil soup");
+    }
+
+    [Fact]
     public async Task DeletingARecipe_ShowsWhatGoes_AndRunsOnlyOnceWhenConfirmed()
     {
         await _fixture.ResetDatabaseAsync();

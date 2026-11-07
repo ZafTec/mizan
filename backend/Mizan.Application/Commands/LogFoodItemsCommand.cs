@@ -1,7 +1,9 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Exceptions;
+using Mizan.Application.Interfaces;
 using Mizan.Application.Planning;
 using Mizan.Contracts.Meals;
 using Mizan.Domain.Constants;
@@ -29,11 +31,13 @@ public sealed record LogFoodItemsCommand(
 public sealed class LogFoodItemsCommandHandler : IRequestHandler<LogFoodItemsCommand, LogFoodReceipt>
 {
     private readonly ISender _sender;
+    private readonly IMizanDbContext _context;
     private readonly ILogger<LogFoodItemsCommandHandler> _logger;
 
-    public LogFoodItemsCommandHandler(ISender sender, ILogger<LogFoodItemsCommandHandler> logger)
+    public LogFoodItemsCommandHandler(ISender sender, IMizanDbContext context, ILogger<LogFoodItemsCommandHandler> logger)
     {
         _sender = sender;
+        _context = context;
         _logger = logger;
     }
 
@@ -90,10 +94,16 @@ public sealed class LogFoodItemsCommandHandler : IRequestHandler<LogFoodItemsCom
     private static void Check(LogFoodItemsCommand request, LogFoodItem item, int index)
     {
         if (item is null) throw new DomainValidationException($"items[{index}] is empty.");
-        var sources = new[] { item.FoodId.HasValue, item.RecipeId.HasValue, item.PlanEntryId.HasValue, !string.IsNullOrWhiteSpace(item.Name) }
-            .Count(given => given);
-        if (sources != 1)
-            throw new DomainValidationException($"items[{index}] needs exactly one of foodId, recipeId, planEntryId, or a name with its nutrition.");
+        var sources = new (bool Given, string Name)[]
+            {
+                (item.FoodId.HasValue, "foodId"), (item.RecipeId.HasValue, "recipeId"),
+                (item.PlanEntryId.HasValue, "planEntryId"), (!string.IsNullOrWhiteSpace(item.Name), "name"),
+            }
+            .Where(source => source.Given).Select(source => source.Name).ToList();
+        if (sources.Count != 1)
+            throw new DomainValidationException(sources.Count == 0
+                ? $"items[{index}] needs exactly one of foodId, recipeId, planEntryId, or a name with its nutrition."
+                : $"items[{index}] has {string.Join(" and ", sources)}; send exactly one. A name with nutrition is only for food without an id, and an id brings its own nutrition.");
         if (item.FoodId == Guid.Empty || item.RecipeId == Guid.Empty || item.PlanEntryId == Guid.Empty)
             throw new DomainValidationException($"items[{index}] has an empty id.");
         if (item.PlanEntryId.HasValue)
@@ -112,6 +122,21 @@ public sealed class LogFoodItemsCommandHandler : IRequestHandler<LogFoodItemsCom
             throw new DomainValidationException($"items[{index}] nutrition values cannot be negative.");
         if (!string.IsNullOrWhiteSpace(item.Name) && item.Calories is null && item.CaloriesPer100g is null)
             throw new DomainValidationException($"items[{index}] needs calories, or amountGrams with caloriesPer100g.");
+    }
+
+    /// <summary>
+    /// The servings to log: as given, else a catalogue food's weight in grams over its serving size,
+    /// else one. The server does the conversion so a caller that knows the grams need not.
+    /// </summary>
+    private async Task<decimal> ServingsAsync(LogFoodItem item, CancellationToken cancellationToken)
+    {
+        if (item.Servings is { } servings) return servings;
+        if (item.FoodId is { } foodId && item.AmountGrams is > 0 and { } grams)
+        {
+            var size = await _context.Foods.Where(f => f.Id == foodId).Select(f => (decimal?)f.ServingSize).FirstOrDefaultAsync(cancellationToken);
+            if (size is > 0) return Math.Round(grams / size.Value, 4);
+        }
+        return 1;
     }
 
     private static string KindOf(LogFoodItem item) =>
@@ -150,7 +175,7 @@ public sealed class LogFoodItemsCommandHandler : IRequestHandler<LogFoodItemsCom
             EntryDate = date,
             LoggedAt = item.LoggedAt,
             MealType = type,
-            Servings = item.Servings ?? 1,
+            Servings = await ServingsAsync(item, cancellationToken),
             AmountGrams = item.AmountGrams,
             Calories = item.Calories,
             ProteinGrams = item.ProteinGrams,

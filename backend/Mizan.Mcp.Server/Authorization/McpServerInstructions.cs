@@ -27,11 +27,11 @@ public static class McpServerInstructions
 
     /// <summary>The same rules for the task tools (<c>Mcp:Toolset</c> tasks).</summary>
     public const string TasksText = """
-        Mizan records meals, workouts and body measurements for one person. Each tool covers one task; a mode argument (view, kind, action or section) picks what it does.
+        Mizan records meals, workouts and body measurements for one person. Each tool covers one task; a mode argument (view, kind, action or section) picks what it does. Each argument says which modes read it: send only those the mode reads, and leave out the rest rather than filling them with empty values.
 
         Logging food:
         - Find before you log: find_food (kind food for the catalogue, kind recipe for saved recipes), then log_food with items, each one a foodId, a recipeId, a planEntryId with its planId, or a name with the nutrition the person gave.
-        - "servings" is a count of the food's own serving size, not grams. Read the find_food result and convert the amount eaten before you send it.
+        - "servings" is a count of the food's own serving (find_food shows its size), not grams. When the person gave grams, send amountGrams instead and Mizan converts.
         - Never guess nutrition numbers or a recipe's batch weight. Ask the person. estimate_food gives an estimate to confirm; it logs nothing.
 
         Several things at once:

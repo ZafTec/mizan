@@ -39,13 +39,15 @@ public sealed class GetAdminAchievementQueryHandler : IRequestHandler<GetAdminAc
 public sealed record AdminActionInfo(string Id, string Kind, string Summary, string RunWith, JsonObject? Arguments);
 
 /// <summary>
-/// The admin actions whose id or summary holds every word of <see cref="Query"/>, or the one named
+/// The admin actions whose id or summary hold the most words of <see cref="Query"/>, or the one named
 /// <see cref="Id"/> with its arguments. Static: it reads the registry, never the database.
 /// </summary>
 public record SearchAdminActionsQuery(string? Query, string? Id) : IRequest<IReadOnlyList<AdminActionInfo>>;
 
 public sealed class SearchAdminActionsQueryHandler : IRequestHandler<SearchAdminActionsQuery, IReadOnlyList<AdminActionInfo>>
 {
+    private const int MaxMatches = 12;
+
     public Task<IReadOnlyList<AdminActionInfo>> Handle(SearchAdminActionsQuery request, CancellationToken cancellationToken)
     {
         if (request.Id is { Length: > 0 } id)
@@ -58,9 +60,14 @@ public sealed class SearchAdminActionsQueryHandler : IRequestHandler<SearchAdmin
             .Split([' ', '_', ',', '.'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(w => w.ToLowerInvariant())
             .ToList();
+        // Best first: the actions that hold the most words of the query, so a query in other words than
+        // the summary's still finds something to read.
         var matches = AdminActionRegistry.All
-            .Where(a => words.All(w => a.Id.Contains(w, StringComparison.OrdinalIgnoreCase) || a.Summary.Contains(w, StringComparison.OrdinalIgnoreCase)))
-            .Select(a => Info(a, withArguments: false))
+            .Select(a => (Action: a, Hits: words.Count(w => a.Id.Contains(w, StringComparison.OrdinalIgnoreCase) || a.Summary.Contains(w, StringComparison.OrdinalIgnoreCase))))
+            .Where(x => words.Count == 0 || x.Hits > 0)
+            .OrderByDescending(x => x.Hits)
+            .Take(words.Count == 0 ? int.MaxValue : MaxMatches)
+            .Select(x => Info(x.Action, withArguments: false))
             .ToList();
         return Task.FromResult<IReadOnlyList<AdminActionInfo>>(matches);
     }

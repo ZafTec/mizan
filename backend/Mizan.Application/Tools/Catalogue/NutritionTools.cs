@@ -29,7 +29,7 @@ public static class NutritionTools
             Name = "find_food",
             Title = "Find foods and recipes",
             Description = "Find foods in the catalogue or the person's saved recipes, with nutrition (foods per 100 g, recipes per serving) and, for a food, its price. "
-                + "Search before logging, and use the returned id: servings are a count of the food's own serving, not grams.",
+                + "Search before logging, and use the returned id: servings are a count of the food's own serving, not grams (log_food also takes amountGrams).",
             Kind = ToolKind.Read,
             ModeArgument = "kind",
             DefaultMode = "food",
@@ -154,7 +154,10 @@ public static class NutritionTools
                         if (unknown is not null) throw new DomainValidationException($"'include' takes entries and goal, not '{unknown}'.");
                         return new GetNutritionDayQuery(Today(args.OptionalDate("date")), include.Contains("entries"), include.Contains("goal"));
                     },
-                    Describe = result => result is DailyNutritionResult day
+                    // With entries or the goal asked for, the whole result: a summary line would drop them.
+                    Describe = result => result is NutritionDayResult { Diary: not null } or NutritionDayResult { HasGoal: not null }
+                        ? TaskToolRunner.Serialize(result)
+                        : result is DailyNutritionResult day
                         ? $"{day.Date:yyyy-MM-dd}: " + NutritionText.Summary(NutritionText.Daily(
                             day.TotalCalories, day.TotalProtein, day.TotalCarbs, day.TotalFat,
                             day.TargetCalories, day.TargetProtein, day.TargetCarbs, day.TargetFat))
@@ -200,7 +203,7 @@ public static class NutritionTools
             Name = "log_food",
             Title = "Log food eaten",
             Description = "Log one or many things eaten to the diary, and get a receipt. Each item is one of a food (foodId), a recipe (recipeId), "
-                + "a meal plan entry (planEntryId with planId) or a name with the nutrition eaten. Search first; servings count the food's own serving, not grams; "
+                + "a meal plan entry (planEntryId with planId) or a name with the nutrition eaten. Search first; servings count the food's own serving, not grams, so give amountGrams for a weight; "
                 + "never guess nutrition. The items are saved one by one: when one fails, retry only the remaining ones, and check an unconfirmed one in the diary first. "
                 + "Workouts and weight have their own tools.",
             Kind = ToolKind.Write,
@@ -222,7 +225,7 @@ public static class NutritionTools
                         ["mealType"] = ToolSchema.Enum("This item's meal.", MealSlots),
                         ["date"] = ToolSchema.Date("This item's day, YYYY-MM-DD."),
                         ["loggedAt"] = ToolSchema.String("When it was eaten, ISO 8601; now by default."),
-                        ["amountGrams"] = ToolSchema.Number("name: the weight eaten, in grams; the server scales the per-100 g figures to it."),
+                        ["amountGrams"] = ToolSchema.Number("The weight eaten, in grams. name: the server scales the per-100 g figures to it. foodId: in place of servings."),
                         ["calories"] = ToolSchema.Number("name: total calories eaten."),
                         ["proteinGrams"] = ToolSchema.Number("name: protein eaten, g."),
                         ["carbsGrams"] = ToolSchema.Number("name: carbs eaten, g."),
@@ -607,7 +610,7 @@ public static class NutritionTools
     private static DateOnly Today(DateOnly? date) => date ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
     private static string FoodLine(FoodDto f) =>
-        $"{f.Id} — {f.Name} (per 100g) - {f.CaloriesPer100g} kcal, P{f.ProteinPer100g} C{f.CarbsPer100g} F{f.FatPer100g}";
+        $"{f.Id} — {f.Name}, one serving {f.ServingSize:0.##} {f.ServingUnit}; per 100g: {f.CaloriesPer100g} kcal, P{f.ProteinPer100g} C{f.CarbsPer100g} F{f.FatPer100g}";
 
     private static string RecipesText(PagedResult<RecipeDto> recipes) =>
         string.Join("\n", recipes.Items.Select(r =>

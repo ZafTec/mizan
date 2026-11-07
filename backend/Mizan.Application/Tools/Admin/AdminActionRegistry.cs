@@ -144,7 +144,7 @@ public static class AdminActionRegistry
                 typeof(GetPriceRegionsQuery), [], _ => new GetPriceRegionsQuery(IncludeDisabled: true)),
             ReadNone<ListFeatureFlagsQuery>("admin_list_feature_flags", "Every feature flag with its default and how many households override it."),
             Read<GetFeatureFlagOverridesQuery>("admin_list_feature_flag_overrides", "The households that override one flag, and whether each has it on."),
-            Read<GetUsageLimitSubjectQuery>("admin_get_usage_limit", "The AI allowance in force for one subject: scope Plan, Household or User, and subjectId."),
+            Read<GetUsageLimitSubjectQuery>("admin_get_usage_limit", "The AI allowance in force for one subject, with a user's subscription plan tier (free or pro): scope Plan, Household or User, and subjectId."),
             new("admin_list_usage_limits", AdminActionKind.ReadOnly, "AI allowance overrides for scope Plan (the default), Household or User.",
                 typeof(ListUsageLimitsQuery), [typeof(ListUsageLimitsQuery)], args => new ListUsageLimitsQuery(args.OptionalString("scope") ?? "Plan")),
             ReadNone<ListNotificationCampaignsQuery>("admin_list_notification_campaigns", "Every campaign and lifecycle message, newest first, with its phase and totals."),

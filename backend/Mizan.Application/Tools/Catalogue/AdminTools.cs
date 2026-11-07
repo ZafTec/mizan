@@ -164,7 +164,7 @@ public static class AdminTools
                 new ToolMode
                 {
                     Name = "search",
-                    Summary = "Actions whose name or summary has every word of query, with how each runs. The default.",
+                    Summary = "Actions whose name or summary hold the words of query, best first, with how each runs. The default.",
                     Area = McpScopes.AdminRead,
                     MinimumRole = ToolRole.Admin,
                     Requests = [typeof(SearchAdminActionsQuery)],

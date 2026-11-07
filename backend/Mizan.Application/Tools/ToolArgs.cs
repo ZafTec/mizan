@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
@@ -26,7 +27,42 @@ public sealed class ToolArgs
     }
 
     public ToolArgs(JsonElement root) =>
-        Root = root.ValueKind == JsonValueKind.Object ? root : JsonDocument.Parse("{}").RootElement.Clone();
+        Root = root.ValueKind == JsonValueKind.Object
+            ? JsonSerializer.SerializeToElement(WithoutPlaceholders(JsonObject.Create(root)!))
+            : JsonDocument.Parse("{}").RootElement.Clone();
+
+    /// <summary>
+    /// A model often fills every argument of a schema, sending an empty string or the all-zero id
+    /// for the ones it does not mean. Those count as left out, in nested objects too, so a mode
+    /// reads only what the caller meant.
+    /// </summary>
+    private static JsonObject WithoutPlaceholders(JsonObject node)
+    {
+        foreach (var (name, value) in node.ToList())
+        {
+            if (IsPlaceholder(value)) node.Remove(name);
+            else Clean(value);
+        }
+        return node;
+    }
+
+    private static void Clean(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                WithoutPlaceholders(obj);
+                break;
+            case JsonArray list:
+                foreach (var item in list) Clean(item);
+                break;
+        }
+    }
+
+    private static bool IsPlaceholder(JsonNode? value) =>
+        value is null
+        || (value is JsonValue text && text.TryGetValue<string>(out var raw)
+            && (string.IsNullOrWhiteSpace(raw) || (Guid.TryParse(raw, out var id) && id == Guid.Empty)));
 
     public static ToolArgs Empty { get; } = new(default);
 
