@@ -221,7 +221,7 @@ public class ToolsetEvalTests(ApiTestFixture fixture, ITestOutputHelper output)
                 + $"{arm.Sum(r => (long)r.PromptTokens):N0} | {arm.Sum(r => (long)r.CompletionTokens):N0} | {arm.Sum(r => (long)r.PromptTokens + r.CompletionTokens):N0} |");
         }
         text.AppendLine();
-        text.AppendLine("| Group | " + string.Join(" | ", runs.Select(r => r.Arm).Distinct().Order().Select(a => $"{a} success / wrong"))  + " |");
+        text.AppendLine("| Group | " + string.Join(" | ", runs.Select(r => r.Arm).Distinct().Order().Select(a => $"{a} success / wrong")) + " |");
         text.AppendLine("| --- |" + string.Concat(runs.Select(r => r.Arm).Distinct().Select(_ => " ---: |")));
         foreach (var group in runs.GroupBy(r => r.Group))
         {

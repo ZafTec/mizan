@@ -126,8 +126,16 @@ public sealed class EvalWorld
 
             db.UserGoals.Add(new UserGoal
             {
-                Id = Guid.NewGuid(), UserId = user, GoalType = "maintenance", TargetCalories = 2000, TargetProteinGrams = 130,
-                TargetCarbsGrams = 220, TargetFatGrams = 65, IsActive = true, CreatedAt = now.AddDays(-20), UpdatedAt = now.AddDays(-20),
+                Id = Guid.NewGuid(),
+                UserId = user,
+                GoalType = "maintenance",
+                TargetCalories = 2000,
+                TargetProteinGrams = 130,
+                TargetCarbsGrams = 220,
+                TargetFatGrams = 65,
+                IsActive = true,
+                CreatedAt = now.AddDays(-20),
+                UpdatedAt = now.AddDays(-20),
             });
 
             FoodDiaryEntry Entry(DateOnly date, string meal, string food, decimal grams)
@@ -135,11 +143,20 @@ public sealed class EvalWorld
                 var f = foods[food];
                 return new FoodDiaryEntry
                 {
-                    Id = Guid.NewGuid(), UserId = user, FoodId = f.Id, Name = f.Name, EntryDate = date, MealType = meal,
-                    AmountGrams = grams, Servings = Math.Round(grams / f.ServingSize, 2),
-                    Calories = Math.Round(f.CaloriesPer100g * grams / 100, 2), ProteinGrams = Math.Round(f.ProteinPer100g * grams / 100, 2),
-                    CarbsGrams = Math.Round(f.CarbsPer100g * grams / 100, 2), FatGrams = Math.Round(f.FatPer100g * grams / 100, 2),
-                    LoggedAt = date.ToDateTime(new TimeOnly(8, 0), DateTimeKind.Utc), UpdatedAt = now,
+                    Id = Guid.NewGuid(),
+                    UserId = user,
+                    FoodId = f.Id,
+                    Name = f.Name,
+                    EntryDate = date,
+                    MealType = meal,
+                    AmountGrams = grams,
+                    Servings = Math.Round(grams / f.ServingSize, 2),
+                    Calories = Math.Round(f.CaloriesPer100g * grams / 100, 2),
+                    ProteinGrams = Math.Round(f.ProteinPer100g * grams / 100, 2),
+                    CarbsGrams = Math.Round(f.CarbsPer100g * grams / 100, 2),
+                    FatGrams = Math.Round(f.FatPer100g * grams / 100, 2),
+                    LoggedAt = date.ToDateTime(new TimeOnly(8, 0), DateTimeKind.Utc),
+                    UpdatedAt = now,
                 };
             }
 
@@ -164,16 +181,33 @@ public sealed class EvalWorld
 
             RecipeIngredient Ingredient(string food, decimal grams, int order) => new()
             {
-                Id = Guid.NewGuid(), FoodId = foods[food].Id, IngredientText = $"{grams:0} g {food}", Amount = grams, Unit = "g", SortOrder = order,
+                Id = Guid.NewGuid(),
+                FoodId = foods[food].Id,
+                IngredientText = $"{grams:0} g {food}",
+                Amount = grams,
+                Unit = "g",
+                SortOrder = order,
             };
             db.Recipes.Add(new Recipe
             {
-                Id = bowl, UserId = user, Title = "Chicken rice bowl", Servings = 2, PrepTimeMinutes = 25, CreatedAt = now.AddDays(-30), UpdatedAt = now.AddDays(-30),
+                Id = bowl,
+                UserId = user,
+                Title = "Chicken rice bowl",
+                Servings = 2,
+                PrepTimeMinutes = 25,
+                CreatedAt = now.AddDays(-30),
+                UpdatedAt = now.AddDays(-30),
                 Ingredients = [Ingredient("Chicken breast, grilled", 300, 0), Ingredient("White rice, cooked", 400, 1), Ingredient("Broccoli, steamed", 200, 2)],
             });
             db.Recipes.Add(new Recipe
             {
-                Id = oats, UserId = user, Title = "Overnight oats", Servings = 1, PrepTimeMinutes = 5, CreatedAt = now.AddDays(-30), UpdatedAt = now.AddDays(-30),
+                Id = oats,
+                UserId = user,
+                Title = "Overnight oats",
+                Servings = 1,
+                PrepTimeMinutes = 5,
+                CreatedAt = now.AddDays(-30),
+                UpdatedAt = now.AddDays(-30),
                 Ingredients = [Ingredient("Rolled oats", 60, 0), Ingredient("Milk, whole", 200, 1), Ingredient("Banana", 60, 2)],
             });
 
@@ -181,8 +215,12 @@ public sealed class EvalWorld
             {
                 db.BodyMeasurements.Add(new BodyMeasurement
                 {
-                    Id = Guid.NewGuid(), UserId = user, MeasurementDate = today.AddDays(-14 + k), WeightKg = 82.0m - 0.1m * k,
-                    CreatedAt = now.AddDays(-14 + k), UpdatedAt = now.AddDays(-14 + k),
+                    Id = Guid.NewGuid(),
+                    UserId = user,
+                    MeasurementDate = today.AddDays(-14 + k),
+                    WeightKg = 82.0m - 0.1m * k,
+                    CreatedAt = now.AddDays(-14 + k),
+                    UpdatedAt = now.AddDays(-14 + k),
                 });
             }
 
@@ -190,7 +228,13 @@ public sealed class EvalWorld
             var row = exercises["Barbell Row"].Id;
             var template = new WorkoutTemplate
             {
-                Id = Guid.NewGuid(), UserId = user, Name = "Upper A", SessionOrder = 0, SortOrder = 0, CreatedAt = now.AddDays(-20), UpdatedAt = now.AddDays(-20),
+                Id = Guid.NewGuid(),
+                UserId = user,
+                Name = "Upper A",
+                SessionOrder = 0,
+                SortOrder = 0,
+                CreatedAt = now.AddDays(-20),
+                UpdatedAt = now.AddDays(-20),
                 Exercises =
                 [
                     new WorkoutTemplateExercise { Id = Guid.NewGuid(), ExerciseId = bench, SortOrder = 0, Sets = 3, RepsPerSet = 5, TargetWeightKg = 62.5m },
@@ -203,9 +247,16 @@ public sealed class EvalWorld
                 var date = today.AddDays(-daysAgo);
                 db.Workouts.Add(new Workout
                 {
-                    Id = Guid.NewGuid(), UserId = user, Name = "Upper A", WorkoutDate = date, TemplateId = template.Id, DurationMinutes = 55,
-                    StartedAt = date.ToDateTime(new TimeOnly(18, 0), DateTimeKind.Utc), CompletedAt = date.ToDateTime(new TimeOnly(18, 55), DateTimeKind.Utc),
-                    CreatedAt = now.AddDays(-daysAgo), UpdatedAt = now.AddDays(-daysAgo),
+                    Id = Guid.NewGuid(),
+                    UserId = user,
+                    Name = "Upper A",
+                    WorkoutDate = date,
+                    TemplateId = template.Id,
+                    DurationMinutes = 55,
+                    StartedAt = date.ToDateTime(new TimeOnly(18, 0), DateTimeKind.Utc),
+                    CompletedAt = date.ToDateTime(new TimeOnly(18, 55), DateTimeKind.Utc),
+                    CreatedAt = now.AddDays(-daysAgo),
+                    UpdatedAt = now.AddDays(-daysAgo),
                     Exercises =
                     [
                         new WorkoutExercise { Id = Guid.NewGuid(), ExerciseId = bench, SortOrder = 0, Sets = Sets(3, 5, benchKg) },
@@ -216,7 +267,11 @@ public sealed class EvalWorld
 
             db.ShoppingLists.Add(new ShoppingList
             {
-                Id = list, UserId = user, Name = "Weekly groceries", CreatedAt = now.AddDays(-2), UpdatedAt = now.AddDays(-2),
+                Id = list,
+                UserId = user,
+                Name = "Weekly groceries",
+                CreatedAt = now.AddDays(-2),
+                UpdatedAt = now.AddDays(-2),
                 Items =
                 [
                     new ShoppingListItem { Id = Guid.NewGuid(), ItemName = "Bananas", Amount = 6, Unit = "pcs", SortOrder = 0, FoodId = foods["Banana"].Id },
@@ -232,19 +287,38 @@ public sealed class EvalWorld
             var coaching = Guid.NewGuid();
             db.TrainerClientRelationships.Add(new TrainerClientRelationship
             {
-                Id = coaching, TrainerId = trainer, ClientId = user, Status = "active", CanViewNutrition = true, CanViewWorkouts = true,
-                CanViewMeasurements = true, CanMessage = true, StartedAt = now.AddDays(-40), CreatedAt = now.AddDays(-40),
+                Id = coaching,
+                TrainerId = trainer,
+                ClientId = user,
+                Status = "active",
+                CanViewNutrition = true,
+                CanViewWorkouts = true,
+                CanViewMeasurements = true,
+                CanMessage = true,
+                StartedAt = now.AddDays(-40),
+                CreatedAt = now.AddDays(-40),
             });
             db.ChatConversations.Add(new ChatConversation { Id = Guid.NewGuid(), TrainerClientRelationshipId = coaching, CreatedAt = now.AddDays(-40), UpdatedAt = now.AddDays(-40) });
             db.TrainerClientRelationships.Add(new TrainerClientRelationship
             {
-                Id = Guid.NewGuid(), TrainerId = trainer, ClientId = requester, Status = "pending", CanViewNutrition = true, CanMessage = true, CreatedAt = now.AddHours(-5),
+                Id = Guid.NewGuid(),
+                TrainerId = trainer,
+                ClientId = requester,
+                Status = "pending",
+                CanViewNutrition = true,
+                CanMessage = true,
+                CreatedAt = now.AddHours(-5),
             });
 
             db.Achievements.Add(new Achievement
             {
-                Id = achievement, Name = achievementName, Description = "Created by mistake during a spring campaign.", Points = 10, Category = "nutrition",
-                CriteriaType = "streak_days", Threshold = 3,
+                Id = achievement,
+                Name = achievementName,
+                Description = "Created by mistake during a spring campaign.",
+                Points = 10,
+                Category = "nutrition",
+                CriteriaType = "streak_days",
+                Threshold = 3,
             });
 
             await db.SaveChangesAsync();
