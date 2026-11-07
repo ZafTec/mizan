@@ -11492,6 +11492,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    surface?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolManifestDto"];
+                        "application/json": components["schemas"]["ToolManifestDto"];
+                        "text/json": components["schemas"]["ToolManifestDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tools/{name}/call": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ToolCallRequest"];
+                    "text/json": components["schemas"]["ToolCallRequest"];
+                    "application/*+json": components["schemas"]["ToolCallRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolCallResultDto"];
+                        "application/json": components["schemas"]["ToolCallResultDto"];
+                        "text/json": components["schemas"]["ToolCallResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tools/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ToolReferenceDto"];
+                        "application/json": components["schemas"]["ToolReferenceDto"];
+                        "text/json": components["schemas"]["ToolReferenceDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Trainers/request": {
         parameters: {
             query?: never;
@@ -16538,6 +16659,52 @@ export interface components {
         };
         TokenRequest: {
             token: string;
+        };
+        ToolCallRequest: {
+            surface?: string | null;
+            /** @enum {unknown|null} */
+            arguments?: null;
+        };
+        ToolCallResultDto: {
+            tool: string;
+            mode?: string | null;
+            isError: boolean;
+            text: string;
+            /** @enum {unknown|null} */
+            data?: null;
+            errorCode?: string | null;
+            needs?: string | null;
+            confirmation?: components["schemas"]["ToolConfirmationDto"];
+        };
+        ToolConfirmationDto: {
+            token: string;
+            /** Format: date-time */
+            expiresAt: string;
+            preview: unknown;
+        };
+        ToolDescriptorDto: {
+            name: string;
+            title: string;
+            description: string;
+            kind: string;
+            inputSchema: unknown;
+            app?: string | null;
+        };
+        ToolManifestDto: {
+            surface: string;
+            tools: components["schemas"]["ToolDescriptorDto"][];
+        };
+        ToolReferenceDto: {
+            priceRegions: components["schemas"]["ToolReferencePriceRegion"][];
+            goalTypes: string[];
+            mealSlots: string[];
+            macroModes: string[];
+            reminderKinds: string[];
+        };
+        ToolReferencePriceRegion: {
+            code: string;
+            name: string;
+            currency: string;
         };
         ToolUsageDto: {
             toolName: string;
