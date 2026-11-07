@@ -83,7 +83,7 @@ public sealed class ToolArgs
     public Guid? OptionalGuid(string field) => AiToolArgs.OptionalGuid(Root, field);
     public DateOnly? OptionalDate(string field) => AiToolArgs.OptionalDate(Root, field);
     public DateOnly RequiredDate(string field) =>
-        OptionalDate(field) ?? throw new DomainValidationException($"'{field}' is required, as YYYY-MM-DD.");
+        OptionalDate(field) ?? throw new DomainValidationException($"'{field}' is required, as YYYY-MM-DD. Ask the person for the day when they have not given one.");
 
     public bool? OptionalBool(string field)
     {

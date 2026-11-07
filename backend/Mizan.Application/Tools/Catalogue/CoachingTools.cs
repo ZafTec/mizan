@@ -151,7 +151,7 @@ public static class CoachingTools
             Properties = new JsonObject
             {
                 ["clientId"] = ToolSchema.Id(ClientHelp),
-                ["startDate"] = ToolSchema.Date("The plan's first day."),
+                ["startDate"] = ToolSchema.Date("The plan's first day, YYYY-MM-DD. Ask the coach when they have not said; never assume one."),
                 ["name"] = ToolSchema.String("The plan's name; from_template uses the template's when left out."),
                 ["description"] = ToolSchema.String("create: a description."),
                 ["durationDays"] = ToolSchema.Integer("create: how many days the plan runs, 7 by default."),

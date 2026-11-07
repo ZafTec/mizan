@@ -9,7 +9,7 @@ A plan runs from a start date for a number of days. Each day has slots (BREAKFAS
 
 ## Draft a plan
 
-`plan_meals` (action `generate`) drafts a whole plan from a `startDate`, `durationDays`, the person's words as `preference`, any targets, and up to three weekly budgets in `budgetCeilings` (one draft each; `dailyBudget` caps each day). Mizan chooses foods and recipes and saves each draft with status Draft. Show the person the violations, the weekly cost and the lines left for review. A draft is not their plan until they accept it. It spends the planning allowance: one plan a day on Free.
+`plan_meals` (action `generate`) drafts a whole plan from a `startDate`, `durationDays`, the person's words as `preference`, any targets, and up to three weekly budgets in `budgetCeilings` (one draft each; `dailyBudget` caps each day). When the person has not said which day the plan starts, ask before calling; never assume today. Mizan chooses foods and recipes and saves each draft with status Draft. Show the person the violations, the weekly cost and the lines left for review. A draft is not their plan until they accept it. It spends the planning allowance: one plan a day on Free.
 
 ## Build a plan by hand
 

@@ -131,7 +131,7 @@ public static class PlanningTools
                 ["planId"] = ToolSchema.Id("update, activate, archive, accept, decline: the plan."),
                 ["name"] = ToolSchema.String("generate, create, update: the plan's name."),
                 ["description"] = ToolSchema.String("create, update: a description."),
-                ["startDate"] = ToolSchema.Date("generate, create, update: the first day, YYYY-MM-DD."),
+                ["startDate"] = ToolSchema.Date("generate, create, update: the first day, YYYY-MM-DD. Ask the person which day the plan starts when they have not said; never assume one."),
                 ["durationDays"] = ToolSchema.Integer("generate: 1 to 14 days; create, update: 1 to 31. 7 by default."),
                 ["preference"] = ToolSchema.String("generate: what the person asked for, in their words."),
                 ["budgetCeilings"] = ToolSchema.Array("generate: weekly budgets, at most three; one draft each.", new JsonObject { ["type"] = "number" }),
