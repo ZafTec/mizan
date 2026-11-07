@@ -5,11 +5,18 @@ namespace Mizan.Mcp.Server.Prompts;
 
 /// <summary>
 /// <see cref="MizanPrompts"/> for the task tools (<c>Mcp:Toolset</c> tasks): the same starting points, naming
-/// the task tools and their modes. The coach's client check-in has no task tool yet, so it is not offered here.
+/// the task tools and their modes. A prompt built on a role's tool is offered only when the caller's
+/// manifest lists that tool (<see cref="Tools"/>).
 /// </summary>
 [McpServerPromptType]
 public sealed class MizanTaskPrompts
 {
+    /// <summary>The task tool a prompt cannot work without, for the prompts that belong to a role.</summary>
+    public static readonly IReadOnlyDictionary<string, string> Tools = new Dictionary<string, string>
+    {
+        ["trainer_checkin"] = "get_clients",
+    };
+
     [McpServerPrompt(Name = "log_my_day", Title = "Log my day")]
     [Description("Log everything eaten and done on one day from a plain description.")]
     public static string LogMyDay(
@@ -97,5 +104,18 @@ public sealed class MizanTaskPrompts
         I have these ingredients: {ingredients}
 
         Suggest one or two meals I can make. Check my own recipes first (find_food, kind recipe). For anything new, tell me the method and an estimate of the nutrition, and be clear that it is an estimate. Once I cook and log it, offer to save it as a recipe with save_food (kind recipe, fromLog).
+        """;
+
+    [McpServerPrompt(Name = "trainer_checkin", Title = "Client check-in")]
+    [Description("Prepare a check-in for a client you coach, from what they shared.")]
+    public static string TrainerCheckin(
+        [Description("The client's id. Leave empty to choose from your clients.")] string? clientId = null,
+        [Description("The day to look at, YYYY-MM-DD. Leave empty for today.")] string? date = null) =>
+        $"""
+        Prepare a check-in for {(string.IsNullOrWhiteSpace(clientId) ? "one of my clients (get_clients, view clients; ask me which one)" : $"client {clientId}")} in Mizan{(string.IsNullOrWhiteSpace(date) ? "" : $" for {date}")}.
+
+        Read what they share with get_clients: view nutrition (clientId{(string.IsNullOrWhiteSpace(date) ? "" : ", date")}) and view workouts (clientId). Report only what comes back. An area refused as not shared, or as client_ai_consent_required, is one the client keeps from you or from AI: say so and do not guess it.
+
+        Then suggest two or three things to talk about. If I want a fuller read, ask_about_client answers from the same shared data and spends my AI allowance, so say that before using it. Draft nothing and send nothing until I ask; manage_clients (action message) sends a message once I approve the words.
         """;
 }

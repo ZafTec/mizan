@@ -152,23 +152,22 @@ public sealed class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWor
     private readonly ITrainerAuthorizationService _authorization;
     private readonly IDataAccessPolicy _policy;
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUser;
 
     public GetClientWorkoutsQueryHandler(
-        ITrainerAuthorizationService authorization, IDataAccessPolicy policy, IMediator mediator)
+        ITrainerAuthorizationService authorization, IDataAccessPolicy policy, IMediator mediator, ICurrentUserService currentUser)
     {
         _authorization = authorization;
         _policy = policy;
         _mediator = mediator;
+        _currentUser = currentUser;
     }
 
     public async Task<Common.PagedResult<WorkoutSummaryDto>> Handle(GetClientWorkoutsQuery request, CancellationToken ct)
     {
         var relationship = await _authorization.GetRelationshipForCurrentTrainerAndClientAsync(request.ClientId, true, ct);
-        if (!await _policy.CanReadAsync(
-                relationship.TrainerId, request.ClientId, DataAxis.Training, AccessPurpose.Display, ct))
-        {
-            throw new ForbiddenAccessException("Workout access is disabled");
-        }
+        await ClientReadAccess.EnsureAsync(_policy, _currentUser, relationship.TrainerId, request.ClientId,
+            DataAxis.Training, "Workout access is disabled", ct);
         return await _mediator.Send(new GetWorkoutsQuery { UserId = request.ClientId, Page = request.Page, PageSize = request.PageSize }, ct);
     }
 }

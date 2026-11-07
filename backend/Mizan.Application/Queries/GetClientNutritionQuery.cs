@@ -39,15 +39,18 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
     private readonly IMizanDbContext _context;
     private readonly ITrainerAuthorizationService _trainerAuthorization;
     private readonly IDataAccessPolicy _policy;
+    private readonly ICurrentUserService _currentUser;
 
     public GetClientNutritionQueryHandler(
         IMizanDbContext context,
         ITrainerAuthorizationService trainerAuthorization,
-        IDataAccessPolicy policy)
+        IDataAccessPolicy policy,
+        ICurrentUserService currentUser)
     {
         _context = context;
         _trainerAuthorization = trainerAuthorization;
         _policy = policy;
+        _currentUser = currentUser;
     }
 
     public async Task<ClientNutritionDto?> Handle(GetClientNutritionQuery request, CancellationToken cancellationToken)
@@ -60,11 +63,8 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
         // Through the policy rather than reading the flag here: one place to
         // audit, and the reason CanViewMeasurements was missed for so long
         // (docs/AI.md#consent).
-        if (!await _policy.CanReadAsync(
-                relationship.TrainerId, request.ClientId, DataAxis.Nutrition, AccessPurpose.Display, cancellationToken))
-        {
-            throw new ForbiddenAccessException("No permission to view client nutrition data");
-        }
+        await ClientReadAccess.EnsureAsync(_policy, _currentUser, relationship.TrainerId, request.ClientId,
+            DataAxis.Nutrition, "No permission to view client nutrition data", cancellationToken);
 
         // Get food diary entries for the specified date (or today if not specified)
         var targetDate = request.Date ?? DateTime.UtcNow.Date;
