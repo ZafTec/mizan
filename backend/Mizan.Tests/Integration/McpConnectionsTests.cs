@@ -386,7 +386,7 @@ public class McpConnectionsTests
     }
 
     [Fact]
-    public async Task DataAccessPolicy_ReadingAClient_NeedsTheCoachingScopeToo()
+    public async Task DataAccessPolicy_ReadingAClient_NeedsOnlyTheCoachingScope()
     {
         var w = await WorldAsync();
         var client = Guid.NewGuid();
@@ -408,8 +408,8 @@ public class McpConnectionsTests
 
         (await new DataAccessPolicy(db, AppUser(w.User, "nutrition:read")).ReadableAxesAsync(w.User, client, AccessPurpose.Display))
             .Should().BeEmpty("nutrition:read alone does not include coaching");
-        (await new DataAccessPolicy(db, AppUser(w.User, "nutrition:read", "trainer:read")).ReadableAxesAsync(w.User, client, AccessPurpose.Display))
-            .Should().BeEquivalentTo(new[] { DataAxis.Nutrition });
+        (await new DataAccessPolicy(db, AppUser(w.User, "coaching:read")).ReadableAxesAsync(w.User, client, AccessPurpose.Display))
+            .Should().BeEquivalentTo(new[] { DataAxis.Nutrition, DataAxis.Training, DataAxis.Body }, "what the client shared decides the areas");
     }
 
     [Fact]

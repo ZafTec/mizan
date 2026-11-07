@@ -63,7 +63,7 @@ Batches are one call: `log_food` takes `items[]` (foods, recipes, plan entries o
 
 ### Coaching tools
 
-A connected app reads a client's area only when the client shares it with the coach and has also allowed AI to read it, because the data leaves Mizan for an outside model. `ClientReadAccess` checks both in Application; the web app needs only the first. A missing consent is refused with `client_ai_consent_required`, an unshared area with `forbidden`. The connection itself must hold the area's read scope too ([AI](AI.md#consent)). `ask_about_client` spends the coach's allowance, never the client's.
+A connected app reads a client's area only when the client shares it with the coach and has also allowed AI to read it, because the data leaves Mizan for an outside model. `ClientReadAccess` checks both in Application; the web app needs only the first. A missing consent is refused with `client_ai_consent_required`, an unshared area with `forbidden`. On the connection side `coaching:read` is enough: its nutrition, training and body areas cover the coach's own data, not a client's ([AI](AI.md#consent)). `ask_about_client` spends the coach's allowance, never the client's.
 
 ### Admin tools
 

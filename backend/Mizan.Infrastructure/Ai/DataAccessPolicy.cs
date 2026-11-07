@@ -59,8 +59,7 @@ public class DataAccessPolicy : IDataAccessPolicy
             : null;
 
         // A connected app holds only what its user allowed it, on top of whatever
-        // the user themselves could do. This is the third intersection after the
-        // trainer grant and the AI consent, and it never widens anything.
+        // the user themselves could do. It never widens anything.
         var connection = _currentUser?.Grant is { } held && _currentUser.UserId == principalId ? held : null;
 
         if (principalId == subjectId)
@@ -70,15 +69,15 @@ public class DataAccessPolicy : IDataAccessPolicy
                 && (connection is null || connection.Allows(GrantAxes.ReadScope(axis)))));
         }
 
-        // Reading a client's data is the coaching tool set, so the app needs that too.
+        // Reading a client's data is the coaching area, so the app needs coaching:read. The app's
+        // nutrition, training and body areas are the trainer's own data and say nothing about a
+        // client's: what the client shared with the coach and their AI consent decide that.
         if (connection is not null && !connection.Allows(McpScopes.TrainerRead)) return Freeze([]);
 
         var grants = await GrantsAsync(principalId, subjectId, cancellationToken);
         if (grants is null) return Freeze([]);
 
-        return Freeze(AllAxes.Where(axis =>
-            grants.Grants(axis) && (consent is null || consent.Allows(axis))
-            && (connection is null || connection.Allows(GrantAxes.ReadScope(axis)))));
+        return Freeze(AllAxes.Where(axis => grants.Grants(axis) && (consent is null || consent.Allows(axis))));
     }
 
     private async Task<UserAiConsent> ConsentAsync(Guid userId, CancellationToken cancellationToken)

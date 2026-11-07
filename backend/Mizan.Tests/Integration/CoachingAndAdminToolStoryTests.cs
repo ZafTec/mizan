@@ -35,8 +35,8 @@ public class CoachingAndAdminToolStoryTests
         manifest.Should().HaveCount(31).And.Contain(["get_clients", "manage_clients", "draft_client_plan", "save_plan_template", "ask_about_client"]);
         manifest.Should().NotContain(name => name.StartsWith("admin_"));
 
-        // The connection holds the coaching tools and, like any read of nutrition, the nutrition scope.
-        using var app = AppClient(coach, await GrantAsync(coach, [McpScopes.CoachingRead, McpScopes.NutritionRead]));
+        // The connection holds only the coaching area; the client's share and AI consent decide the rest.
+        using var app = AppClient(coach, await GrantAsync(coach, [McpScopes.CoachingRead]));
 
         var withoutConsent = await CallAsync(app, "get_clients", new { view = "nutrition", clientId = client });
         withoutConsent.GetProperty("errorCode").GetString().Should().Be("client_ai_consent_required", withoutConsent.ToString());
