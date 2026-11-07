@@ -200,8 +200,10 @@ public class NotificationDeliveryTests
             [new NotificationKindPreferenceUpdate(NotificationKinds.Achievements, Email: true)], "22:00", "07:00"));
         set.StatusCode.Should().Be(HttpStatusCode.OK, await set.Content.ReadAsStringAsync());
 
-        // 23:00 UTC, the person's clock: inside 22:00 to 07:00.
-        _fixture.Clock.Set(new DateTimeOffset(2026, 11, 2, 23, 0, 0, TimeSpan.Zero));
+        // 23:00 UTC, the person's clock: inside 22:00 to 07:00. The night is ahead of the real
+        // clock, so draining the outbox (which reads the real time) finds the email not yet due.
+        var night = DateTime.UtcNow.Date.AddDays(30);
+        _fixture.Clock.Set(new DateTimeOffset(night.AddHours(23), TimeSpan.Zero));
         try
         {
             using (var scope = _fixture.Services.CreateScope())
@@ -212,7 +214,7 @@ public class NotificationDeliveryTests
                 await scope.ServiceProvider.GetRequiredService<MizanDbContext>().SaveChangesAsync();
             }
 
-            var release = new DateTime(2026, 11, 3, 7, 0, 0, DateTimeKind.Utc);
+            var release = DateTime.SpecifyKind(night.AddDays(1).AddHours(7), DateTimeKind.Utc);
             var (email, telegram) = await world.DbAsync(async db => (
                 await db.OutboxJobs.AsNoTracking().SingleAsync(j => j.Type == OutboxJobTypes.Email),
                 await db.OutboxJobs.AsNoTracking().SingleAsync(j => j.Type == OutboxJobTypes.TelegramMessage)));
