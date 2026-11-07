@@ -55,6 +55,7 @@ public static class NutritionTools
                     Surfaces = ToolSurface.Both,
                     Requests = [typeof(SearchFoodsQuery), typeof(GetFoodDetailQuery)],
                     Replaces = ["search_foods", "get_food", "get_food_price"],
+                    NotFound = "There is no such food.",
                     Build = (args, context) => args.OptionalGuid("foodId") is { } foodId
                         ? new GetFoodDetailQuery(foodId, args.OptionalBool("includePrice") ?? false)
                         : new SearchFoodsQuery
@@ -80,6 +81,7 @@ public static class NutritionTools
                     Axis = DataAxis.Planning,
                     Requests = [typeof(GetRecipesQuery), typeof(GetRecipeByIdQuery)],
                     Replaces = ["search_recipes", "get_recipe"],
+                    NotFound = "There is no such recipe, or it is not the person's to read.",
                     Build = (args, _) => args.OptionalGuid("recipeId") is { } recipeId
                         ? new GetRecipeByIdQuery(recipeId)
                         : new GetRecipesQuery

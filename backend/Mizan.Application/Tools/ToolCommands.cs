@@ -145,7 +145,8 @@ public sealed class GetToolReferenceQueryHandler : IRequestHandler<GetToolRefere
 public static class ToolCalls
 {
     public static ToolCallContext ContextOf(ICurrentUserService currentUser, ToolSurface surface) =>
-        new(currentUser.UserId ?? throw new UnauthorizedAccessException(), surface, currentUser.Role ?? "user", currentUser.Grant);
+        new(currentUser.UserId ?? throw new UnauthorizedAccessException(), surface, currentUser.Role ?? "user", currentUser.Grant,
+            currentUser.ImpersonatorId is not null);
 }
 
 /// <summary>The vocabularies of the tools' arguments, from the Domain lists the commands validate against.</summary>

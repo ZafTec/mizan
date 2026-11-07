@@ -8,7 +8,7 @@ namespace Mizan.Application.Queries;
 
 /// <summary>
 /// What leaving a household, or removing a member from it, takes away, for the person to see
-/// before they confirm: the household, who leaves, and the shared plans and shopping lists that
+/// before they confirm: the household, who leaves, and the shared plans, shopping lists and recipes that
 /// person no longer reaches. Without <c>MemberId</c> the caller is the one who leaves. Names and
 /// counts only, so the same state gives the same preview.
 /// </summary>
@@ -23,7 +23,8 @@ public sealed record HouseholdMembershipDeletePreview(
     string? Role,
     int MembersLeft,
     int SharedMealPlans,
-    int SharedShoppingLists);
+    int SharedShoppingLists,
+    int SharedRecipes);
 
 public sealed class GetHouseholdMembershipDeletePreviewQueryHandler
     : IRequestHandler<GetHouseholdMembershipDeletePreviewQuery, HouseholdMembershipDeletePreview>
@@ -54,6 +55,8 @@ public sealed class GetHouseholdMembershipDeletePreviewQueryHandler
             .CountAsync(p => p.HouseholdId == household.Id && p.Kind == PlanKind.Personal && p.UserId != memberId, cancellationToken);
         var lists = await _context.ShoppingLists.AsNoTracking()
             .CountAsync(l => l.HouseholdId == household.Id && l.UserId != memberId, cancellationToken);
+        var recipes = await _context.Recipes.AsNoTracking()
+            .CountAsync(r => r.HouseholdId == household.Id && r.UserId != memberId, cancellationToken);
 
         return new HouseholdMembershipDeletePreview(
             household.Id,
@@ -64,6 +67,7 @@ public sealed class GetHouseholdMembershipDeletePreviewQueryHandler
             member.Role,
             household.Members.Count - 1,
             plans,
-            lists);
+            lists,
+            recipes);
     }
 }

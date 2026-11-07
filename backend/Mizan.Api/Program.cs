@@ -552,6 +552,11 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
             await context.Response.WriteAsJsonAsync(new { errorCode = "upgrade_required", error = upgradeEx.Message });
         }
+        else if (exception is ClientAiConsentRequiredException consentEx)
+        {
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsJsonAsync(new { errorCode = ClientAiConsentRequiredException.Code, error = consentEx.Message });
+        }
         else if (exception is ForbiddenAccessException forbiddenEx)
         {
             Log.Warning("Forbidden access for {Path}: {Message}",

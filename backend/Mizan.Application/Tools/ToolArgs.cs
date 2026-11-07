@@ -93,6 +93,9 @@ public sealed class ToolArgs
             ? new ToolArgs(Root.GetProperty(field))
             : throw new DomainValidationException($"'{field}' must be an object.");
 
+    /// <summary>A nested object, or no arguments at all when it is left out.</summary>
+    public ToolArgs ObjectOrEmpty(string field) => Has(field) ? Object(field) : Empty;
+
     /// <summary>The objects of a list argument, each as its own arguments.</summary>
     public List<ToolArgs> Objects(string field)
     {

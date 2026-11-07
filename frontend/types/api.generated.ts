@@ -7158,6 +7158,7 @@ export interface paths {
             parameters: {
                 query?: {
                     Status?: string;
+                    HouseholdId?: string;
                     Page?: number;
                     PageSize?: number;
                 };
@@ -9842,6 +9843,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    HouseholdId?: string;
                     Page?: number;
                     PageSize?: number;
                 };

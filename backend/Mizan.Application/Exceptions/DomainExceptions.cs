@@ -25,6 +25,18 @@ public sealed class UpgradeRequiredException : ForbiddenAccessException
     public UpgradeRequiredException(string message) : base(message) { }
 }
 
+/// <summary>
+/// A connected app asked for a client's data that the client shares with their coach but has not
+/// allowed AI to read. An outside agent needs both (docs/AI.md#consent).
+/// </summary>
+public sealed class ClientAiConsentRequiredException : ForbiddenAccessException
+{
+    public const string Code = "client_ai_consent_required";
+
+    public ClientAiConsentRequiredException(string area)
+        : base($"The client shares their {area} with you but has not allowed AI to read it, so a connected app cannot. They can change that in Mizan under Settings, AI.") { }
+}
+
 public class DomainValidationException : DomainException
 {
     public DomainValidationException(string message) : base(message) { }

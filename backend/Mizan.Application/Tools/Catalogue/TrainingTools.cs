@@ -56,6 +56,7 @@ public static class TrainingTools
                     Surfaces = ToolSurface.Both,
                     Requests = [typeof(GetWorkoutsQuery), typeof(GetWorkoutByIdQuery)],
                     Replaces = ["list_workouts", "get_workout"],
+                    NotFound = "There is no such workout.",
                     Build = (args, context) => args.OptionalGuid("workoutId") is { } workoutId
                         ? new GetWorkoutByIdQuery(workoutId)
                         : new GetWorkoutsQuery
@@ -111,7 +112,7 @@ public static class TrainingTools
                     Requests = [typeof(GetNextTemplateSessionQuery)],
                     Replaces = ["get_next_workout_session"],
                     Build = (args, _) => new GetNextTemplateSessionQuery(args.RequiredGuid("templateId")),
-                    Shape = result => result ?? new { session = (object?)null, message = "There is no such template." },
+                    NotFound = "There is no such workout template.",
                 },
                 new ToolMode
                 {

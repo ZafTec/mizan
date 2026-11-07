@@ -46,7 +46,7 @@ public static class HouseholdTools
                     Requests = [typeof(GetHouseholdQuery)],
                     Replaces = ["get_household"],
                     Build = (args, _) => new GetHouseholdQuery(args.RequiredGuid("householdId")),
-                    Shape = result => result ?? new { household = (object?)null, message = "There is no such household." },
+                    NotFound = "There is no such household, or the person is not in it.",
                 },
                 new ToolMode
                 {
@@ -56,7 +56,7 @@ public static class HouseholdTools
                     Requests = [typeof(GetHouseholdInvitationsQuery)],
                     Replaces = ["list_household_invitations"],
                     Build = (args, context) => new GetHouseholdInvitationsQuery(args.RequiredGuid("householdId"), context.UserId),
-                    Shape = result => result ?? new { invitations = (object?)null, message = "There is no such household you manage." },
+                    NotFound = "There is no such household that the person manages.",
                 },
             ],
         },
@@ -165,7 +165,7 @@ public static class HouseholdTools
             {
                 ["householdMealPlans"] = preview.SharedMealPlans,
                 ["householdShoppingLists"] = preview.SharedShoppingLists,
-                ["householdRecipes"] = "the recipes shared in the household",
+                ["householdRecipes"] = preview.SharedRecipes,
             },
         };
     }

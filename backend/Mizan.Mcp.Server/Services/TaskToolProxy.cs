@@ -37,9 +37,22 @@ public sealed class TaskToolProxy
     public async Task<IList<Tool>> ListAsync(CancellationToken cancellationToken) =>
         (await ManifestAsync(cancellationToken)).Tools.Select(ToTool).ToList();
 
-    /// <summary>Whether the caller's manifest lists <paramref name="name"/>. Used before a call becomes a task, so a refused call is answered at once.</summary>
-    public bool Lists(string name) =>
-        ManifestAsync(CancellationToken.None).GetAwaiter().GetResult().Tools.Any(tool => tool.Name == name);
+    /// <summary>Whether the caller's manifest lists <paramref name="name"/>.</summary>
+    public async Task<bool> ListsAsync(string name, CancellationToken cancellationToken) =>
+        (await ManifestAsync(cancellationToken)).Tools.Any(tool => tool.Name == name);
+
+    /// <summary>
+    /// Whether the caller's cached manifest lists <paramref name="name"/>, or null when nothing is cached.
+    /// For the task execution mode, which is chosen synchronously: it never waits on the API.
+    /// </summary>
+    public bool? ListsCached(string name) =>
+        _cache.TryGetValue(CacheKey(), out ToolManifestDto? cached) && cached is not null
+            ? cached.Tools.Any(tool => tool.Name == name)
+            : null;
+
+    /// <summary>Whether a tool in the caller's manifest renders the app page <paramref name="uri"/>: the page is open exactly when its tool is.</summary>
+    public async Task<bool> ListsAppAsync(string uri, CancellationToken cancellationToken) =>
+        (await ManifestAsync(cancellationToken)).Tools.Any(tool => string.Equals(tool.App, uri, StringComparison.OrdinalIgnoreCase));
 
     public async Task<CallToolResult> CallAsync(string name, IDictionary<string, JsonElement>? arguments, CancellationToken cancellationToken)
     {
@@ -54,10 +67,7 @@ public sealed class TaskToolProxy
 
     private async Task<ToolManifestDto> ManifestAsync(CancellationToken cancellationToken)
     {
-        var http = _http.HttpContext;
-        // Per connection: the grant and the person. An administrator's manifest differs from their own
-        // ordinary connection's because the grant differs, and the API decides what each one gets.
-        var key = $"mcp:task-tools:{McpGrantAccess.GrantId(http)}:{McpGrantAccess.UserId(http)}";
+        var key = CacheKey();
         if (_cache.TryGetValue(key, out ToolManifestDto? cached) && cached is not null) return cached;
 
         using var scope = _scopes.CreateScope();
@@ -67,6 +77,14 @@ public sealed class TaskToolProxy
             ?? throw new InvalidOperationException("The API answered the tool manifest with nothing.");
         _cache.Set(key, manifest, ManifestLifetime);
         return manifest;
+    }
+
+    // Per connection: the grant and the person. An administrator's manifest differs from their own
+    // ordinary connection's because the grant differs, and the API decides what each one gets.
+    private string CacheKey()
+    {
+        var http = _http.HttpContext;
+        return $"mcp:task-tools:{McpGrantAccess.GrantId(http)}:{McpGrantAccess.UserId(http)}";
     }
 
     public static Tool ToTool(ToolDescriptorDto descriptor) => new()
@@ -118,7 +136,13 @@ public sealed class TaskToolProxy
         if (result.IsError)
         {
             // The code and the missing permission let a client say where to change it without parsing the text.
-            structured = new JsonObject { ["errorCode"] = result.ErrorCode, ["needs"] = result.Needs };
+            // What the error carries besides (the items a promotion needs weights for) stays alongside.
+            var error = new JsonObject { ["errorCode"] = result.ErrorCode, ["needs"] = result.Needs };
+            foreach (var (field, value) in structured ?? [])
+            {
+                if (!error.ContainsKey(field)) error[field] = value?.DeepClone();
+            }
+            structured = error;
         }
 
         return new CallToolResult

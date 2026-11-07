@@ -2,14 +2,19 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Planning;
 
 namespace Mizan.Application.Planning;
 
-/// <summary>The lists a person owns and the ones shared in households they can see, newest change first.</summary>
+/// <summary>
+/// The lists a person owns and the ones shared in households they can see, newest change first.
+/// <c>HouseholdId</c> narrows to one household the person (and the connection) can see.
+/// </summary>
 public record GetShoppingListsQuery : IRequest<PagedResult<ShoppingListSummaryDto>>, IPagedQuery
 {
+    public Guid? HouseholdId { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
 }
@@ -39,12 +44,14 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException("User must be authenticated");
         var households = await _households.AccessibleIdsAsync(cancellationToken);
+        if (request.HouseholdId is { } only && !households.Contains(only))
+            throw new EntityNotFoundException($"Household {only} was not found.");
 
         var tags = new List<string> { CacheTags.ShoppingLists(userId) };
         tags.AddRange(households.Select(CacheTags.HouseholdShoppingLists));
 
         return await _cache.GetOrCreateAsync(
-            $"shopping-lists:{userId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.Page}:{request.PageSize}",
+            $"shopping-lists:{userId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.HouseholdId}:{request.Page}:{request.PageSize}",
             (self: this, request, userId, households),
             static (state, ct) => state.self.LoadAsync(state.request, state.userId, state.households, ct),
             CacheOptions,
@@ -61,6 +68,7 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
         var query = _context.ShoppingLists.AsNoTracking()
             .Where(l => (l.UserId == userId && (!restricted || l.HouseholdId == null || households.Contains(l.HouseholdId.Value)))
                 || (l.HouseholdId != null && households.Contains(l.HouseholdId.Value)));
+        if (request.HouseholdId is { } householdId) query = query.Where(l => l.HouseholdId == householdId);
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query

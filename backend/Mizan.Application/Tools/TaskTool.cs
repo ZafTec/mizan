@@ -34,9 +34,10 @@ public enum ToolRole
 /// <summary>
 /// Who is calling and from where, as the session and the connection say. A builder takes
 /// ownership from here, never from the arguments, so a caller cannot act for someone else by
-/// writing an id (docs/AI.md#consent).
+/// writing an id (docs/AI.md#consent). <paramref name="Impersonating"/> is set while an administrator
+/// views Mizan as someone else; no admin mode is offered then.
 /// </summary>
-public sealed record ToolCallContext(Guid UserId, ToolSurface Surface, string Role, GrantContext? Grant);
+public sealed record ToolCallContext(Guid UserId, ToolSurface Surface, string Role, GrantContext? Grant, bool Impersonating = false);
 
 /// <summary>
 /// A previewed high-impact action. The preview request reads what the action would remove,
@@ -97,6 +98,9 @@ public sealed class ToolMode
     /// <summary>Set for a high-impact action: the call previews it and returns a token instead of doing it.</summary>
     public ToolConfirmStep? Confirm { get; init; }
 
+    /// <summary>The message when the command answers with nothing, such as an id that names no record. Null passes the empty result on.</summary>
+    public string? NotFound { get; init; }
+
     public bool Writes => Area.EndsWith(":write", StringComparison.Ordinal);
 }
 
@@ -126,6 +130,18 @@ public sealed class TaskTool
 
     /// <summary>The MCP app page (<c>ui://mizan/&lt;name&gt;.html</c>) this tool renders, if any.</summary>
     public string? App { get; init; }
+
+    /// <summary>
+    /// Describes the mode argument in place of one line per mode, for a tool with many modes that
+    /// another tool describes (run_action, whose actions find_action lists).
+    /// </summary>
+    public string? ModeHelp { get; init; }
+
+    /// <summary>
+    /// The tool that carries out this tool's previews. Null gives the tool its own <c>confirm</c> mode;
+    /// run_action names confirm_action, which a host asks the person before calling.
+    /// </summary>
+    public string? ConfirmTool { get; init; }
 
     /// <summary>The mode the arguments select, or null when they name none this tool has.</summary>
     public ToolMode? ModeFor(ToolArgs args)

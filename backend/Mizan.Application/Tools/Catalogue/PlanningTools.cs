@@ -38,6 +38,7 @@ public static class PlanningTools
                 ["planId"] = ToolSchema.Id("plan: the plan. day: a plan (a draft too); without it, the active plan on that date."),
                 ["date"] = ToolSchema.Date("day: YYYY-MM-DD, today by default (with planId, the plan's first day)."),
                 ["status"] = ToolSchema.Enum("list: only plans in this status.", ["Draft", "Active", "Archived", "Declined"]),
+                ["householdId"] = ToolSchema.Id("list: only the plans shared in this household (get_household view mine)."),
                 ["page"] = ToolSchema.Integer("list: page, from 1."),
                 ["pageSize"] = ToolSchema.Integer("list: plans per page, 20 by default."),
                 ["macroMode"] = ToolSchema.Enum("targets: the macro mode to preview.", ["None", "Keto", "HighProtein", "Custom"]),
@@ -55,9 +56,11 @@ public static class PlanningTools
                     Area = McpScopes.PlanningRead,
                     Requests = [typeof(GetMealPlansQuery)],
                     Replaces = ["list_meal_plans"],
-                    Build = (args, _) => new GetMealPlansQuery
+                    Build = (args, context) => new GetMealPlansQuery
                     {
                         Status = args.OptionalString("status"),
+                        // An outside agent names the household; the assistant stays in the active one.
+                        HouseholdId = context.Surface == ToolSurface.Mcp ? args.OptionalGuid("householdId") : null,
                         Page = args.OptionalInt("page") ?? 1,
                         PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? 20, 1, 100),
                     },
@@ -71,7 +74,7 @@ public static class PlanningTools
                     Requests = [typeof(GetMealPlanByIdQuery)],
                     Replaces = ["get_meal_plan"],
                     Build = (args, _) => new GetMealPlanByIdQuery(args.RequiredGuid("planId")),
-                    Shape = result => result ?? new { plan = (object?)null, message = "There is no such plan." },
+                    NotFound = "There is no such plan, or it is not yours to read.",
                     Describe = result => result is MealPlanDetailDto plan ? DescribePlan(plan) : "There is no such plan.",
                 },
                 new ToolMode
@@ -302,6 +305,7 @@ public static class PlanningTools
             Properties = new JsonObject
             {
                 ["listId"] = ToolSchema.Id("list: the shopping list."),
+                ["householdId"] = ToolSchema.Id("lists: only the lists shared in this household (get_household view mine)."),
                 ["page"] = ToolSchema.Integer("lists: page, from 1."),
                 ["pageSize"] = ToolSchema.Integer("lists: lists per page, 20 by default."),
             },
@@ -314,8 +318,9 @@ public static class PlanningTools
                     Area = McpScopes.PlanningRead,
                     Requests = [typeof(GetShoppingListsQuery)],
                     Replaces = ["list_shopping_lists"],
-                    Build = (args, _) => new GetShoppingListsQuery
+                    Build = (args, context) => new GetShoppingListsQuery
                     {
+                        HouseholdId = context.Surface == ToolSurface.Mcp ? args.OptionalGuid("householdId") : null,
                         Page = args.OptionalInt("page") ?? 1,
                         PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? 20, 1, 100),
                     },
@@ -328,7 +333,7 @@ public static class PlanningTools
                     Requests = [typeof(GetShoppingListQuery)],
                     Replaces = ["get_shopping_list"],
                     Build = (args, _) => new GetShoppingListQuery(args.RequiredGuid("listId")),
-                    Shape = result => result ?? new { list = (object?)null, message = "There is no such shopping list." },
+                    NotFound = "There is no such shopping list, or it is not yours to read.",
                 },
             ],
         },

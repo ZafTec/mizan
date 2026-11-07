@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Ai;
+using Mizan.Application.Commands;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Tools;
@@ -96,6 +97,7 @@ public sealed class TaskToolRunner : ITaskToolRunner
 
         if (result is ToolRunResult nested) return nested;
         if (Unsuccessful(result) is { } message) return Error(tool.Name, mode.Name, "failed", message);
+        if (result is null && mode.NotFound is { } missing) return Error(tool.Name, mode.Name, "not_found", missing);
 
         var data = mode.Shape is null ? result : mode.Shape(result);
         var text = mode.Describe?.Invoke(result) ?? Serialize(data);
@@ -134,11 +136,13 @@ public sealed class TaskToolRunner : ITaskToolRunner
         _context.PendingToolActions.Add(pending);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var how = tool.ModeArgument is { } argument
-            ? $"call {tool.Name} with {argument} \"{TaskToolCatalogue.ConfirmMode}\" and this token"
-            : $"call {tool.Name} with this token";
+        var how = tool.ConfirmTool is { } confirmTool
+            ? $"call {confirmTool} with this token"
+            : tool.ModeArgument is { } argument
+                ? $"call {tool.Name} with {argument} \"{TaskToolCatalogue.ConfirmMode}\" and this token"
+                : $"call {tool.Name} with this token";
         var preview = JsonSerializer.SerializeToElement(facts);
-        var text = $"Nothing is removed yet. Show the person what this removes: {facts.ToJsonString()}. "
+        var text = $"Nothing is done yet. Show the person what this would do: {facts.ToJsonString()}. "
             + $"Only when they agree, {how}: {token}. It works once and expires in {PendingToolAction.Lifetime.TotalMinutes:0} minutes.";
         return new ToolRunResult(tool.Name, mode.Name, false, text, new { preview = facts, confirmToken = token, expiresAt = pending.ExpiresAt },
             Confirmation: new ToolConfirmationDto(token, pending.ExpiresAt, preview));
@@ -218,6 +222,11 @@ public sealed class TaskToolRunner : ITaskToolRunner
                 return Error(tool.Name, mode.Name, "validation_failed", string.Join(" ", validation.Errors.Select(e => e.ErrorMessage)));
             case EntityNotFoundException:
                 return Error(tool.Name, mode.Name, "not_found", ex.Message);
+            case PromotionWeightsRequiredException weights:
+                // The items are what the caller must answer: each needs its weight before it can be promoted.
+                return Error(tool.Name, mode.Name, "promotion_weights_required", ex.Message, data: new { items = weights.Items });
+            case ClientAiConsentRequiredException:
+                return Error(tool.Name, mode.Name, ClientAiConsentRequiredException.Code, ex.Message);
             case UpgradeRequiredException:
                 return Error(tool.Name, mode.Name, "upgrade_required", ex.Message);
             case FeatureDisabledException:
@@ -259,7 +268,9 @@ public sealed class TaskToolRunner : ITaskToolRunner
     }
 
     private static string NotAllowed(TaskTool tool, ToolMode mode, string needs) =>
-        needs.StartsWith("role:", StringComparison.Ordinal)
+        needs == ToolFilter.NotImpersonating
+            ? $"{tool.Name} ({mode.Name}) is not available while viewing Mizan as someone else. Stop viewing as them first."
+            : needs.StartsWith("role:", StringComparison.Ordinal)
             ? $"{tool.Name} ({mode.Name}) is for {needs["role:".Length..]}s only."
             : needs.StartsWith("surface:", StringComparison.Ordinal)
                 ? $"{tool.Name} ({mode.Name}) is not offered here."
@@ -268,6 +279,6 @@ public sealed class TaskToolRunner : ITaskToolRunner
     public static string Serialize(object? data) =>
         data is null ? "null" : JsonSerializer.Serialize(data, ToolArgs.Json);
 
-    private static ToolRunResult Error(string tool, string? mode, string code, string message, string? needs = null) =>
-        new(tool, mode, true, message, null, code, needs);
+    private static ToolRunResult Error(string tool, string? mode, string code, string message, string? needs = null, object? data = null) =>
+        new(tool, mode, true, message, data, code, needs);
 }

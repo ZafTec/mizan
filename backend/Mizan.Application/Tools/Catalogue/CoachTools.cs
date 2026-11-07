@@ -72,7 +72,7 @@ public static class CoachTools
                     Requests = [typeof(GetChatConversationQuery)],
                     Replaces = ["get_coach_chat"],
                     Build = (args, _) => new GetChatConversationQuery(args.RequiredGuid("relationshipId")),
-                    Shape = result => result ?? new { conversation = (object?)null, message = "There is no such conversation." },
+                    NotFound = "There is no such conversation.",
                 },
             ],
         },

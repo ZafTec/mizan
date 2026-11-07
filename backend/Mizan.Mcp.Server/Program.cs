@@ -266,9 +266,10 @@ mcpServer
         // instead of becoming a task that can only fail.
         var name = context.Params?.Name ?? string.Empty;
         if (!taskTools.Contains(name) || McpGrantAccess.LimitReached(null, links) is not null) return McpTaskExecutionMode.Synchronous;
-        // Task tools: the caller's manifest (cached per connection) says whether the API would take the call.
+        // Task tools: the caller's cached manifest says whether the API would take the call. This choice
+        // cannot wait on the API, so without a cached manifest the call is answered at once (the API still checks it).
         var allowed = toolset == McpToolset.Tasks
-            ? rootServices!.GetRequiredService<TaskToolProxy>().Lists(name)
+            ? rootServices!.GetRequiredService<TaskToolProxy>().ListsCached(name) == true
             : McpToolScopes.TryGet(name, out var scope) && McpGrantAccess.Allowed(null, scope);
         return allowed ? McpTaskExecutionMode.Optional : McpTaskExecutionMode.Synchronous;
     })
@@ -306,9 +307,12 @@ mcpServer
     {
         var result = await next(context, cancellationToken);
         var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
-        result.Resources = result.Resources
-            .Where(r => McpResourceScopes.TryGet(r.Uri, out var scope) && McpGrantAccess.Allowed(http, scope))
-            .ToList();
+        var kept = new List<ModelContextProtocol.Protocol.Resource>();
+        foreach (var resource in result.Resources)
+        {
+            if (await ResourceAllowedAsync(http, resource.Uri, cancellationToken)) kept.Add(resource);
+        }
+        result.Resources = kept;
         return result;
     });
 
@@ -334,7 +338,8 @@ mcpServer
         if (http?.User.Identity?.IsAuthenticated != true)
             throw new McpProtocolException("Authentication required. Connect Mizan from your MCP client.", McpErrorCode.InvalidRequest);
 
-        if (!McpResourceScopes.TryGet(uri, out var scope) || !McpGrantAccess.Allowed(http, scope))
+        McpResourceScopes.TryGet(uri, out var scope);
+        if (!await ResourceAllowedAsync(http, uri, cancellationToken))
         {
             if (backend != null && grantId != Guid.Empty) await backend.LogUsageAsync(grantId, userId, "resource", name, false, "Not allowed by the connection", 0);
             throw new McpProtocolException(McpToolText.NotAllowed(name, scope), McpErrorCode.InvalidParams);
@@ -363,9 +368,12 @@ mcpServer
     {
         var result = await next(context, cancellationToken);
         var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
-        result.Prompts = result.Prompts
-            .Where(p => McpResourceScopes.PromptScopes.TryGetValue(p.Name, out var scope) && McpGrantAccess.Allowed(http, scope))
-            .ToList();
+        var kept = new List<Prompt>();
+        foreach (var prompt in result.Prompts)
+        {
+            if (await PromptAllowedAsync(http, prompt.Name, cancellationToken)) kept.Add(prompt);
+        }
+        result.Prompts = kept;
         return result;
     });
 
@@ -377,7 +385,7 @@ mcpServer
         var grantId = McpGrantAccess.GrantId(http);
         var backend = http?.RequestServices.GetService<IBackendApiClient>();
 
-        if (!McpResourceScopes.PromptScopes.TryGetValue(name, out var scope) || !McpGrantAccess.Allowed(http, scope))
+        if (!await PromptAllowedAsync(http, name, cancellationToken))
             throw new McpProtocolException(McpToolText.NotAllowed(name, McpResourceScopes.PromptScopes.GetValueOrDefault(name)), McpErrorCode.InvalidParams);
 
         var result = await next(context, cancellationToken);
@@ -573,5 +581,27 @@ Log.Information("[MCP] Backend API URL: {BackendUrl}", builder.Configuration["BA
 Log.Information("[MCP] Server starting...");
 
 app.Run();
+
+// In tasks mode an app page is open exactly when a tool in the caller's manifest renders it, so it
+// follows the areas the API checks. Everything else, and every page in legacy mode, keeps its scope.
+async Task<bool> ResourceAllowedAsync(HttpContext? http, string uri, CancellationToken cancellationToken)
+{
+    if (toolset == McpToolset.Tasks && uri.StartsWith("ui://", StringComparison.Ordinal))
+    {
+        return http?.User.Identity?.IsAuthenticated == true
+            && await rootServices!.GetRequiredService<TaskToolProxy>().ListsAppAsync(uri, cancellationToken);
+    }
+
+    return McpResourceScopes.TryGet(uri, out var scope) && McpGrantAccess.Allowed(http, scope);
+}
+
+// A prompt needs its scope; in tasks mode a prompt built on a role's tool also needs that tool in the manifest.
+async Task<bool> PromptAllowedAsync(HttpContext? http, string name, CancellationToken cancellationToken)
+{
+    if (!McpResourceScopes.PromptScopes.TryGetValue(name, out var scope) || !McpGrantAccess.Allowed(http, scope)) return false;
+    if (toolset != McpToolset.Tasks || !MizanTaskPrompts.Tools.TryGetValue(name, out var tool)) return true;
+    return http?.User.Identity?.IsAuthenticated == true
+        && await rootServices!.GetRequiredService<TaskToolProxy>().ListsAsync(tool, cancellationToken);
+}
 
 public partial class Program { }

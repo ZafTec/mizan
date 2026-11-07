@@ -52,9 +52,14 @@ public static class ToolFilter
         return false;
     }
 
+    /// <summary>What an administrator viewing Mizan as someone else is missing for an admin mode.</summary>
+    public const string NotImpersonating = "not_impersonating";
+
     /// <summary>Null when the caller may use the mode, else the scope it is missing (or the role, as <c>role:trainer</c>).</summary>
     public static string? Refusal(ToolMode mode, ToolCallContext context)
     {
+        // Seeing the site as someone else never reaches administration, whatever role the session holds.
+        if (mode.MinimumRole == ToolRole.Admin && context.Impersonating) return NotImpersonating;
         if (!RoleAllows(mode.MinimumRole, context.Role)) return $"role:{mode.MinimumRole.ToString().ToLowerInvariant()}";
         if (!mode.Surfaces.HasFlag(context.Surface)) return $"surface:{SurfaceName(context.Surface)}";
         return GrantAllows(mode, context.Grant) ? null : mode.Area;
@@ -105,7 +110,7 @@ public static class ToolFilter
         var properties = new JsonObject();
         if (tool.ModeArgument is { } argument)
         {
-            var lines = string.Join("\n", modes.Select(m => $"{m.Name}: {m.Summary}"));
+            var lines = tool.ModeHelp ?? string.Join("\n", modes.Select(m => $"{m.Name}: {m.Summary}"));
             var mode = new JsonObject
             {
                 ["type"] = "string",
