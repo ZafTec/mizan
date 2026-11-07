@@ -134,6 +134,11 @@ public class McpParityCoverageTests
         ["PUT api/exercises/*/model"] = Files,
         ["POST api/admin/settings/ai/test"] = "Spends a provider call to check the AI settings; run it from the console.",
         ["GET api/admin/mail/announcements/audience"] = "The count the announcement form shows; admin_send_announcement sends.",
+
+        // The task tools reach these generically: with Mcp:Toolset=tasks the server lists and calls through them.
+        ["GET api/tools"] = TaskTools,
+        ["POST api/tools/*/call"] = TaskTools,
+        ["GET api/tools/reference"] = "Served as the mizan://reference resources, not a tool.",
     };
 
     private const string SignIn = "Sign-in and account credentials belong to the person's browser.";
@@ -147,6 +152,7 @@ public class McpParityCoverageTests
     private const string Public = "A public page or signed link, reached without an account.";
     private const string Onboarding = "The web's first-run conversation; an app uses ask_ai and the logging tools.";
     private const string Files = "A file download or upload for the console.";
+    private const string TaskTools = "The task tools' manifest and runner, which the MCP server forwards to in tasks mode.";
 
     [Fact]
     public void EveryEndpoint_HasAnMcpTool_OrAStatedReason()

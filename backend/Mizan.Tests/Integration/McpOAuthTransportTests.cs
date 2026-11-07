@@ -129,7 +129,9 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
 
         names.Should().Contain(new[] { "search_foods", "get_food_diary" });
         names.Should().NotContain(new[] { "log_food", "delete_meal", "get_workout", "ask_ai", "admin_list_users" });
-        names.Select(n => McpToolScopes.All[n]).Should().OnlyContain(scope => scope.StartsWith("nutrition:"));
+        // The nutrition area covers recipes, and any area may read the profile.
+        names.Select(n => McpToolScopes.All[n]).Should().OnlyContain(scope =>
+            scope == McpScopes.NutritionRead || scope == McpScopes.RecipesRead || scope == McpScopes.ProfileRead);
     }
 
     [Fact]

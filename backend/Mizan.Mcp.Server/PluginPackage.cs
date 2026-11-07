@@ -23,9 +23,13 @@ public sealed class PluginPackage
 
     private readonly Lazy<(byte[] Bytes, string ETag)> _built;
 
-    public PluginPackage(string mcpPublicUrl)
+    private readonly McpToolset _toolset;
+
+    /// <summary>The skills follow <paramref name="toolset"/>, so the plugin names the tools its server serves.</summary>
+    public PluginPackage(string mcpPublicUrl, McpToolset toolset = McpToolset.Legacy)
     {
         McpUrl = mcpPublicUrl.TrimEnd('/');
+        _toolset = toolset;
         _built = new Lazy<(byte[], string)>(Build);
     }
 
@@ -55,7 +59,7 @@ public sealed class PluginPackage
             Add(zip, ".mcp.json", Encoding.UTF8.GetBytes(ConnectorJson()));
             Add(zip, "README.md", Embedded("plugin/README.md"));
             Add(zip, "LICENSE", Embedded("plugin/LICENSE"));
-            foreach (var skill in McpSkillCatalog.All)
+            foreach (var skill in McpSkillCatalog.For(_toolset))
                 foreach (var file in skill.Files)
                     Add(zip, $"skills/{skill.Name}/{file.Path}", file.Bytes);
         }

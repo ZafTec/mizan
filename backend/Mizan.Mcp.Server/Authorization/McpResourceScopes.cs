@@ -45,10 +45,17 @@ public static class McpResourceScopes
             return true;
         }
         if (parsed.Scheme != "mizan") return false;
+        // The fixed lists the tools take values from (price regions, goal types...) hold nothing of the person.
+        if (IsReference(uri)) return true;
         if (!ByHost.TryGetValue(parsed.Host, out var found)) return false;
         scope = found;
         return true;
     }
+
+    /// <summary>A <c>mizan://reference</c> list: open to every connection and free, like a skill.</summary>
+    public static bool IsReference(string uri) =>
+        Uri.TryCreate(uri, UriKind.Absolute, out var parsed) && parsed.Scheme == "mizan"
+        && string.Equals(parsed.Host, "reference", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The same resource family under one name, so usage groups instead of listing every id.</summary>
     public static string Pattern(string uri)

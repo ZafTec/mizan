@@ -92,11 +92,31 @@ document.getElementById("log").addEventListener("click", async () => {
   const date = document.getElementById("date").value || today();
   const mealType = document.getElementById("meal").value;
   button.disabled = true; status.className = "muted";
+  const manual = (food) => ({ name: food.name.trim() || "Food", amountGrams: food.grams, caloriesPer100g: food.per100g.calories, proteinPer100g: food.per100g.proteinGrams, carbsPer100g: food.per100g.carbsGrams, fatPer100g: food.per100g.fatGrams });
+  if (toolset === "tasks") {
+    // One log_food call for every ticked item. The receipt says which were saved; those are unticked, so a retry sends only the rest.
+    const chosen = foods.filter((f) => f.include && !f.logged);
+    status.textContent = `Logging ${chosen.length} item${chosen.length === 1 ? "" : "s"}…`;
+    try {
+      const result = await callTool("log_food", { date, mealType, items: chosen.map(manual) });
+      if (result.isError) throw new Error(textOf(result) || "Could not log those items");
+      const receipt = dataOf(result) || {};
+      const saved = new Set((receipt.completed || []).map((c) => c.index));
+      chosen.forEach((food, index) => { if (saved.has(index)) { food.logged = true; food.include = false; } });
+      if (receipt.failed) {
+        const failed = chosen[receipt.failed.index];
+        status.className = "err";
+        status.textContent = `${saved.size} logged. ${failed ? failed.name : "An item"} failed: ${receipt.failed.error}. The rest were not logged.`;
+      } else status.textContent = `${saved.size} item${saved.size === 1 ? "" : "s"} logged to ${date}.`;
+    } catch (error) { status.className = "err"; status.textContent = error.message; }
+    renderRows();
+    return;
+  }
   let done = 0;
   for (const food of foods.filter((f) => f.include && !f.logged)) {
     status.textContent = `Logging ${food.name}…`;
     try {
-      const result = await callTool("log_meal_manual", { name: food.name.trim() || "Food", date, mealType, servings: 1, amountGrams: food.grams, caloriesPer100g: food.per100g.calories, proteinPer100g: food.per100g.proteinGrams, carbsPer100g: food.per100g.carbsGrams, fatPer100g: food.per100g.fatGrams });
+      const result = await callTool("log_meal_manual", { ...manual(food), date, mealType, servings: 1 });
       if (result.isError) throw new Error(textOf(result) || "Could not log that item");
       food.logged = true; food.include = false; done++;
     } catch (error) {

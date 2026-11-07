@@ -58,11 +58,12 @@ public class McpResourcesPromptsTests : IClassFixture<WebApplicationFactory<McpS
 
         var resources = Names(await RpcAsync(client, "resources/list"), "resources", "uri");
         resources.Should().Contain(new[] { "mizan://goals/current", "mizan://nutrition/today" });
-        resources.Should().NotContain(new[] { "mizan://profile", "mizan://households", "mizan://streak" });
+        resources.Should().Contain("mizan://profile", "any area may read the profile");
+        resources.Should().NotContain(new[] { "mizan://households", "mizan://meal-plans/today" });
         resources.Where(u => u.StartsWith("skill://")).Should().NotBeEmpty("skills need no permission");
 
         var templates = Names(await RpcAsync(client, "resources/templates/list"), "resourceTemplates", "uriTemplate");
-        templates.Should().BeEquivalentTo(new[] { "mizan://diary/{date}", "mizan://nutrition/{date}" });
+        templates.Should().BeEquivalentTo(new[] { "mizan://diary/{date}", "mizan://nutrition/{date}", "mizan://recipes/{id}" }, "the nutrition area covers recipes");
     }
 
     [Fact]
@@ -74,7 +75,8 @@ public class McpResourcesPromptsTests : IClassFixture<WebApplicationFactory<McpS
             .Where(u => u.StartsWith("mizan://")).Should().BeEquivalentTo(new[]
             {
                 "mizan://profile", "mizan://goals/current", "mizan://nutrition/today", "mizan://streak", "mizan://households",
-                "mizan://meal-plans/today",
+                "mizan://meal-plans/today", "mizan://reference", "mizan://reference/price-regions", "mizan://reference/goal-types",
+                "mizan://reference/meal-slots", "mizan://reference/macro-modes", "mizan://reference/reminder-kinds",
             });
         Names(await RpcAsync(client, "resources/templates/list"), "resourceTemplates", "uriTemplate").Should().BeEquivalentTo(new[]
         {

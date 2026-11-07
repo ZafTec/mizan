@@ -21,9 +21,9 @@ public static class MizanApps
     /// <summary>Where a page takes the shared host bridge (<c>_bridge.js</c>) when it is served.</summary>
     public const string BridgeMarker = "<!-- mizan:bridge -->";
 
-    public static IEnumerable<McpServerResource> Resources() => Pages.Select(page =>
+    public static IEnumerable<McpServerResource> Resources(McpToolset toolset = McpToolset.Legacy) => Pages.Select(page =>
     {
-        var html = Page(page);
+        var html = Page(page, toolset);
         var resource = McpServerResource.Create(
             () => html,
             new McpServerResourceCreateOptions
@@ -40,13 +40,17 @@ public static class MizanApps
     /// <summary>
     /// The page with the shared host bridge inlined at its marker. Served pages stay one file each,
     /// because the host blocks network requests, while the bridge is kept once in the source.
+    /// The bridge is preceded by <c>const toolset</c>, "legacy" or "tasks": a page that calls tools itself
+    /// (the day arrows, Log, Shopping list) calls the ones this server serves. The server knows its toolset
+    /// when it serves the page, so the page does not depend on a host passing a result's metadata through.
     /// </summary>
-    internal static string Page(string page)
+    internal static string Page(string page, McpToolset toolset = McpToolset.Legacy)
     {
         var html = Read($"apps/{page}.html");
         if (!html.Contains(BridgeMarker, StringComparison.Ordinal))
             throw new InvalidOperationException($"The app page {page} has no {BridgeMarker} marker, so it would be served without its host bridge.");
-        return html.Replace(BridgeMarker, Bridge.Value, StringComparison.Ordinal);
+        var bridge = $"const toolset = \"{McpToolsets.Name(toolset)}\";\n" + Bridge.Value;
+        return html.Replace(BridgeMarker, bridge, StringComparison.Ordinal);
     }
 
     private static string Read(string resource)

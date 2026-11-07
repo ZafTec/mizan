@@ -94,7 +94,8 @@ async function go(days) {
   const message = document.getElementById("message");
   message.className = "muted"; message.textContent = "Loading…";
   try {
-    const result = await callTool("get_nutrition_summary", { date: shiftDate(current.date, days) });
+    const date = shiftDate(current.date, days);
+    const result = toolset === "tasks" ? await callTool("get_nutrition", { view: "day", date }) : await callTool("get_nutrition_summary", { date });
     if (result.isError) throw new Error(textOf(result) || "Could not load that day");
     const data = dataOf(result);
     if (!data) throw new Error("Nothing came back for that day");
@@ -106,7 +107,8 @@ window.onToolResult = (result) => {
   const m = document.getElementById("message");
   if (result.isError) { m.className = "err"; m.textContent = textOf(result) || "Could not load the day."; return; }
   const data = dataOf(result);
-  if (!data || Array.isArray(data)) { m.className = "muted"; m.textContent = "No data for this day yet."; return; }
+  // get_nutrition shows its range and goals views here too; this page draws one day.
+  if (!data || Array.isArray(data) || !("totalCalories" in data)) { m.className = "muted"; m.textContent = "No data for this day yet."; return; }
   render(data);
 };
 document.getElementById("prev").addEventListener("click", () => go(-1));

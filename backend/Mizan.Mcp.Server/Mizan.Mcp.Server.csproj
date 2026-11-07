@@ -30,6 +30,8 @@
   <ItemGroup>
     <!-- The skills ship inside the server, and the plugin carries the same files (see docs/MCP.md#skills). -->
     <EmbeddedResource Include="Skills\**\*" LogicalName="skills/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The same skills for the task tools (Mcp:Toolset tasks), served under the same names when that toolset is on. -->
+    <EmbeddedResource Include="SkillsTasks\**\*" LogicalName="skills-tasks/%(RecursiveDir)%(Filename)%(Extension)" />
     <!-- The plugin's manifest, README and licence, zipped with the skills at /mcp/plugin.zip. plugin/ in the repository is a copy. -->
     <EmbeddedResource Include="Plugin\plugin.json;Plugin\README.md;Plugin\LICENSE" LogicalName="plugin/%(Filename)%(Extension)" />
     <!-- Each MCP App is served as one self-contained page, because the host's default policy blocks every network

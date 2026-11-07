@@ -154,14 +154,19 @@ function render(data) {
 async function log(entry) {
   say("muted", `Logging ${entryName(entry)}…`);
   try {
-    const result = await callTool("log_plan_entry", { mealPlanId: plan.id, entryId: entry.id });
+    const result = toolset === "tasks"
+      ? await callTool("log_food", { items: [{ planEntryId: entry.id, planId: plan.id }] })
+      : await callTool("log_plan_entry", { mealPlanId: plan.id, entryId: entry.id });
     if (result.isError) throw new Error(textOf(result) || "Could not log that entry");
+    // log_food answers with a receipt; its one item either completed or failed.
+    const receipt = toolset === "tasks" ? dataOf(result) || {} : null;
+    if (receipt && receipt.failed) throw new Error(receipt.failed.error || "Could not log that entry");
     entry.logged = true;
     const day = plan.days[selected];
     day.loggedCount = (day.loggedCount || 0) + 1;
     renderDay();
     renderSummary();
-    const data = dataOf(result);
+    const data = receipt ? (receipt.completed || [])[0] : dataOf(result);
     say("muted", `Logged ${entryName(entry)}${data && data.date ? ` on ${data.date}` : ""}.`);
   } catch (error) { say("err", error.message); }
 }
@@ -171,7 +176,9 @@ async function shop() {
   button.disabled = true;
   say("muted", "Building the shopping list…");
   try {
-    const result = await callTool("generate_shopping_list", { mealPlanId: plan.id });
+    const result = toolset === "tasks"
+      ? await callTool("update_shopping_list", { action: "from_plan", planId: plan.id })
+      : await callTool("generate_shopping_list", { mealPlanId: plan.id });
     if (result.isError) throw new Error(textOf(result) || "Could not build the list");
     const data = dataOf(result) || {};
     say("muted", typeof data.itemCount !== "number" ? "Shopping list ready." : `Shopping list ready: ${data.itemCount} item${data.itemCount === 1 ? "" : "s"}${data.needsReviewCount ? `, ${data.needsReviewCount} to check` : ""}.`);
@@ -183,7 +190,8 @@ window.onToolResult = (result) => {
   if (result.isError) { say("err", textOf(result) || "Could not load the plan."); return; }
   const data = dataOf(result);
   const normalized = data && !Array.isArray(data) ? normalize(data) : null;
-  if (!normalized) { say("muted", "No active plan covers that date."); return; }
+  // get_meal_plan's other views (the list, targets, templates) are not a plan; this page draws a plan or a day.
+  if (!normalized) { say("muted", data && Array.isArray(data.items) ? "Open a plan to see it here." : "No active plan covers that date."); return; }
   render(normalized);
 };
 document.getElementById("shop").addEventListener("click", shop);

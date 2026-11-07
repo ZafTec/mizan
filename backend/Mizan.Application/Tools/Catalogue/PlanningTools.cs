@@ -28,10 +28,11 @@ public static class PlanningTools
             Name = "get_meal_plan",
             Title = "Meal plans",
             Description = "The person's meal plans: the list, one plan with its days, entries (each with its entry id), prep sessions and violations, "
-                + "one day of a plan, the targets a macro mode gives, or the templates a plan can start from.",
+                + "one day of a plan, the targets a macro mode gives, or the templates a plan can start from. The plan and day views render the meal-plan view in hosts that show apps.",
             Kind = ToolKind.Read,
             ModeArgument = "view",
             DefaultMode = "list",
+            App = "ui://mizan/meal-plan.html",
             Properties = new JsonObject
             {
                 ["planId"] = ToolSchema.Id("plan: the plan. day: a plan (a draft too); without it, the active plan on that date."),

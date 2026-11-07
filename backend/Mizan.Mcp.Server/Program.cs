@@ -39,6 +39,10 @@ var authorizationServer = (builder.Configuration["Mcp:AuthorizationServer"] ?? "
 // The web app's address, for the links in limit and upgrade messages.
 var links = new McpLinks(builder.Configuration);
 builder.Services.AddSingleton(links);
+// Which tools this deployment serves: the legacy endpoint-shaped ones (the default) or the task tools,
+// whose list and calls the API answers (docs/MCP.md#toolsets).
+var toolset = McpToolsets.Parse(builder.Configuration[McpToolsets.ConfigKey]);
+builder.Services.AddSingleton<TaskToolProxy>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -156,17 +160,19 @@ IServiceProvider? rootServices = null;
 
 // Only these tools can take a task. A task is for work that may outlast a chat turn,
 // which here means the ones that call an AI provider or build a whole export.
-var taskTools = new HashSet<string> { "ask_ai", "suggest_meals", "analyze_food_image", "generate_meal_plan", "export_profile" };
+var taskTools = toolset == McpToolset.Tasks
+    ? new HashSet<string> { "estimate_food", "plan_meals" }
+    : new HashSet<string> { "ask_ai", "suggest_meals", "analyze_food_image", "generate_meal_plan", "export_profile" };
 
 // MCP Server
-builder.Services.AddMcpServer(options =>
+var mcpServer = builder.Services.AddMcpServer(options =>
 {
     options.ServerInfo = new()
     {
         Name = "mizan-mcp",
         Version = "3.0.0"
     };
-    options.ServerInstructions = McpServerInstructions.Text;
+    options.ServerInstructions = McpServerInstructions.For(toolset);
 
     // Skills over MCP: the server advertises the extension and answers its two methods.
     // The skill files themselves are ordinary resources, registered below.
@@ -178,7 +184,7 @@ builder.Services.AddMcpServer(options =>
         new McpServerRequestHandler
         {
             Method = "skills/list",
-            Handler = (request, ct) => ValueTask.FromResult<JsonNode?>(McpSkillCatalog.List()),
+            Handler = (request, ct) => ValueTask.FromResult<JsonNode?>(McpSkillCatalog.List(toolset)),
         },
         new McpServerRequestHandler
         {
@@ -186,7 +192,7 @@ builder.Services.AddMcpServer(options =>
             Handler = (request, ct) =>
             {
                 var uri = request.Params?["uri"]?.GetValue<string>();
-                var found = McpSkillCatalog.Get(uri)
+                var found = McpSkillCatalog.Get(uri, toolset)
                     ?? throw new McpProtocolException($"Unknown skill: {uri}", McpErrorCode.InvalidParams);
                 return ValueTask.FromResult<JsonNode?>(found);
             },
@@ -199,7 +205,24 @@ builder.Services.AddMcpServer(options =>
     // still send initialize are served the same way.
     http.Stateless = builder.Configuration.GetValue("Mcp:Stateless", true);
     http.IdleTimeout = TimeSpan.FromMinutes(30);
-})
+});
+
+if (toolset == McpToolset.Tasks)
+{
+    // The task tools: the API lists what this caller may use and runs each call. A tool the
+    // grant does not cover is not listed, and a call to it is refused by the API.
+    mcpServer
+        .WithListToolsHandler(async (context, cancellationToken) => new ListToolsResult
+        {
+            Tools = await rootServices!.GetRequiredService<TaskToolProxy>().ListAsync(cancellationToken),
+        })
+        .WithCallToolHandler(async (context, cancellationToken) =>
+            await rootServices!.GetRequiredService<TaskToolProxy>().CallAsync(context.Params?.Name ?? string.Empty, context.Params?.Arguments, cancellationToken))
+        .WithPrompts<MizanTaskPrompts>();
+}
+else
+{
+    mcpServer
 .WithTools<FoodTools>()
 .WithTools<PriceTools>()
 .WithTools<RecipeTools>()
@@ -224,13 +247,17 @@ builder.Services.AddMcpServer(options =>
 .WithTools<TrainerTools>()
 .WithTools<AiTools>()
 .WithTools<UploadTools>()
+.WithPrompts<MizanPrompts>();
+}
+
+mcpServer
 .WithMcpApps()
 .WithResources<MizanResources>()
-.WithResources(MizanApps.Resources())
-.WithResources(McpSkillCatalog.Files.Select(file => McpServerResource.Create(
+.WithResources<ReferenceResources>()
+.WithResources(MizanApps.Resources(toolset))
+.WithResources(McpSkillCatalog.FilesFor(toolset).Select(file => McpServerResource.Create(
     () => file.Text,
     new McpServerResourceCreateOptions { UriTemplate = file.Uri, Name = file.Uri["skill://".Length..], MimeType = file.MimeType })))
-.WithPrompts<MizanPrompts>()
 .WithTasks(
     new ApiMcpTaskStore(() => rootServices!.GetRequiredService<IServiceScopeFactory>()),
     options => options.ExecutionModeSelector = context =>
@@ -238,8 +265,12 @@ builder.Services.AddMcpServer(options =>
         // A call the grant does not cover, or one over the monthly cap, is refused on the spot
         // instead of becoming a task that can only fail.
         var name = context.Params?.Name ?? string.Empty;
-        var allowed = McpToolScopes.TryGet(name, out var scope) && McpGrantAccess.Allowed(null, scope) && McpGrantAccess.LimitReached(null, links) is null;
-        return allowed && taskTools.Contains(name) ? McpTaskExecutionMode.Optional : McpTaskExecutionMode.Synchronous;
+        if (!taskTools.Contains(name) || McpGrantAccess.LimitReached(null, links) is not null) return McpTaskExecutionMode.Synchronous;
+        // Task tools: the caller's manifest (cached per connection) says whether the API would take the call.
+        var allowed = toolset == McpToolset.Tasks
+            ? rootServices!.GetRequiredService<TaskToolProxy>().Lists(name)
+            : McpToolScopes.TryGet(name, out var scope) && McpGrantAccess.Allowed(null, scope);
+        return allowed ? McpTaskExecutionMode.Optional : McpTaskExecutionMode.Synchronous;
     })
 .WithRequestFilters(filters =>
 {
@@ -250,9 +281,13 @@ builder.Services.AddMcpServer(options =>
         var result = await next(context, cancellationToken);
         var held = McpGrantAccess.Held(context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext);
 
-        result.Tools = result.Tools
-            .Where(tool => McpToolScopes.TryGet(tool.Name, out var scope) && McpScopes.Allows(held, scope))
-            .ToList();
+        // The task tools' list is already the caller's own manifest, narrowed by the API.
+        if (toolset == McpToolset.Legacy)
+        {
+            result.Tools = result.Tools
+                .Where(tool => McpToolScopes.TryGet(tool.Name, out var scope) && McpScopes.Allows(held, scope))
+                .ToList();
+        }
 
         foreach (var tool in result.Tools)
         {
@@ -306,7 +341,7 @@ builder.Services.AddMcpServer(options =>
         }
 
         // Skills are public instructions and app pages hold no data, so reading one is free. Everything else shares the monthly cap with tools.
-        if (uri.StartsWith("skill://", StringComparison.Ordinal) || uri.StartsWith("ui://", StringComparison.Ordinal))
+        if (uri.StartsWith("skill://", StringComparison.Ordinal) || uri.StartsWith("ui://", StringComparison.Ordinal) || McpResourceScopes.IsReference(uri))
             return await next(context, cancellationToken);
         if (McpGrantAccess.LimitReached(http, links) is { } limit) throw new McpProtocolException(limit, McpErrorCode.InvalidRequest);
 
@@ -376,8 +411,11 @@ builder.Services.AddMcpServer(options =>
         var backend = backendScope?.ServiceProvider.GetService<IBackendApiClient>();
 
         // Fail closed: a tool with no scope on record is refused, and so is one the grant does not cover.
-        if (!McpToolScopes.TryGet(toolName, out var requiredScope)
-            || !McpScopes.Allows(McpGrantAccess.Held(httpContext), requiredScope))
+        // A task tool is checked by the API, which refuses it the same way and says what is missing.
+        string? requiredScope = null;
+        if (toolset == McpToolset.Legacy
+            && (!McpToolScopes.TryGet(toolName, out requiredScope)
+                || !McpScopes.Allows(McpGrantAccess.Held(httpContext), requiredScope!)))
         {
             Log.Warning("[MCP Tool] Tool call refused by grant. Tool: {ToolName}", toolName);
             if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
@@ -411,7 +449,9 @@ builder.Services.AddMcpServer(options =>
 
         try
         {
-            var result = WidgetResults.WithStructuredContent(toolName, await next(context, cancellationToken));
+            var answered = await next(context, cancellationToken);
+            // A task tool's result already carries its structured content from the API.
+            var result = toolset == McpToolset.Legacy ? WidgetResults.WithStructuredContent(toolName, answered) : answered;
             sw.Stop();
 
             activity?.SetTag("mcp.tool.success", result.IsError != true);
@@ -516,7 +556,7 @@ foreach (var path in new[]
 }
 // The Claude plugin for this deployment: its connector points at this server (docs/MCP.md#claude-plugin).
 // Public, like the skills it carries; nginx already routes /mcp/* here.
-var plugin = new PluginPackage(publicUrl);
+var plugin = new PluginPackage(publicUrl, toolset);
 app.MapGet($"{resourcePath}/plugin.zip", (HttpContext context) =>
 {
     context.Response.Headers.ETag = plugin.ETag;

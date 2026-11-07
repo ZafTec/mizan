@@ -24,4 +24,30 @@ public static class McpServerInstructions
 
         This connection holds only the permissions the person gave it. Tools outside them are not listed. If a call is refused, say what permission is missing and where the person can change it: Mizan, More, Connected apps.
         """;
+
+    /// <summary>The same rules for the task tools (<c>Mcp:Toolset</c> tasks).</summary>
+    public const string TasksText = """
+        Mizan records meals, workouts and body measurements for one person. Each tool covers one task; a mode argument (view, kind, action or section) picks what it does.
+
+        Logging food:
+        - Find before you log: find_food (kind food for the catalogue, kind recipe for saved recipes), then log_food with items, each one a foodId, a recipeId, a planEntryId with its planId, or a name with the nutrition the person gave.
+        - "servings" is a count of the food's own serving size, not grams. Read the find_food result and convert the amount eaten before you send it.
+        - Never guess nutrition numbers or a recipe's batch weight. Ask the person. estimate_food gives an estimate to confirm; it logs nothing.
+
+        Several things at once:
+        - Send them in one call: log_food takes many items, edit_meal_plan many changes, update_shopping_list add_items many items. These are not one database transaction. The receipt says what completed, what failed and what remains. Retry only what remains, and check an unconfirmed write before you repeat it.
+
+        Removing things:
+        - delete removes one thing by kind and id. A high-impact kind (a meal plan, a recipe, a household membership, the social profile, ticked shopping items) first returns a preview and a token and removes nothing. Show the person the preview; only when they agree, call delete with kind "confirm" and that token. It works once.
+
+        Reference:
+        - The fixed values the tools take (price regions, goal types, meal slots, macro modes, reminder kinds) are in the resource mizan://reference and its parts such as mizan://reference/price-regions.
+
+        Plans and households:
+        - Meal plans and shopping lists can belong to a household. This connection sees only the households the person allowed. Nutrition and costs come from Mizan; quote them, do not add them up.
+
+        This connection holds only the permissions the person gave it. Tools and modes outside them are not listed. If a call is refused, say what permission is missing and where the person can change it: Mizan, More, Connected apps.
+        """;
+
+    public static string For(McpToolset toolset) => toolset == McpToolset.Tasks ? TasksText : Text;
 }

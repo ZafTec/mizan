@@ -24,21 +24,31 @@ public static class McpSkillCatalog
 
     public sealed record Skill(string Name, string Uri, IReadOnlyDictionary<string, string> Frontmatter, IReadOnlyList<SkillFile> Files);
 
+    /// <summary>The skills for the legacy tools, the ones the repository's plugin copies.</summary>
     public static IReadOnlyList<Skill> All => Loaded.Value;
 
     public static IEnumerable<SkillFile> Files => All.SelectMany(skill => skill.Files);
 
-    private static readonly Lazy<IReadOnlyList<Skill>> Loaded = new(Load);
+    /// <summary>
+    /// The skills a deployment serves. The task tools have their own copies (<c>SkillsTasks/</c>) under the same
+    /// names and addresses, because a skill names the tools to call.
+    /// </summary>
+    public static IReadOnlyList<Skill> For(McpToolset toolset) => toolset == McpToolset.Tasks ? TasksLoaded.Value : Loaded.Value;
 
-    private static List<Skill> Load()
+    public static IEnumerable<SkillFile> FilesFor(McpToolset toolset) => For(toolset).SelectMany(skill => skill.Files);
+
+    private static readonly Lazy<IReadOnlyList<Skill>> Loaded = new(() => Load("skills/"));
+    private static readonly Lazy<IReadOnlyList<Skill>> TasksLoaded = new(() => Load("skills-tasks/"));
+
+    private static List<Skill> Load(string prefix)
     {
         var assembly = typeof(McpSkillCatalog).Assembly;
         var files = new Dictionary<string, List<SkillFile>>(StringComparer.Ordinal);
 
         foreach (var resource in assembly.GetManifestResourceNames()
-                     .Where(n => n.Replace('\\', '/').StartsWith("skills/", StringComparison.Ordinal)))
+                     .Where(n => n.Replace('\\', '/').StartsWith(prefix, StringComparison.Ordinal)))
         {
-            var path = resource.Replace('\\', '/')["skills/".Length..];
+            var path = resource.Replace('\\', '/')[prefix.Length..];
             var slash = path.IndexOf('/');
             if (slash <= 0) continue;
 
@@ -98,18 +108,18 @@ public static class McpSkillCatalog
         }).ToArray()),
     };
 
-    public static JsonNode List() => new JsonObject
+    public static JsonNode List(McpToolset toolset = McpToolset.Legacy) => new JsonObject
     {
         ["resultType"] = "complete",
-        ["skills"] = new JsonArray(All.Select(skill => (JsonNode)Entry(skill)).ToArray()),
+        ["skills"] = new JsonArray(For(toolset).Select(skill => (JsonNode)Entry(skill)).ToArray()),
         ["ttlMs"] = TtlMs,
         ["cacheScope"] = "public",
     };
 
     /// <summary>Null when no skill has that SKILL.md address. The caller answers with Invalid params.</summary>
-    public static JsonNode? Get(string? uri)
+    public static JsonNode? Get(string? uri, McpToolset toolset = McpToolset.Legacy)
     {
-        var skill = All.FirstOrDefault(s => string.Equals(s.Uri, uri, StringComparison.Ordinal));
+        var skill = For(toolset).FirstOrDefault(s => string.Equals(s.Uri, uri, StringComparison.Ordinal));
         if (skill is null) return null;
 
         return new JsonObject
