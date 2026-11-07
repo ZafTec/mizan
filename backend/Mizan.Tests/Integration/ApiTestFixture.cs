@@ -826,6 +826,9 @@ public sealed class ScriptedAiProvider : IAiProvider
 
     public bool IsConfigured { get; set; } = true;
 
+    /// <summary>Answers an unscripted call when it returns something; the default reply otherwise.</summary>
+    public Func<AiCompletionRequest, AiCompletionResponse?>? Fallback { get; set; }
+
     public Task<AiProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(new AiProviderStatus(IsConfigured, Model));
 
@@ -846,6 +849,7 @@ public sealed class ScriptedAiProvider : IAiProvider
             _calls.Clear();
             _scripted.Clear();
             IsConfigured = true;
+            Fallback = null;
         }
     }
 
@@ -896,7 +900,7 @@ public sealed class ScriptedAiProvider : IAiProvider
             _calls.Add(request);
             answer = _scripted.Count > 0
                 ? _scripted.Dequeue()
-                : _ => new AiCompletionResponse("Noted.", new AiTokenUsage(40, 12), Model);
+                : request => Fallback?.Invoke(request) ?? new AiCompletionResponse("Noted.", new AiTokenUsage(40, 12), Model);
         }
 
         var response = answer(request);

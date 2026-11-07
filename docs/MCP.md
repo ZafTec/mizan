@@ -180,3 +180,13 @@ Compose starts `mcp` with the backend URL, the internal service keys, `Mcp__Publ
 The advertised metadata comes from `Mcp__PublicUrl`, not from request headers. Check it after a deploy: a wrong host in the 401 challenge is the usual reason a client cannot start sign-in. The service trusts `X-Forwarded-For` and `X-Forwarded-Proto` only from the loopback address, or from the one proxy named in `ReverseProxy__KnownProxy` (an IP address or a resolvable hostname such as a Compose service name), the same rule the API applies. Set it when the proxy runs on another host so the recorded client address is the caller's and not the proxy's.
 
 Usage is recorded per connection, tool, resource, and prompt. A failed write should be checked in the log before blindly resubmitting, especially when a connection drops after the API may have committed it.
+
+### Evaluating the toolsets
+
+`ToolsetEvalTests` runs a live model against both toolsets with the same seeded people, the same requests and the same MCP service in process, and scores each run by the database state or the answer. It is skipped unless `MIZAN_TOOL_EVAL=1`, and it needs `TEST_DB_CONNECTION` like the other integration tests and an OpenAI-compatible chat-completions endpoint in `EVAL_BASE_URL`, `EVAL_KEY` and `EVAL_MODEL` (`EVAL_MAX_TOKENS` defaults to 4000). Keep the key out of the repo and the shell history; the harness never writes it or the address.
+
+```bash
+MIZAN_TOOL_EVAL=1 dotnet test backend/Mizan.Tests --filter "FullyQualifiedName~ToolsetEvalTests"
+```
+
+`MIZAN_TOOL_EVAL_RUNS` (3 per request), `MIZAN_TOOL_EVAL_PARALLEL` (3), `MIZAN_TOOL_EVAL_ARMS` (`legacy,tasks`) and `MIZAN_TOOL_EVAL_CASES` (case ids or groups) narrow a run. Each run is a line in `runs-*.jsonl` with every call, and `summary.md` holds success, wrong calls, calls and tokens per arm and group; both go to `MIZAN_TOOL_EVAL_OUT` (by default the test's `TestResults/tool-eval`) and are not committed. A call is wrong when it errors or is not one the request needs. Compare arms from the same run: the model and the backend change between runs.
