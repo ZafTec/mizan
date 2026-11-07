@@ -71,53 +71,53 @@ public sealed class SaveNamedWorkoutCommandHandler : IRequestHandler<SaveNamedWo
         switch (request.Action)
         {
             case NamedWorkoutAction.Log:
-            {
-                var logged = await _sender.Send(new LogWorkoutCommand
                 {
-                    Name = request.Name,
-                    WorkoutDate = request.WorkoutDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
-                    DurationMinutes = request.DurationMinutes,
-                    BodyweightKg = request.BodyweightKg,
-                    CaloriesBurned = request.CaloriesBurned,
-                    Notes = request.Notes,
-                    TemplateId = request.TemplateId,
-                    Exercises = exercises,
-                }, cancellationToken);
-                return new NamedWorkoutResult("logged", logged.Id, resolved, logged);
-            }
+                    var logged = await _sender.Send(new LogWorkoutCommand
+                    {
+                        Name = request.Name,
+                        WorkoutDate = request.WorkoutDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
+                        DurationMinutes = request.DurationMinutes,
+                        BodyweightKg = request.BodyweightKg,
+                        CaloriesBurned = request.CaloriesBurned,
+                        Notes = request.Notes,
+                        TemplateId = request.TemplateId,
+                        Exercises = exercises,
+                    }, cancellationToken);
+                    return new NamedWorkoutResult("logged", logged.Id, resolved, logged);
+                }
             case NamedWorkoutAction.Update:
-            {
-                var id = request.WorkoutId ?? throw new DomainValidationException("'workoutId' is required to change a workout.");
-                var current = await _sender.Send(new GetWorkoutByIdQuery(id), cancellationToken)
-                    ?? throw new EntityNotFoundException("Workout", id);
-                await _sender.Send(new UpdateWorkoutCommand
                 {
-                    Id = id,
-                    Name = request.Name ?? current.Name,
-                    WorkoutDate = request.WorkoutDate ?? current.WorkoutDate,
-                    DurationMinutes = request.DurationMinutes ?? current.DurationMinutes,
-                    BodyweightKg = request.BodyweightKg ?? current.BodyweightKg,
-                    CaloriesBurned = request.CaloriesBurned ?? current.CaloriesBurned,
-                    Notes = request.Notes ?? current.Notes,
-                    TemplateId = request.TemplateId ?? current.TemplateId,
-                    StartedAt = current.StartedAt,
-                    CompletedAt = current.CompletedAt,
-                    Exercises = exercises,
-                }, cancellationToken);
-                return new NamedWorkoutResult("updated", id, resolved, null);
-            }
+                    var id = request.WorkoutId ?? throw new DomainValidationException("'workoutId' is required to change a workout.");
+                    var current = await _sender.Send(new GetWorkoutByIdQuery(id), cancellationToken)
+                        ?? throw new EntityNotFoundException("Workout", id);
+                    await _sender.Send(new UpdateWorkoutCommand
+                    {
+                        Id = id,
+                        Name = request.Name ?? current.Name,
+                        WorkoutDate = request.WorkoutDate ?? current.WorkoutDate,
+                        DurationMinutes = request.DurationMinutes ?? current.DurationMinutes,
+                        BodyweightKg = request.BodyweightKg ?? current.BodyweightKg,
+                        CaloriesBurned = request.CaloriesBurned ?? current.CaloriesBurned,
+                        Notes = request.Notes ?? current.Notes,
+                        TemplateId = request.TemplateId ?? current.TemplateId,
+                        StartedAt = current.StartedAt,
+                        CompletedAt = current.CompletedAt,
+                        Exercises = exercises,
+                    }, cancellationToken);
+                    return new NamedWorkoutResult("updated", id, resolved, null);
+                }
             default:
-            {
-                // The draft's frame is the one the web log writes and SaveWorkoutDraftCommand checks.
-                var payload = JsonSerializer.Serialize(new
                 {
-                    name = request.Name,
-                    workoutDate = request.WorkoutDate?.ToString("yyyy-MM-dd"),
-                    exercises = exercises.Select(e => new { exerciseId = e.ExerciseId, notes = e.Notes, supersetWithNext = e.SupersetWithNext, sets = e.Sets }),
-                }, DraftJson);
-                await _sender.Send(new SaveWorkoutDraftCommand(payload), cancellationToken);
-                return new NamedWorkoutResult("drafted", null, resolved, null);
-            }
+                    // The draft's frame is the one the web log writes and SaveWorkoutDraftCommand checks.
+                    var payload = JsonSerializer.Serialize(new
+                    {
+                        name = request.Name,
+                        workoutDate = request.WorkoutDate?.ToString("yyyy-MM-dd"),
+                        exercises = exercises.Select(e => new { exerciseId = e.ExerciseId, notes = e.Notes, supersetWithNext = e.SupersetWithNext, sets = e.Sets }),
+                    }, DraftJson);
+                    await _sender.Send(new SaveWorkoutDraftCommand(payload), cancellationToken);
+                    return new NamedWorkoutResult("drafted", null, resolved, null);
+                }
         }
     }
 

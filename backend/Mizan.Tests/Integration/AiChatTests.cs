@@ -363,13 +363,20 @@ public class AiChatTests
         var world = new PlanningWorld(_fixture);
         (await client.PostAsJsonAsync("/api/Goals", new
         {
-            GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 150m, TargetCarbsGrams = 250m, TargetFatGrams = 70m,
+            GoalType = "general",
+            TargetCalories = 2000,
+            TargetProteinGrams = 150m,
+            TargetCarbsGrams = 250m,
+            TargetFatGrams = 70m,
         })).StatusCode.Should().Be(HttpStatusCode.Created);
         // So far: 1500 kcal, 140 g protein, 100 g carbs, 50 g fat. The carbs are the gap.
         var soFar = await _fixture.SeedFoodAsync("Day so far", 1500m, 140m, 100m, 50m);
         (await client.PostAsJsonAsync("/api/Nutrition/log", new
         {
-            FoodId = soFar.Id, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "lunch", AmountGrams = 100m,
+            FoodId = soFar.Id,
+            EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            MealType = "lunch",
+            AmountGrams = 100m,
         })).EnsureSuccessStatusCode();
         async Task<Mizan.Domain.Entities.Recipe> OneServing(string title, decimal kcal, decimal protein, decimal carbs, decimal fat) =>
             await world.RecipeAsync(userId, title, 1, false, (await _fixture.SeedFoodAsync(title + " base", kcal, protein, carbs, fat), 100m, "g", null));
@@ -402,12 +409,19 @@ public class AiChatTests
         await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
         (await client.PostAsJsonAsync("/api/Goals", new
         {
-            GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 150m, TargetCarbsGrams = 220m, TargetFatGrams = 60m,
+            GoalType = "general",
+            TargetCalories = 2000,
+            TargetProteinGrams = 150m,
+            TargetCarbsGrams = 220m,
+            TargetFatGrams = 60m,
         })).StatusCode.Should().Be(HttpStatusCode.Created);
         var food = await _fixture.SeedFoodAsync("Suggestion rice", 100m, 10m, 20m, 5m);
         (await client.PostAsJsonAsync("/api/Nutrition/log", new
         {
-            FoodId = food.Id, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "lunch", Servings = 2m,
+            FoodId = food.Id,
+            EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            MealType = "lunch",
+            Servings = 2m,
         })).EnsureSuccessStatusCode();
         _fixture.Ai.Reply("""{"suggestions":[],"note":null}""");
 
@@ -437,9 +451,15 @@ public class AiChatTests
         {
             db.FoodPrices.Add(new FoodPrice
             {
-                Id = Guid.NewGuid(), FoodId = teff.Id, RegionCode = Mizan.Domain.Pricing.PriceRegionDefaults.Code,
-                Price = 120, Quantity = 1, Unit = Mizan.Domain.Pricing.PriceUnits.Kilogram,
-                Confidence = Mizan.Domain.Pricing.PriceConfidence.Observed, ObservedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow,
+                Id = Guid.NewGuid(),
+                FoodId = teff.Id,
+                RegionCode = Mizan.Domain.Pricing.PriceRegionDefaults.Code,
+                Price = 120,
+                Quantity = 1,
+                Unit = Mizan.Domain.Pricing.PriceUnits.Kilogram,
+                Confidence = Mizan.Domain.Pricing.PriceConfidence.Observed,
+                ObservedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
             });
             await db.SaveChangesAsync();
             return 0;

@@ -41,11 +41,29 @@ location ~ ^/\.well-known/(oauth-authorization-server|openid-configuration)/api$
 
 ## What a connection can see and call
 
-The MCP layer holds each tool to a scope (`McpToolScopes`; a test fails if a tool has none). A client sees only the tools, resources, and prompts its grant covers, and a direct call outside it is refused naming the missing permission. The API enforces household and data-axis limits itself, so a bug in the MCP layer cannot widen a user's choice.
+A connection is granted areas: `nutrition`, `training`, `body`, `planning`, `social`, `coaching` and `admin` (administrators only), each `:read` or `:write`, and write includes read. A grant made with the older scopes (`recipes`, `households`, `notifications`, `trainer`, `ai:use`, `profile`) keeps working: Connected apps and the consent screen show it as the areas it covers (`ToolAreas.FromScopes`), and an area implies the older scopes its tools need, so the legacy tools still answer a grant made with areas. Saving a grant again stores areas.
+
+The legacy MCP layer holds each tool to a scope (`McpToolScopes`; a test fails if a tool has none). A client sees only the tools, resources, and prompts its grant covers, and a direct call outside it is refused naming the missing permission. The API enforces household and data-axis limits itself, so a bug in the MCP layer cannot widen a user's choice.
 
 Personal read endpoints are gated by scope only. Household-owned records are filtered by membership and by the grant's households. Household writes are refused when the grant cannot see the household: creating one needs household access set to all households, and inviting, removing, leaving, deleting, switching or answering an invitation needs the household inside the grant. The refusal names the permission and where to change it (`HouseholdAccess.EnsureGrantCovers`).
 
 The free plan allows 15 successful tool calls and resource reads per month. Prompts, skills, and app pages do not count; failures do not count.
+
+## Task tools
+
+The task tools are defined once, in `Mizan.Application/Tools` (`TaskToolCatalogue`), and serve the MCP connector, outside agents calling the API, and the in-app assistant ([AI](AI.md#consent)). A person sees 26: 24 personal (`find_food`, `get_nutrition`, `log_food`, `estimate_food`, `save_food`, `set_goal`, `get_training`, `log_workout`, `save_workout_template`, `get_body_trend`, `log_body`, `get_meal_plan`, `plan_meals`, `edit_meal_plan`, `get_shopping_list`, `update_shopping_list`, `set_reminder`, `get_my_account`, `update_my_settings`, `get_social`, `social_action`, `get_my_coach`, `manage_my_coach`, `delete`) and 2 household (`get_household`, `manage_household`). Coaching tools for trainers and admin tools come later; the legacy toolset still has them.
+
+Each tool has modes picked by one argument (`view`, `kind`, `action` or `section`). A mode builds an existing MediatR command with the caller's id from the session, never from the arguments, and is held to a least role, a surface (`mcp`, `assistant` or both) and one area. `GET /api/tools?surface=mcp|assistant` lists what the caller may use: tools are filtered by role, then by the grant's areas, and each tool's mode enum is narrowed to the modes left. `POST /api/tools/{name}/call` with `{surface, arguments}` runs one through `ITaskToolRunner`, which checks role, surface and area again on every call and refuses with `errorCode` `not_allowed` and `needs` (the missing area) rather than guessing. A grant made with older scopes reaches a mode through the scopes of the legacy tools it replaces (`ToolMode.Replaces`), no further. Every call is audited as `CallTaskToolCommand` with tool, mode, surface and outcome.
+
+Batches are one call: `log_food` takes `items[]` (foods, recipes, plan entries or known nutrition), `edit_meal_plan` takes `changes[]`, and `update_shopping_list` `add_items` takes `items[]`. Each checks every item first, then returns a receipt of what completed, failed and remains, so a retry repeats only what remains. `log_workout` takes exercises by id or by name and saves nothing while a name is unknown or ambiguous. Outside agents pass `householdId` on plans and shopping lists; the assistant always uses the active household.
+
+`GET /api/tools/reference` (MCP resources `mizan://reference` and `mizan://reference/{price-regions,goal-types,meal-slots,macro-modes,reminder-kinds}`, open to every connection and not counted) lists the enabled price regions, goal types, meal slots, macro modes and reminder kinds the tools accept.
+
+`Mcp:Toolset` chooses what the MCP service offers: `legacy` (default) keeps the tools below; `tasks` passes `tools/list` and `tools/call` through to the API manifest and call endpoints (`TaskToolProxy`), with the same sign-in, free-plan cap and usage log. The manifest is cached 60 seconds per grant and user, so a changed grant shows within a minute; the API checks every call regardless. A tool's kind sets its annotations (`read` is read-only, `destructive` is destructive, all closed-world) and its app sets `_meta.ui.resourceUri`. A result's `data` becomes `structuredContent` (an array as `{items}`), a confirmation is added as `structuredContent.confirmation` `{token, expiresAt, preview}`, and an error carries `{errorCode, needs}`. `estimate_food` and `plan_meals` may run as tasks. The server instructions, prompts (`MizanTaskPrompts`, without `trainer_checkin`) and skills (`SkillsTasks`) name the task tools in this mode.
+
+### Confirming a high-impact action
+
+Deleting a meal plan, a recipe, a household membership (leaving, or removing a member), the social profile, or a shopping list's ticked items does not happen on the first call. `delete` returns a preview of what goes and a `confirmation` token; the model shows the preview, and only when the person agrees calls `delete` again with `kind: "confirm"` and the token. The token is stored hashed in `pending_tool_actions` with the arguments and a hash of the preview's facts. It works once, for ten minutes, for the same person and connection, and only while that connection still allows the action. Confirming rebuilds the command from the stored arguments, runs the preview again and refuses with `facts_changed` if what the person saw has changed, `token_used` or `token_expired` otherwise. The audit entry records the confirmed action.
 
 ## Tools, resources, and prompts
 
@@ -89,6 +107,8 @@ JSON arguments (`rulesJson`, `entriesJson`, `prepSessionsJson`) carry the record
 | `analyze_food_image` | `food-photo` | `ai:use` |
 | `list_body_measurements` | `body-trend` | `body:read` |
 | `get_meal_plan`, `get_plan_day` | `meal-plan` | `planning:read` |
+
+In tasks mode the same pages open from `get_nutrition` (day view), `estimate_food`, `get_body_trend` and `get_meal_plan`. The served page carries `const toolset = "tasks"`, and its own calls use the task tools: the day view calls `get_nutrition`, the photo review logs ticked items with one `log_food` batch and marks what the receipt completed, and the meal plan logs with `log_food` `items: [{planEntryId, planId}]` and builds the list with `update_shopping_list` `action: "from_plan"`.
 
 The photo review logs ticked items one at a time and stops at the first failure, so a retry never logs anything twice. The meal plan page shows a plan's days (or one day) with entries, nutrition, totals, prep sessions and violations; its Log button calls `log_plan_entry` through the host and disables itself once the entry is logged, and its Shopping list button calls `generate_shopping_list`. Those writes need `planning:write` on the connection; the page itself needs only `planning:read`.
 

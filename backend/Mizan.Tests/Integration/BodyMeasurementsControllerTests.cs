@@ -102,8 +102,14 @@ public class BodyMeasurementsControllerTests
             var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
             var exercise = new Exercise
             {
-                Id = Guid.NewGuid(), Name = "Weigh-in squat", Category = "Strength", MuscleGroup = "Legs",
-                IsCustom = true, IsApproved = true, CreatedByUserId = userId, CreatedAt = DateTime.UtcNow,
+                Id = Guid.NewGuid(),
+                Name = "Weigh-in squat",
+                Category = "Strength",
+                MuscleGroup = "Legs",
+                IsCustom = true,
+                IsApproved = true,
+                CreatedByUserId = userId,
+                CreatedAt = DateTime.UtcNow,
             };
             db.Exercises.Add(exercise);
             await db.SaveChangesAsync();
