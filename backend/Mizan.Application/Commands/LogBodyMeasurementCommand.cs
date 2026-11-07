@@ -1,7 +1,8 @@
 using MediatR;
 using FluentValidation;
 using Mizan.Application.Interfaces;
-using Mizan.Domain.Entities;
+using Mizan.Application.Notifications;
+using Mizan.Domain.Body;
 
 namespace Mizan.Application.Commands;
 
@@ -54,38 +55,31 @@ public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasureme
 {
     private readonly IMizanDbContext _context;
     private readonly IAchievementEvaluator _achievements;
+    private readonly GoalReachedNotifications _goals;
 
-    public LogBodyMeasurementCommandHandler(IMizanDbContext context, IAchievementEvaluator achievements)
+    public LogBodyMeasurementCommandHandler(IMizanDbContext context, IAchievementEvaluator achievements, GoalReachedNotifications goals)
     {
         _context = context;
         _achievements = achievements;
+        _goals = goals;
     }
 
     public async Task<LogBodyMeasurementResult> Handle(LogBodyMeasurementCommand request, CancellationToken cancellationToken)
     {
-        var measurement = new BodyMeasurement
-        {
-            Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            MeasurementDate = DateOnly.FromDateTime(request.Date),
-            WeightKg = request.WeightKg,
-            BodyFatPercentage = request.BodyFatPercentage,
-            MuscleMassKg = request.MuscleMassKg,
-            WaistCm = request.WaistCm,
-            HipsCm = request.HipsCm,
-            ChestCm = request.ChestCm,
-            LeftArmCm = request.LeftArmCm,
-            RightArmCm = request.RightArmCm,
-            LeftThighCm = request.LeftThighCm,
-            RightThighCm = request.RightThighCm,
-            Notes = request.Notes,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.BodyMeasurements.Add(measurement);
+        // One measurement a day: a second write that day updates it.
+        var measurement = await BodyMeasurementRecorder.RecordAsync(
+            _context,
+            request.UserId,
+            DateOnly.FromDateTime(request.Date),
+            new BodyMeasurementValues(request.WeightKg, request.BodyFatPercentage, request.MuscleMassKg,
+                request.WaistCm, request.HipsCm, request.ChestCm, request.LeftArmCm, request.RightArmCm,
+                request.LeftThighCm, request.RightThighCm),
+            request.Notes,
+            cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["body_measurements_logged"]);
+        await _goals.NotifyAsync(measurement, cancellationToken);
 
         return new LogBodyMeasurementResult
         {

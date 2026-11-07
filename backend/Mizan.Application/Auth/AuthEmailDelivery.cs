@@ -8,7 +8,7 @@ namespace Mizan.Application.Auth;
 internal static class AuthEmailDelivery
 {
     /// <summary>
-    /// Queues an identity email rather than sending it inline.
+    /// Queues an identity email through the email log rather than sending it inline.
     ///
     /// This used to call the sender inside a try/catch that logged and carried
     /// on. That was the least bad option available - a mail outage must not
@@ -21,9 +21,9 @@ internal static class AuthEmailDelivery
     /// email queued for an account that does not exist, and one that succeeds
     /// cannot lose the email (docs/ARCHITECTURE.md#storage-caching-and-jobs).
     /// </summary>
-    public static Task QueueAsync(
-        IOutbox outbox,
-        EmailMessage message,
+    public static Task<Guid> QueueAsync(
+        IEmailQueue emails,
+        OutgoingEmail message,
         Guid userId,
         string purpose,
         CancellationToken cancellationToken)
@@ -31,10 +31,19 @@ internal static class AuthEmailDelivery
         // Deduplicate the same delivery, not every email with the same subject.
         // A newly issued token changes the message and must always be queued.
         var messageHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(message)));
-        return outbox.EnqueueAsync(
-            OutboxJobTypes.Email,
+        return emails.QueueAsync(
             message,
+            KindOf(purpose),
+            toUserId: userId,
             dedupeKey: $"auth:{purpose}:{userId}:{messageHash}",
-            cancellationToken);
+            cancellationToken: cancellationToken);
     }
+
+    private static string KindOf(string purpose) => purpose switch
+    {
+        "verify" => EmailKinds.AuthVerify,
+        "reset" => EmailKinds.AuthReset,
+        _ when purpose.StartsWith("signin", StringComparison.Ordinal) => EmailKinds.AuthSignIn,
+        _ => $"auth.{purpose}",
+    };
 }

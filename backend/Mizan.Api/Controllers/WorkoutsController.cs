@@ -65,6 +65,8 @@ public class WorkoutsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateWorkout(Guid id, [FromBody] UpdateWorkoutCommand command)
     {
+        // The route names the workout; a body that leaves its id out means the same one.
+        if (command.Id == Guid.Empty) command = command with { Id = id };
         if (id != command.Id) return BadRequest(new { errorCode = "id_mismatch", error = "Route and body IDs must match" });
         await _mediator.Send(command);
         return NoContent();

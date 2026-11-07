@@ -52,6 +52,20 @@ public class GoalsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteGoal(Guid id)
+    {
+        var deleted = await _mediator.Send(new DeleteUserGoalCommand(id));
+        return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpDelete("progress/{id:guid}")]
+    public async Task<IActionResult> DeleteProgress(Guid id)
+    {
+        var deleted = await _mediator.Send(new DeleteGoalProgressCommand(id));
+        return deleted ? NoContent() : NotFound();
+    }
+
     // Not Pro-gated: /goal/dashboard is a spine nav destination (Progress),
     // not a secondary feature - paywalling it would paywall the nav itself.
     [HttpGet("progress")]

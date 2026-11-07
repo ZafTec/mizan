@@ -1,0 +1,242 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6F68; text-decoration: none; } a:hover { color: #164F4A; }
+
+    .sheet { font-family: Archivo, system-ui, sans-serif; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    .sheet.light {
+      --paper:  #FBFAF7; --raised: #FFFFFF; --ink: #1A1815; --body: #55514A; --muted: #8C8779;
+      --faint: #A19B8D; --rule: #E3DFD6; --hair: #EDE9E0; --brand: #1F6F68; --danger: #A33A2A;
+      --warn: #8A5E17; --wash: #F3F1EA; --skeleton: #EDE9E0;
+    }
+    .sheet.dark {
+      --paper: #14161A; --raised: #1A1D22; --ink: #F2F0EB; --body: #C0BCB4; --muted: #8B867C;
+      --faint: #6E6A62; --rule: #2A2E34; --hair: #23262B; --brand: #63C9BE; --danger: #E88171;
+      --warn: #D6A254; --wash: #1D2026; --skeleton: #23262B;
+    }
+
+    .lede { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 0; max-width: 62ch; }
+    .capt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+    h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+
+    /* A phone frame. Everything inside is the app at 390 wide, 20px gutters. */
+    .phone { width: 390px; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 18px; color: var(--ink); font-size: 14px; }
+    .phone h1 { font-size: 30px; line-height: 1.1; }
+    .phone .lead { font-size: 13px; color: var(--body); line-height: 1.5; margin: 6px 0 0; }
+    .phone .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 3px; font-weight: 600; font-size: 14px; }
+    .phone .btn.primary { background: var(--ink); color: var(--paper); }
+    .phone .btn.secondary { border: 1px solid var(--rule); color: var(--ink); }
+    .phone .link { color: var(--brand); font-size: 13px; }
+    .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 14px 0; gap: 12px; }
+    .facts .k { font-size: 12px; color: var(--body); }
+    .facts .v { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-top: 4px; }
+    .facts .v small { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+    .sec { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+    .sec h2 { font-size: 18px; }
+    .row { display: flex; align-items: center; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--hair); padding: 10px 0; }
+    .row .t { flex: 1; min-width: 0; }
+    .row .t .n { font-weight: 500; color: var(--ink); }
+    .row .t .d { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+    .row .r { text-align: right; font-size: 13px; color: var(--body); white-space: nowrap; }
+    .row .r b { color: var(--ink); font-weight: 600; font-size: 15px; }
+    .row .chev { color: var(--faint); font-size: 16px; }
+    .empty { padding: 22px 0 6px; }
+    .empty .n { font-weight: 600; font-size: 15px; }
+    .empty p { font-size: 13px; color: var(--body); margin: 4px 0 0; line-height: 1.5; }
+    .check { width: 20px; height: 20px; border: 1.5px solid var(--body); border-radius: 3px; flex: none; }
+    .check.on { background: var(--brand); border-color: var(--brand); position: relative; }
+    .check.on::after { content: ""; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px; border: solid var(--paper); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); display: inline-block; margin-right: 6px; }
+    .no { color: var(--danger); } .yes { color: var(--brand); }
+  </style>
+</helmet>
+
+<div class="sheet {{theme}}" style="width: 1280px; background: var(--paper); color: var(--ink); padding: 44px 48px 52px; display: flex; flex-direction: column; gap: 40px;">
+
+  <!-- masthead -->
+  <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 26px;">
+    <div class="capt">Mizan &middot; Design language &middot; Phase 19</div>
+    <h1 style="font-size: 42px; line-height: 1.05;">The secondary page</h1>
+    <p class="lede">Today, History, Progress and Recipes are already a ruled sheet. The pages under More still carry the old app: icon tiles, stat cards, mascots, badge pills. This board gives them one shape so they read like the rest, and it is the shape the daily log already uses. Nothing here needs a new component; the table, the rows and the empty states exist.</p>
+  </div>
+
+  <!-- 01 anatomy -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">01</span>
+      <h2 style="font-size: 22px;">Anatomy</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">Header, facts, list, one action. In that order, and nothing else.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: 390px 1fr; gap: 40px; align-items: start;">
+      <div class="phone">
+        <div>
+          <h1>Meal plans</h1>
+          <p class="lead">A week of recipes your household can shop for.</p>
+        </div>
+        <div class="facts">
+          <div><div class="k">Plans</div><div class="v num">3</div></div>
+          <div><div class="k">This week</div><div class="v num">12<small>meals</small></div></div>
+          <div><div class="k">To buy</div><div class="v num">9<small>items</small></div></div>
+        </div>
+        <div>
+          <div class="sec"><h2>Your plans</h2><a class="link" href="#">Shopping list &rarr;</a></div>
+          <div class="row"><div class="t"><div class="n">Week of 13 Oct</div><div class="d">13 &ndash; 19 Oct &middot; Home</div></div><div class="r num"><b>12</b> meals</div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Cutting week</div><div class="d">6 &ndash; 12 Oct</div></div><div class="r num"><b>7</b> meals</div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Weekly plan</div><div class="d">29 Sep &ndash; 5 Oct</div></div><div class="r num"><b>0</b> meals</div><span class="chev">&rsaquo;</span></div>
+        </div>
+        <a class="btn primary" href="#">New plan</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 6px;">
+        <div><div class="capt">Header</div><p class="lede">Title and one line that says what the page is for. No eyebrow on the pages people use, the title is enough. On a phone the primary action moves to the bottom of the page so the first screen is the content.</p></div>
+        <div><div class="capt">Facts</div><p class="lede">Up to three numbers in one ruled strip, the same strip the nutrition totals use on Today. Never a card per number, never an icon per number. If a number needs an icon to be understood, the label is wrong.</p></div>
+        <div><div class="capt">List</div><p class="lede">Rows under a section rule. Name left, numbers right in tabular figures, a chevron when the row opens something. Rows are the unit for plans, exercises, achievements, shopping items. Tables are for pages that sort and page, like Foods and Measurement history.</p></div>
+        <div><div class="capt">Action</div><p class="lede">One filled button per page, ink, and it is the thing the page exists to do. Secondary routes are links in a section header. Edit and delete live on the detail page, not on every row.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 rules -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">02</span>
+      <h2 style="font-size: 22px;">What leaves</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px;">
+      <div><p class="lede"><span class="no">&times;</span> Icon tiles beside a title. The 48px coloured square carried the old brand; here it is a second coloured object per row.</p></div>
+      <div><p class="lede"><span class="no">&times;</span> Stat cards. Four boxes counting the same list the page shows underneath.</p></div>
+      <div><p class="lede"><span class="no">&times;</span> Mascot illustrations in empty states. An empty page says in one sentence what will appear and how to make it appear.</p></div>
+      <div><p class="lede"><span class="no">&times;</span> Badge pills for category, muscle and equipment. They become one muted line under the name.</p></div>
+      <div><p class="lede"><span class="no">&times;</span> Hubs that link to pages More already lists. Profile stops being a second More.</p></div>
+      <div><p class="lede"><span class="yes">&check;</span> Numbers always formatted. A weight is <span class="num">74.6 kg</span>, never <span class="num">74.6000000000000</span>. Deltas are text with a sign, not a coloured chip.</p></div>
+    </div>
+  </div>
+
+  <!-- 03 the screens -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">03</span>
+      <h2 style="font-size: 22px;">The six pages this round</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">Each one is the anatomy above with its own facts and rows.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, 390px); gap: 28px;">
+
+      <div class="phone">
+        <div><h1>Shopping list</h1><p class="lead">What your plans need you to buy.</p></div>
+        <div class="sec"><h2>To buy</h2><span class="capt num" style="font-weight: 500;">9 left of 14</span></div>
+        <div>
+          <div class="row"><span class="check"></span><div class="t"><div class="n">Red lentils</div></div><div class="r num">500 g</div></div>
+          <div class="row"><span class="check"></span><div class="t"><div class="n">Onions</div></div><div class="r num">3</div></div>
+          <div class="row"><span class="check"></span><div class="t"><div class="n">Berbere</div></div><div class="r num">2 tbsp</div></div>
+          <div class="row"><span class="check on"></span><div class="t"><div class="n" style="color: var(--muted); text-decoration: line-through;">Injera</div></div><div class="r num" style="color: var(--muted);">6</div></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;"><a class="link" href="#">Show bought items</a><a class="link" href="#">Print</a></div>
+        <div class="empty" style="border-top: 1px solid var(--rule);"><div class="n">Nothing to buy</div><p>Add recipes to a meal plan and their ingredients land here.</p><a class="link" href="#">Open meal plans &rarr;</a></div>
+      </div>
+
+      <div class="phone">
+        <div><h1>Body</h1><p class="lead">Weight and measurements over time.</p></div>
+        <div class="facts">
+          <div><div class="k">Weight</div><div class="v num">74.2<small>kg</small></div><div class="d" style="font-size: 12px; color: var(--muted);">&minus;0.2 since last</div></div>
+          <div><div class="k">Body fat</div><div class="v num">&mdash;</div></div>
+          <div><div class="k">Waist</div><div class="v num">80.5<small>cm</small></div></div>
+        </div>
+        <a class="btn primary" href="#">Add measurement</a>
+        <div>
+          <div class="sec"><h2>Weight</h2><span class="capt" style="font-weight: 500;">3 months</span></div>
+          <div style="height: 120px; border-bottom: 1px solid var(--hair); position: relative; margin-top: 12px;">
+            <svg width="350" height="120" viewBox="0 0 350 120" style="position: absolute; inset: 0;"><polyline fill="none" stroke="var(--brand)" stroke-width="1.5" points="10,20 60,34 110,42 160,55 210,66 260,78 310,90 340,100"/><g fill="var(--paper)" stroke="var(--brand)" stroke-width="1.5"><circle cx="10" cy="20" r="3"/><circle cx="110" cy="42" r="3"/><circle cx="210" cy="66" r="3"/><circle cx="340" cy="100" r="3"/></g></svg>
+          </div>
+          <p class="lede" style="font-size: 12px; margin-top: 8px;">One line in the brand colour on the paper. Body fat and muscle appear as more lines only when they have data. The dashed goal line stays.</p>
+        </div>
+        <div><div class="sec"><h2>History</h2></div><p class="lede" style="font-size: 12px; margin-top: 10px;">The existing table: Date, Weight, Body fat, then the rest behind the secondary toggle. Numbers to one decimal.</p></div>
+      </div>
+
+      <div class="phone">
+        <div><h1>Exercises</h1><p class="lead">The movements you can put in a workout.</p></div>
+        <div style="display: flex; gap: 8px;"><div style="flex: 1; border: 1px solid var(--rule); background: var(--raised); border-radius: 3px; min-height: 44px; display: flex; align-items: center; padding: 0 12px; color: var(--faint); font-size: 14px;">Search exercises</div><div style="border: 1px solid var(--rule); background: var(--raised); border-radius: 3px; min-height: 44px; display: flex; align-items: center; padding: 0 12px; font-size: 14px;">Any type &#9662;</div></div>
+        <div>
+          <div class="sec"><h2>All exercises</h2><span class="capt num" style="font-weight: 500;">146</span></div>
+          <div class="row"><div class="t"><div class="n">Bench press</div><div class="d">Strength &middot; Chest &middot; Barbell</div></div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Barbell row</div><div class="d">Strength &middot; Back &middot; Barbell</div></div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Back squat</div><div class="d">Strength &middot; Legs &middot; Barbell</div></div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Plank</div><div class="d">Core &middot; Bodyweight</div></div><span class="chev">&rsaquo;</span></div>
+        </div>
+        <p class="lede" style="font-size: 12px;">Typing filters as you type; there is no Search button. A picture, when the exercise has one, is a 44px square at the left of the row, never a coloured placeholder when it has none.</p>
+        <a class="btn secondary" href="#">Start a workout</a>
+      </div>
+
+      <div class="phone">
+        <div><h1>Achievements</h1><p class="lead">Your streak and what it has earned.</p></div>
+        <div class="facts">
+          <div><div class="k">Streak</div><div class="v num">4<small>days</small></div></div>
+          <div><div class="k">Longest</div><div class="v num">12<small>days</small></div></div>
+          <div><div class="k">Level</div><div class="v">Rookie</div></div>
+        </div>
+        <p class="lede" style="font-size: 12.5px;">0 points &middot; 50 to Bronze</p>
+        <div>
+          <div class="sec"><h2>Earned</h2><span class="capt num" style="font-weight: 500;">0</span></div>
+          <div class="empty"><div class="n">Nothing earned yet</div><p>The first one is a single logged meal. The rest are listed below so you know what counts.</p></div>
+        </div>
+        <div>
+          <div class="sec"><h2>Still to earn</h2><span class="capt num" style="font-weight: 500;">18</span></div>
+          <div class="row"><div class="t"><div class="n">First bite</div><div class="d">Log 1 meal &middot; <span class="num">0 / 1</span></div></div><div class="r num"><b>10</b> pts</div></div>
+          <div class="row"><div class="t"><div class="n">Week one</div><div class="d">Hit a 7-day nutrition streak &middot; <span class="num">4 / 7</span></div></div><div class="r num"><b>50</b> pts</div></div>
+          <div class="row"><div class="t"><div class="n">Iron habit</div><div class="d">Log 10 workouts &middot; <span class="num">1 / 10</span></div></div><div class="r num"><b>30</b> pts</div></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div><h1>Profile</h1><p class="lead">Who you are to Mizan.</p></div>
+        <div style="display: flex; gap: 14px; align-items: center; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 16px 0;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--wash); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 20px;">A</div>
+          <div><div style="font-weight: 600; font-size: 16px;">Alex Morgan</div><div style="font-size: 13px; color: var(--muted);">alex@example.test</div></div>
+        </div>
+        <div>
+          <div class="row"><div class="t"><div class="n">Member since</div></div><div class="r num">12 Mar 2026</div></div>
+          <div class="row"><div class="t"><div class="n">Time zone</div></div><div class="r">Africa/Addis Ababa</div></div>
+          <div class="row"><div class="t"><div class="n">Plan</div></div><div class="r">Free &middot; <a class="link" href="#">Billing</a></div></div>
+          <div class="row"><div class="t"><div class="n">Streak</div></div><div class="r num"><b>4</b> days</div></div>
+        </div>
+        <div>
+          <div class="sec"><h2>Account</h2></div>
+          <div class="row"><div class="t"><div class="n">Settings</div><div class="d">Name, time zone, appearance, assistant</div></div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Sessions</div><div class="d">Where you are signed in</div></div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Connected apps</div><div class="d">What AI assistants may do</div></div><span class="chev">&rsaquo;</span></div>
+          <div class="row"><div class="t"><div class="n">Export my data</div></div><span class="chev">&rsaquo;</span></div>
+        </div>
+        <p class="lede" style="font-size: 12px;">The old page was a second More: six feature links, four stat cards and a block of green squares. Features live in More; this page is only the account.</p>
+      </div>
+
+      <div class="phone">
+        <div><h1>Meal plans</h1><p class="lead">A week of recipes your household can shop for.</p></div>
+        <div class="empty" style="border-top: 1px solid var(--ink); padding-top: 18px;"><div class="n">No plans yet</div><p>Pick a week and add recipes to its days. The shopping list writes itself from what you add.</p></div>
+        <a class="btn primary" href="#">New plan</a>
+        <p class="lede" style="font-size: 12px; margin-top: 8px;">The empty state is the same page minus the rows. No facts strip when every number would be zero.</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light","section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

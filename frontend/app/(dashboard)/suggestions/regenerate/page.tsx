@@ -1,8 +1,8 @@
-import { regenerateSuggestions } from '@/data/suggestion';
-import { getUserServer } from '@/helper/session';
-import { redirect } from 'next/navigation';
+import { regenerateSuggestions } from "@/data/suggestion";
+import { getUserServer } from "@/helper/session";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function RegeneratePage() {
   await getUserServer(); // Verify user is authenticated
@@ -11,5 +11,5 @@ export default async function RegeneratePage() {
   await regenerateSuggestions();
 
   // Redirect back to the suggestions page
-  return redirect('/suggestions');
+  return redirect("/suggestions");
 }

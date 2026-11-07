@@ -1,0 +1,4 @@
+proof/
+proof-paper/
+*.blend1
+__pycache__/

@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Mcp;
 
 namespace Mizan.Api.Authentication;
 
@@ -42,28 +43,39 @@ public class SessionCookieAuthenticationHandler : AuthenticationHandler<SessionC
             return AuthenticateResult.NoResult();
         }
 
-        var userId = await _sessions.ResolveAsync(token, Context.RequestAborted);
-        if (userId is null)
+        var session = await _sessions.ResolveIdentityAsync(token, Context.RequestAborted);
+        if (session is null)
         {
             return AuthenticateResult.Fail("Session expired");
         }
 
         // Same gate the JWT path used, same cache: deleted, unverified and
         // banned users are turned away without a database round trip.
-        var status = await _userStatus.GetStatusAsync(userId.Value, Context.RequestAborted);
+        var userId = session.UserId;
+        var status = await _userStatus.GetStatusAsync(userId, Context.RequestAborted);
         if (!status.Exists) return AuthenticateResult.Fail("User not found");
         if (!status.EmailVerified) return AuthenticateResult.Fail("Email not verified");
         if (status.IsBanned) return AuthenticateResult.Fail("User banned");
 
-        var id = userId.Value.ToString();
+        var id = userId.ToString();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, id),
+            new("sub", id),
+            new(ClaimTypes.Role, status.Role),
+            new("role", status.Role),
+        };
+
+        // An administrator viewing the site as this user. Who they are rides every request, so audit entries and the
+        // restrictions below can name them.
+        if (session.ImpersonatorId is { } impersonator)
+        {
+            claims.Add(new Claim(ImpersonationClaims.Impersonator, impersonator.ToString()));
+            claims.Add(new Claim(ImpersonationClaims.Expires, session.ExpiresAt.ToString("O")));
+        }
+
         var identity = new ClaimsIdentity(
-            new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, id),
-                new Claim("sub", id),
-                new Claim(ClaimTypes.Role, status.Role),
-                new Claim("role", status.Role),
-            },
+            claims,
             Scheme.Name,
             ClaimTypes.NameIdentifier,
             ClaimTypes.Role);

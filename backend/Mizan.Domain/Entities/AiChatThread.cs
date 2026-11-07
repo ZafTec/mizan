@@ -4,6 +4,13 @@ public enum AiChatRole
 {
     User = 0,
     Assistant = 1,
+
+    /// <summary>
+    /// A fact the app the person is using reported, such as a form they are part way through
+    /// (docs/AI.md#app-context). Not their words and not the assistant's: the model reads it as
+    /// background, and the transcript does not show it.
+    /// </summary>
+    Context = 2,
 }
 
 /// <summary>
@@ -55,6 +62,15 @@ public class AiChatThread
     /// only reads what has happened since.
     /// </summary>
     public int SummarisedThrough { get; set; }
+
+    /// <summary>
+    /// App context waiting for the person's next message, such as "asked which days" in a guided
+    /// flow, until <see cref="PendingContextUntil"/>. A turn that carries it clears it; it is also
+    /// kept as a <see cref="AiChatRole.Context"/> message.
+    /// </summary>
+    public string? PendingContext { get; set; }
+
+    public DateTime? PendingContextUntil { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

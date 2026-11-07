@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
@@ -377,6 +378,88 @@ public class AchievementsControllerTests
     // because the migration seeds 20 baseline achievements (referenced by the evaluator).
     // These tests need a clean slate to assert exact counts, so we clear both tables
     // explicitly. Order matters: user_achievements has an FK to achievements.
+    // ---------- badges ----------
+
+    [Fact]
+    public async Task Get_ReturnsDefaultBadgesAsAbsoluteUrls_AndLeavesUploadsAlone()
+    {
+        await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
+
+        var userId = Guid.NewGuid();
+        var email = $"ach-badge-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email);
+
+        var shipped = Guid.NewGuid();
+        var uploaded = Guid.NewGuid();
+        var bare = Guid.NewGuid();
+        using (var scope = _fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+            db.Achievements.AddRange(
+                new Achievement { Id = shipped, Name = "Shipped badge", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 1, Points = 10, IconUrl = "/badges/128/achievement-first-meal.png" },
+                new Achievement { Id = uploaded, Name = "Uploaded badge", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 2, Points = 10, IconUrl = "https://media.example.test/achievements/2026/10/abc.png" },
+                new Achievement { Id = bare, Name = "No badge", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 3, Points = 10 });
+            await db.SaveChangesAsync();
+        }
+
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        var list = await client.GetFromJsonAsync<AchievementListResponse>("/api/Achievements?pageSize=50");
+        var byId = list!.Items.ToDictionary(i => i.Id);
+
+        // A default ships with the web app, so the API hands out an address on
+        // the app origin that Telegram and the native client can fetch.
+        byId[shipped].IconUrl.Should().Be("http://localhost:3000/badges/128/achievement-first-meal.png");
+        byId[uploaded].IconUrl.Should().Be("https://media.example.test/achievements/2026/10/abc.png");
+        byId[bare].IconUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Migration_GivesEverySeededAchievementADefaultBadge()
+    {
+        // Another test in this class may have truncated the catalogue, so put
+        // back what a fresh install has (the 20 model-seeded rows and the
+        // catalogue seed), then re-run the badge migration and check all 29.
+        using var scope = _fixture.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        var modelSeed = db.GetService<Microsoft.EntityFrameworkCore.Metadata.IDesignTimeModel>().Model.FindEntityType(typeof(Achievement))!.GetSeedData()
+            .Select(d => new Achievement
+            {
+                Id = (Guid)d["Id"]!,
+                Name = (string)d["Name"]!,
+                Description = (d.TryGetValue("Description", out var description) ? description : null) as string,
+                Category = (d.TryGetValue("Category", out var category) ? category : null) as string,
+                CriteriaType = (d.TryGetValue("CriteriaType", out var criteriaType) ? criteriaType : null) as string,
+                Threshold = Convert.ToInt32(d["Threshold"]),
+                Points = Convert.ToInt32(d["Points"]),
+            })
+            .ToList();
+        modelSeed.Should().HaveCount(20);
+        var present = await db.Achievements.Select(a => a.Id).ToListAsync();
+        db.Achievements.AddRange(modelSeed.Where(a => !present.Contains(a.Id)));
+        await db.SaveChangesAsync();
+        await db.Database.ExecuteSqlRawAsync(Mizan.Infrastructure.Data.Seed.CatalogSeed.Sql);
+
+        string[] catalogueKeys = ["first-share", "ten-shares", "first-follower", "ten-followers", "first-pr", "volume", "template-ten", "reactions", "comments"];
+        var expected = modelSeed.Select(a => a.Id)
+            .Concat(catalogueKeys.Select(k => new Guid(Convert.ToHexString(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes($"mizan-achievement:{k}"))))))
+            .ToHashSet();
+        expected.Should().HaveCount(29);
+
+        var migrator = db.GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>();
+        await migrator.MigrateAsync("RecipeNutritionSnapshots");
+        await migrator.MigrateAsync();
+
+        var rows = await db.Achievements.AsNoTracking()
+            .Where(a => expected.Contains(a.Id))
+            .Select(a => new { a.Id, a.IconUrl })
+            .ToListAsync();
+        rows.Should().HaveCount(29);
+        rows.Should().OnlyContain(r => r.IconUrl != null && r.IconUrl.StartsWith("/badges/128/achievement-"), "every shipped achievement has a default badge");
+        rows.Select(r => r.IconUrl).Should().OnlyHaveUniqueItems();
+    }
+
     private async Task ResetAchievementsAsync()
     {
         using var scope = _fixture.Services.CreateScope();
@@ -454,6 +537,7 @@ public class AchievementsControllerTests
         public string Name { get; init; } = string.Empty;
         public string? Category { get; init; }
         public int Points { get; init; }
+        public string? IconUrl { get; init; }
     }
 
     private record AnalyticsResponse

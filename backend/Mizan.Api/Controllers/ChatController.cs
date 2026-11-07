@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
+using Mizan.Contracts.Coaching;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
 
@@ -47,4 +48,3 @@ public class ChatController : ControllerBase
     }
 }
 
-public record SendMessageRequest(Guid ConversationId, string Content);

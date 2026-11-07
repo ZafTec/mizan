@@ -6,6 +6,12 @@ public class Achievement
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? IconUrl { get; set; }
+
+    /// <summary>
+    /// A branded card rendered once for an achievement without an icon, so a Telegram message has a
+    /// picture to send. Cleared when the achievement is renamed; never shown in place of an icon.
+    /// </summary>
+    public string? CardImageUrl { get; set; }
     public int Points { get; set; }
     public string? Category { get; set; } // nutrition, workout, streak, milestone
 

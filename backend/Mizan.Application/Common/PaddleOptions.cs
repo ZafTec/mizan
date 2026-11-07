@@ -11,8 +11,12 @@ public class PaddleOptions
     public string Environment { get; set; } = "sandbox"; // sandbox | production
     public string ApiKey { get; set; } = string.Empty;
     public string WebhookSecret { get; set; } = string.Empty;
+
+    /// <summary>The public client-side token the browser opens checkout with.</summary>
+    public string ClientToken { get; set; } = string.Empty;
+
     public int GraceDays { get; set; } = 3;
 
     /// <summary>Price id for the one-time Lifetime purchase, used to detect lifetime grants from transaction.completed.</summary>
-    public string LifetimePriceId { get; set; } = string.Empty;
+    public string LifetimePriceId { get; set; } = "pri_01kwa2qt2c0q0ntgp0ntrn3tbt";
 }

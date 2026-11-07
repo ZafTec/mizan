@@ -1,7 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Mizan.Application.Interfaces;
-using Mizan.Domain.Entities;
+using Mizan.Domain.Body;
 
 namespace Mizan.Application.Commands;
 
@@ -65,26 +65,15 @@ public class CreateBodyMeasurementCommandHandler : IRequestHandler<CreateBodyMea
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
-        var measurement = new BodyMeasurement
-        {
-            Id = Guid.NewGuid(),
-            UserId = _currentUser.UserId.Value,
-            MeasurementDate = request.MeasurementDate,
-            WeightKg = request.WeightKg,
-            BodyFatPercentage = request.BodyFatPercentage,
-            MuscleMassKg = request.MuscleMassKg,
-            WaistCm = request.WaistCm,
-            HipsCm = request.HipsCm,
-            ChestCm = request.ChestCm,
-            LeftArmCm = request.LeftArmCm,
-            RightArmCm = request.RightArmCm,
-            LeftThighCm = request.LeftThighCm,
-            RightThighCm = request.RightThighCm,
-            Notes = request.Notes,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.BodyMeasurements.Add(measurement);
+        var measurement = await BodyMeasurementRecorder.RecordAsync(
+            _context,
+            _currentUser.UserId.Value,
+            request.MeasurementDate,
+            new BodyMeasurementValues(request.WeightKg, request.BodyFatPercentage, request.MuscleMassKg,
+                request.WaistCm, request.HipsCm, request.ChestCm, request.LeftArmCm, request.RightArmCm,
+                request.LeftThighCm, request.RightThighCm),
+            request.Notes,
+            cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
         return new CreateBodyMeasurementResult

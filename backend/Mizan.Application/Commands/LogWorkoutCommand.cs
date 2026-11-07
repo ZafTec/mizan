@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Nutrition;
 using Mizan.Contracts.Workouts;
 
 namespace Mizan.Application.Commands;
@@ -30,6 +31,10 @@ public abstract class LogWorkoutRequestValidator<T> : AbstractValidator<T> where
     protected LogWorkoutRequestValidator()
     {
         RuleFor(x => x.WorkoutDate).NotEmpty();
+        RuleFor(x => x.WorkoutDate)
+            .Must(date => DiaryDates.Problem(date, DateOnly.FromDateTime(DateTime.UtcNow), DiaryDates.Workout) is null)
+            .When(x => x.WorkoutDate != default)
+            .WithMessage(x => DiaryDates.Problem(x.WorkoutDate, DateOnly.FromDateTime(DateTime.UtcNow), DiaryDates.Workout) ?? string.Empty);
         RuleFor(x => x.Name).MaximumLength(100);
         RuleFor(x => x.Notes).MaximumLength(500);
         RuleFor(x => x.DurationMinutes).InclusiveBetween(1, 1_440).When(x => x.DurationMinutes.HasValue);
@@ -176,15 +181,15 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
             _context.Workouts.Add(workout);
             if (request.BodyweightKg.HasValue)
             {
-                _context.BodyMeasurements.Add(new BodyMeasurement
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = _currentUser.UserId.Value,
-                    MeasurementDate = request.WorkoutDate,
-                    WeightKg = request.BodyweightKg,
-                    Notes = "Workout bodyweight",
-                    CreatedAt = DateTime.UtcNow
-                });
+                // The day's weight, not a second row beside the one log_day or the form wrote.
+                await BodyMeasurementRecorder.RecordAsync(
+                    _context,
+                    _currentUser.UserId.Value,
+                    request.WorkoutDate,
+                    new Mizan.Domain.Body.BodyMeasurementValues(WeightKg: request.BodyweightKg),
+                    notes: null,
+                    ct,
+                    noteForNewDay: "Workout bodyweight");
             }
             await _context.SaveChangesAsync(ct);
 

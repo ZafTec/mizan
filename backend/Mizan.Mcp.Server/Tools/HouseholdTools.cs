@@ -28,7 +28,7 @@ public sealed class HouseholdTools
     }
 
     [McpServerTool(Name = "create_household")]
-    [Description("Create a new household for sharing shopping lists and meal plans.")]
+    [Description("Create a new household for sharing shopping lists and meal plans. Needs household access set to all households on this connection, because a connection limited to chosen households could not see the new one.")]
     public async Task<string> CreateHousehold(
         [Description("Household name")] string name,
         CancellationToken ct = default)
@@ -101,4 +101,9 @@ public sealed class HouseholdTools
     {
         return await _api.DeleteAsync($"/api/Households/{householdId}/members/{userId}", ct);
     }
+
+    [McpServerTool(Name = "list_household_invitations", ReadOnly = true, Idempotent = true)]
+    [Description("The invitations a household has sent, with each one's status. Not found when the person may not manage the household's members.")]
+    public Task<string> ListInvitations([Description("Household UUID")] string householdId, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Households/{ToolArguments.ParseId(householdId, nameof(householdId))}/invitations", ct);
 }

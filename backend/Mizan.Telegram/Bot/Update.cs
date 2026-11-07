@@ -25,6 +25,18 @@ public sealed record Message
     [JsonPropertyName("text")] public string? Text { get; init; }
     [JsonPropertyName("caption")] public string? Caption { get; init; }
     [JsonPropertyName("photo")] public IReadOnlyList<PhotoSize>? Photo { get; init; }
+
+    /// <summary>Links and formatting in <see cref="Text"/>; a card keeps its photo's address in a <c>text_link</c>.</summary>
+    [JsonPropertyName("entities")] public IReadOnlyList<MessageEntity>? Entities { get; init; }
+
+    /// <summary>The buttons under the message, as the bot sent them. A pressed card says what else it offered.</summary>
+    [JsonPropertyName("reply_markup")] public InlineKeyboardMarkup? ReplyMarkup { get; init; }
+}
+
+public sealed record MessageEntity
+{
+    [JsonPropertyName("type")] public string Type { get; init; } = string.Empty;
+    [JsonPropertyName("url")] public string? Url { get; init; }
 }
 
 public sealed record TelegramUser
@@ -63,4 +75,39 @@ public sealed record TelegramFile
 {
     [JsonPropertyName("file_path")] public string? FilePath { get; init; }
     [JsonPropertyName("file_size")] public int? FileSize { get; init; }
+}
+
+/// <summary>
+/// The <c>reply_markup</c> of a message with buttons under it. Each button is one
+/// of two kinds: a <c>callback_data</c> button comes back to the bot as a
+/// <see cref="CallbackQuery"/>; a <c>web_app</c> button opens the Mini App over
+/// HTTPS and the bot hears nothing until the page calls it.
+/// </summary>
+public sealed record InlineKeyboardMarkup
+{
+    [JsonPropertyName("inline_keyboard")] public IReadOnlyList<IReadOnlyList<InlineKeyboardButton>> InlineKeyboard { get; init; } = [];
+
+    /// <summary>One button per row.</summary>
+    public static InlineKeyboardMarkup Column(params InlineKeyboardButton[] buttons) =>
+        new() { InlineKeyboard = buttons.Select(b => (IReadOnlyList<InlineKeyboardButton>)[b]).ToList() };
+}
+
+public sealed record InlineKeyboardButton
+{
+    [JsonPropertyName("text")] public string Text { get; init; } = string.Empty;
+    [JsonPropertyName("callback_data")] public string? CallbackData { get; init; }
+    [JsonPropertyName("web_app")] public WebAppInfo? WebApp { get; init; }
+    [JsonPropertyName("url")] public string? Url { get; init; }
+
+    public static InlineKeyboardButton Callback(string text, string data) => new() { Text = text, CallbackData = data };
+
+    /// <summary>A button that opens a page in the browser rather than the Mini App.</summary>
+    public static InlineKeyboardButton OpenUrl(string text, string url) => new() { Text = text, Url = url };
+
+    public static InlineKeyboardButton OpenWebApp(string text, string url) => new() { Text = text, WebApp = new WebAppInfo { Url = url } };
+}
+
+public sealed record WebAppInfo
+{
+    [JsonPropertyName("url")] public string Url { get; init; } = string.Empty;
 }

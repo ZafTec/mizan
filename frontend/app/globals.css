@@ -135,6 +135,23 @@
   --duration-fast: 160ms;
   --duration-medium: 220ms;
   --duration-slow: 300ms;
+
+  --animate-page-enter: page-enter var(--duration-slow) var(--ease-out) both;
+  --animate-fade-up: fade-up 280ms var(--ease-out) both;
+  --animate-loader-blink: loader-blink 0.6s linear infinite alternate;
+  --animate-menu-pop: pop-in 180ms var(--ease-out) both;
+  --animate-pop-in: pop-in 160ms var(--ease-out) both;
+  --animate-pop-out: pop-out 120ms var(--ease-out) both;
+  --animate-overlay-in: fade-in 180ms var(--ease-out) both;
+  --animate-overlay-out: fade-out 150ms var(--ease-out) both;
+  --animate-modal-in: modal-pop 200ms var(--ease-out) both;
+  --animate-badge-in: badge-in 360ms var(--ease-out) 80ms both;
+  --animate-dialog-in: dialog-pop-in 200ms var(--ease-out) both;
+  --animate-dialog-out: dialog-pop-out 150ms var(--ease-out) both;
+  --animate-modal-out: modal-pop-out 150ms var(--ease-out) both;
+  --animate-enter: fade-up 200ms var(--ease-out) both;
+  --animate-sheet-in: sheet-up 280ms var(--ease-drawer) both;
+  --animate-sheet-out: sheet-down 200ms var(--ease-out) both;
 }
 
 /*
@@ -172,6 +189,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-hair: var(--hair);
+  --color-danger-wash: var(--danger-wash);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -225,6 +244,11 @@
      tints a row that needs attention without adding a second coloured object.
      (Main.dc.html, rule 04.) */
   --danger-wash: oklch(97.77% 0.009 45);
+  /* The keyboard-active row in a list: one step off the raised surface. */
+  --hair: var(--color-charcoal-blue-100);
+  /* Scrollbars: a thin thumb on a transparent track, the same everywhere. */
+  --scrollbar-thumb: var(--color-charcoal-blue-300);
+  --scrollbar-thumb-hover: var(--color-charcoal-blue-500);
 }
 
 html {
@@ -266,7 +290,13 @@ html {
   --sidebar-ring: var(--color-verdigris-400);
 
   --danger-wash: oklch(22.71% 0.013 26);
+  --hair: oklch(25.5% 0.009 82);
+  --scrollbar-thumb: var(--color-charcoal-blue-800);
+  --scrollbar-thumb-hover: var(--color-charcoal-blue-700);
 }
+
+/* `compact:` is the density setting on <html> (Appearance). */
+@custom-variant compact (&:where(.compact *));
 
 @layer base {
   * {
@@ -276,6 +306,43 @@ html {
   html {
     @apply scroll-smooth;
     overflow-x: clip;
+  }
+
+  /* One scrollbar for every scrolling area: thin, a rounded thumb in the
+     theme's quiet tone, no track and no arrow buttons. Firefox and current
+     Chromium read the standard properties; older WebKit reads the
+     pseudo-elements below. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    background-color: var(--scrollbar-thumb);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   /* One sans family for the whole app, display type included - see
@@ -302,220 +369,205 @@ html {
   select {
     transition-timing-function: var(--ease-emphasized);
   }
-}
 
-/* Tabular figures. A column of counts scans vertically or it is decoration. */
-.num {
-  font-variant-numeric: tabular-nums;
+  input,
+  textarea {
+    caret-color: var(--ring);
+  }
+
+  button:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
+  /* The default keyboard focus ring. It lives in the base layer so a
+     component's own focus style (an `outline-none` with a border or ring
+     utility) replaces it instead of drawing a second outline. */
+  :where(button, a, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
 }
 
 /*
- * Buttons. Two shapes carry the whole product, matching `.cta` and
- * `.cta-quiet` in the spec: solid ink, or a hairline outline. The accent is
- * never a button fill - it means "live", and a page full of teal buttons
- * spends that meaning on navigation.
+ * Shared primitives. Each is used across many files, so it is one utility
+ * rather than a long class string repeated at every call site; anything used
+ * in one component is written in that component's markup instead.
+ *
+ * Buttons: solid ink, a hairline outline, or quiet. The accent is never a
+ * button fill - it means "live". Nothing lifts on hover; the press scale is
+ * feedback that the tap happened.
  */
-.btn,
-.btn-primary,
-.btn-secondary,
-.btn-accent,
-.btn-danger,
-.btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 rounded-xs px-5 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-charcoal-blue-950;
-  border-radius: 3px;
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-[3px] px-5 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-charcoal-blue-950 compact:px-4 compact:py-2;
   transition-property: background-color, border-color, color, opacity;
   transition-duration: var(--duration-fast);
   transition-timing-function: var(--ease-out);
-}
-
-/* Nothing lifts on hover - the sheet has no z-axis. Press feedback stays:
-   it confirms the tap happened, which is feedback, not decoration. */
-.btn:active,
-.btn-primary:active,
-.btn-secondary:active,
-.btn-accent:active,
-.btn-danger:active,
-.btn-ghost:active {
-  transform: scale(0.985);
-  transition-duration: var(--duration-instant);
-}
-
-.btn-primary {
-  @apply bg-charcoal-blue-900 text-charcoal-blue-50 hover:bg-charcoal-blue-800 focus:ring-charcoal-blue-400 dark:bg-charcoal-blue-50 dark:text-charcoal-blue-950 dark:hover:bg-charcoal-blue-200;
-}
-
-.btn-secondary {
-  @apply border border-charcoal-blue-300 bg-transparent text-charcoal-blue-800 hover:border-charcoal-blue-400 hover:bg-charcoal-blue-100 focus:ring-charcoal-blue-400 dark:border-charcoal-blue-700 dark:text-charcoal-blue-200 dark:hover:bg-charcoal-blue-900;
-}
-
-.btn-accent {
-  @apply bg-verdigris-700 text-white hover:bg-verdigris-800 focus:ring-verdigris-600 dark:bg-verdigris-400 dark:text-charcoal-blue-950 dark:hover:bg-verdigris-300;
-}
-
-.btn-danger {
-  @apply bg-burnt-peach-700 text-white hover:bg-burnt-peach-800 focus:ring-burnt-peach-600 dark:bg-burnt-peach-400 dark:text-charcoal-blue-950 dark:hover:bg-burnt-peach-300;
-}
-
-.btn-ghost {
-  @apply border border-transparent bg-transparent text-charcoal-blue-700 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 focus:ring-charcoal-blue-400 dark:text-charcoal-blue-300 dark:hover:border-charcoal-blue-700 dark:hover:text-charcoal-blue-50;
-}
-
-.btn-sm {
-  @apply px-3.5 py-2 text-xs;
-}
-
-.btn-lg {
-  @apply px-6 py-3.5 text-base;
-}
-
-/*
- * Surfaces. A card is paper with a rule around it - no shadow, no lift, no
- * rounded corner beyond the 3px the whole system uses. `.card-hover`,
- * `.surface-panel` and `.glass-panel` are the same surface under different
- * names kept for their existing call sites.
- */
-.card,
-.card-hover,
-.surface-panel,
-.glass-panel {
-  @apply border border-charcoal-blue-200 bg-white dark:border-charcoal-blue-700 dark:bg-charcoal-blue-900;
-  border-radius: 3px;
-  transition-property: border-color, background-color;
-  transition-duration: var(--duration-fast);
-  transition-timing-function: var(--ease-out);
-}
-
-.card,
-.card-hover,
-.surface-panel {
-  @apply overflow-hidden;
-}
-
-.card-hover {
-  @apply hover:border-charcoal-blue-400 dark:hover:border-charcoal-blue-600;
-}
-
-@layer components {
-  .input {
-    @apply w-full border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-500 focus:outline-none dark:border-charcoal-blue-700 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-50 dark:placeholder-charcoal-blue-500;
-    border-radius: 3px;
-    transition-property: border-color, background-color, color;
-    transition-duration: var(--duration-fast);
-    transition-timing-function: var(--ease-out);
-  }
-
-  /* The focus ring is the ink, not a glow - one hairline going darker. */
-  .input:focus {
-    border-color: var(--color-charcoal-blue-900);
-  }
-
-  html.dark .input:focus {
-    border-color: var(--color-charcoal-blue-400);
-  }
-
-  .input-error {
-    @apply border-burnt-peach-600 focus:border-burnt-peach-700 dark:border-burnt-peach-400;
+  &:active {
+    transform: scale(0.985);
+    transition-duration: var(--duration-instant);
   }
 }
+@utility btn-primary {
+  @apply btn bg-charcoal-blue-900 text-charcoal-blue-50 hover:bg-charcoal-blue-800 focus:ring-charcoal-blue-400 dark:bg-charcoal-blue-50 dark:text-charcoal-blue-950 dark:hover:bg-charcoal-blue-200;
+}
+@utility btn-secondary {
+  @apply btn border border-charcoal-blue-300 bg-transparent text-charcoal-blue-800 hover:border-charcoal-blue-400 hover:bg-charcoal-blue-100 focus:ring-charcoal-blue-400 dark:border-charcoal-blue-700 dark:text-charcoal-blue-200 dark:hover:bg-charcoal-blue-900;
+}
+@utility btn-danger {
+  @apply btn bg-burnt-peach-700 text-white hover:bg-burnt-peach-800 focus:ring-burnt-peach-600 dark:bg-burnt-peach-400 dark:text-charcoal-blue-950 dark:hover:bg-burnt-peach-300;
+}
+@utility btn-ghost {
+  @apply btn border border-transparent bg-transparent text-charcoal-blue-700 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 focus:ring-charcoal-blue-400 dark:text-charcoal-blue-300 dark:hover:border-charcoal-blue-700 dark:hover:text-charcoal-blue-50;
+}
+/* Destructive actions say so in the destructive colour: a quiet row or
+   inline action, an outlined one beside other outlined controls, and the
+   filled btn-danger for the confirmation that does it. */
+@utility btn-ghost-destructive {
+  @apply btn border border-transparent bg-transparent text-destructive hover:border-destructive/40 hover:bg-danger-wash focus:ring-destructive/40;
+}
+@utility btn-secondary-destructive {
+  @apply btn border border-destructive/50 bg-transparent text-destructive hover:border-destructive hover:bg-danger-wash focus:ring-destructive/40;
+}
+@utility btn-sm {
+  @apply px-3.5 py-2 text-xs compact:px-4 compact:py-2;
+}
 
-.label {
+/* A card is paper with a rule around it: no shadow, no lift. */
+@utility card {
+  @apply overflow-hidden rounded-[3px] border border-charcoal-blue-200 bg-white transition-[border-color,background-color] duration-160 ease-out dark:border-charcoal-blue-700 dark:bg-charcoal-blue-900;
+}
+
+/* Fields. The focus ring is the ink, not a glow: one hairline going darker. */
+@utility input {
+  @apply w-full rounded-[3px] border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 transition-[border-color,background-color,color] duration-160 ease-out placeholder:text-muted-foreground focus:border-charcoal-blue-900 focus:outline-none dark:border-charcoal-blue-700 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-50 dark:focus:border-charcoal-blue-400 compact:py-2.5;
+}
+@utility input-error {
+  @apply border-burnt-peach-600 focus:border-burnt-peach-700 dark:border-burnt-peach-400;
+}
+@utility label {
   @apply mb-1.5 block text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300;
 }
 
-.section-title {
-  @apply text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50;
+/* A caption labels the section beneath it and then gets out of the way. */
+@utility eyebrow {
+  @apply text-[10px] font-semibold tracking-[0.16em] text-charcoal-blue-500 uppercase;
+}
+
+@utility text-link {
+  @apply inline-flex min-h-9 items-center justify-start gap-1.5 text-[13px] font-medium text-chart-1 underline-offset-4 hover:underline max-sm:min-h-11;
+}
+
+@utility icon-button {
+  @apply inline-flex size-11 shrink-0 items-center justify-center rounded-[3px] text-muted-foreground disabled:cursor-not-allowed disabled:opacity-35 not-disabled:hover:bg-muted not-disabled:hover:text-foreground;
+}
+/* The bin on a row: quiet until pointed at, then the destructive colour. */
+@utility icon-button-destructive {
+  @apply inline-flex size-11 shrink-0 items-center justify-center rounded-[3px] text-muted-foreground transition-[background-color,color] duration-160 ease-out disabled:cursor-not-allowed disabled:opacity-35 not-disabled:hover:bg-danger-wash not-disabled:hover:text-destructive;
+}
+
+/* A switch keeps its pill: the shape is what says "this slides". */
+@utility toggle {
+  @apply relative h-[1.375rem] w-10 cursor-pointer appearance-none rounded-full bg-charcoal-blue-300 transition-colors duration-160 ease-out checked:bg-verdigris-700 dark:bg-charcoal-blue-700 dark:checked:bg-verdigris-400;
+  @apply after:absolute after:top-0.5 after:left-0.5 after:size-[1.125rem] after:rounded-full after:bg-white after:transition-transform after:duration-160 after:ease-out after:content-[''] checked:after:translate-x-[1.125rem];
+}
+
+/* Log pages: the Ledger's ruled surfaces. */
+@utility log-page {
+  @apply mx-auto max-w-[1060px] [&_h2]:text-[20px] [&_h2]:[line-height:1.3] [&_h2]:font-semibold;
+}
+@utility log-page-header {
+  @apply mb-8 flex items-center justify-between gap-6 max-sm:mb-6 max-sm:flex-col max-sm:items-start max-sm:gap-5;
+  @apply [&_h1]:text-[34px] [&_h1]:[line-height:1.15] [&_h1]:font-semibold max-sm:[&_h1]:text-[30px] [&_p]:text-[14px] max-sm:[&>div:last-child]:max-w-full max-sm:[&_.btn-primary]:hidden;
+}
+@utility log-section-header {
+  @apply flex min-h-11 items-center justify-between gap-3 border-b border-foreground pb-3;
+}
+@utility log-empty {
+  @apply py-9 pr-4;
+}
+@utility ledger-row {
+  @apply flex min-h-14 items-center gap-3 border-b border-border py-2.5;
+}
+@utility nutrition-value {
+  @apply mt-2 mb-3.5 text-[29px] [line-height:1.1] font-medium tracking-[-0.02em] whitespace-nowrap max-xl:text-[26px] max-sm:text-[27px];
+}
+@utility nutrition-strip {
+  @apply mb-8 grid grid-cols-4 gap-8 border-t border-b border-t-foreground border-b-border pt-6 pb-7 max-xl:gap-5 max-sm:grid-cols-2 max-sm:gap-6 max-sm:py-[22px];
+}
+/* The same ruled strip as the nutrition totals, for up to three figures. */
+@utility facts-strip {
+  @apply grid grid-cols-3 gap-6 border-t border-b border-t-foreground border-b-border pt-5 pb-[22px] [&_.nutrition-value]:mt-1.5 [&_.nutrition-value]:mb-0 [&_.nutrition-value]:text-[24px] max-sm:[&_.nutrition-value.facts-level]:text-[20px];
+}
+@utility target-track {
+  @apply h-[3px] overflow-hidden bg-border [&_span]:block [&_span]:h-full;
+}
+@utility meal-group-header {
+  @apply flex items-center justify-between gap-3 bg-muted px-3 py-2.5 [&_h3]:text-[13px] [&_h3]:font-semibold;
+}
+@utility period-tabs {
+  @apply mb-8 flex gap-1 border-b border-border;
+  @apply [&_a]:flex [&_a]:min-h-11 [&_a]:items-center [&_a]:border-b-2 [&_a]:border-transparent [&_a]:px-5 [&_a]:pb-3 [&_a]:text-[14px] [&_a]:text-muted-foreground [&_a[aria-current=page]]:border-foreground [&_a[aria-current=page]]:font-semibold [&_a[aria-current=page]]:text-foreground;
+}
+@utility directory-search {
+  @apply mb-8 flex max-w-[520px] items-center gap-3 rounded-[3px] border border-input bg-card px-3.5 focus-within:outline-2 focus-within:outline-offset-3 focus-within:outline-ring;
+  @apply [&_svg]:shrink-0 [&_svg]:text-muted-foreground [&_input]:min-h-12 [&_input]:min-w-0 [&_input]:flex-1 [&_input]:bg-transparent [&_input]:text-[14px] [&_input]:outline-none [&_input]:placeholder:text-muted-foreground;
+}
+
+/* A setting: its name on the left, the control on the right; stacked on a phone. */
+@utility setting-section {
+  @apply scroll-mt-6 [&>header]:flex [&>header]:flex-wrap [&>header]:items-baseline [&>header]:justify-between [&>header]:gap-x-3 [&>header]:gap-y-1 [&>header]:border-b [&>header]:border-foreground [&>header]:pb-2;
+}
+@utility setting-row {
+  @apply grid min-h-14 items-center gap-x-6 gap-y-2 border-b border-border py-3.5 sm:grid-cols-[minmax(140px,220px)_minmax(0,1fr)] [&>.setting-label]:text-[14px] [&>.setting-label]:text-muted-foreground;
 }
 
 /*
- * The caption, from the spec's `.capt`. It was a bordered pill with a
- * background - a badge on top of every section heading. A caption is text: it
- * labels the section beneath it and then gets out of the way.
+ * Motion. Entrances are opacity and a few pixels, never a bounce; the
+ * keyframes back the `animate-*` utilities declared in @theme.
  */
-.eyebrow {
-  @apply text-[10px] font-semibold uppercase tracking-[0.16em] text-charcoal-blue-500 dark:text-charcoal-blue-500;
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
-/* An icon sits on the sheet, not in a chip. Kept as a layout box (the call
-   sites size it) with the border and fill removed. */
-.icon-chip {
-  @apply inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300;
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
-.nav-glass {
-  @apply border-b border-charcoal-blue-200 bg-charcoal-blue-50 dark:border-charcoal-blue-700 dark:bg-charcoal-blue-950;
+@keyframes loader-blink {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.5) rotate(5deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-
-.text-gradient {
-  @apply text-charcoal-blue-900 dark:text-charcoal-blue-50;
+/* An earned badge settles into its modal just after the panel arrives. */
+@keyframes badge-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-
-.footer-link {
-  @apply text-sm text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100;
-  transition: color var(--duration-fast) var(--ease-out);
-}
-
-.press-feedback {
-  transition: transform var(--duration-instant) var(--ease-out);
-}
-.press-feedback:active {
-  transform: scale(0.985);
-}
-
-/*
- * Motion. Entrances stay because an element appearing with no transition
- * reads as broken; they are opacity and a few pixels, never a bounce.
- */
-.page-transition,
-.animate-in {
-  animation: page-enter var(--duration-slow) var(--ease-out) both;
-}
-
-.animate-fade-in,
-.stagger-item {
-  animation: fade-up 280ms var(--ease-out) both;
-}
-
-.stagger-children > * {
-  opacity: 0;
-  animation: fade-up 260ms var(--ease-out) both;
-}
-.stagger-children > *:nth-child(1) {
-  animation-delay: 0ms;
-}
-.stagger-children > *:nth-child(2) {
-  animation-delay: 40ms;
-}
-.stagger-children > *:nth-child(3) {
-  animation-delay: 80ms;
-}
-.stagger-children > *:nth-child(4) {
-  animation-delay: 120ms;
-}
-.stagger-children > *:nth-child(5) {
-  animation-delay: 160ms;
-}
-.stagger-children > *:nth-child(6) {
-  animation-delay: 200ms;
-}
-.stagger-children > *:nth-child(7) {
-  animation-delay: 240ms;
-}
-.stagger-children > *:nth-child(8) {
-  animation-delay: 280ms;
-}
-
-.menu-pop {
-  transform-origin: top right;
-  animation: menu-pop-in 180ms var(--ease-out) both;
-}
-.menu-pop.from-left {
-  transform-origin: top left;
-}
-.menu-pop.from-bottom-right {
-  transform-origin: bottom right;
-}
-
-@keyframes menu-pop-in {
+@keyframes pop-in {
   from {
     opacity: 0;
     transform: scale(0.98) translateY(-3px);
@@ -525,21 +577,7 @@ html {
     transform: scale(1) translateY(0);
   }
 }
-
-/*
- * Radix Popover/Dialog, animated for real. The shadcn boilerplate these were
- * adapted from assumes `tailwindcss-animate` - not installed here - so
- * `animate-in`, `fade-in-0` and `zoom-in-95` were never real utilities and
- * these surfaces appeared with no transition at all. These read the
- * `data-state` Radix already sets.
- */
-.radix-pop {
-  animation: menu-pop-in 160ms var(--ease-out) both;
-}
-.radix-pop[data-state="closed"] {
-  animation: menu-pop-out 120ms var(--ease-out) both;
-}
-@keyframes menu-pop-out {
+@keyframes pop-out {
   from {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -549,37 +587,53 @@ html {
     transform: scale(0.98) translateY(-3px);
   }
 }
-
-/* Modals stay centered - there is no trigger to scale from. */
-.dialog-overlay {
-  animation: overlay-fade-in 180ms var(--ease-out) both;
-}
-.dialog-overlay[data-state="closed"] {
-  animation: overlay-fade-out 150ms var(--ease-out) both;
-}
-@keyframes overlay-fade-in {
+@keyframes fade-in {
   from {
     opacity: 0;
   }
-  to {
-    opacity: 1;
-  }
 }
-@keyframes overlay-fade-out {
-  from {
-    opacity: 1;
-  }
+@keyframes fade-out {
   to {
     opacity: 0;
   }
 }
-
-.dialog-content {
-  animation: dialog-pop-in 200ms var(--ease-out) both;
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-.dialog-content[data-state="closed"] {
-  animation: dialog-pop-out 150ms var(--ease-out) both;
+@keyframes modal-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
 }
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sheet-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+/* Radix dialogs are centered with a translate, so their scale keeps it. */
 @keyframes dialog-pop-in {
   from {
     opacity: 0;
@@ -601,130 +655,112 @@ html {
   }
 }
 
-.modal-overlay-in {
-  animation: overlay-fade-in 180ms var(--ease-out) both;
+/*
+ * View transitions (React <ViewTransition>, see DESIGN.md "Motion").
+ * The root is never snapshotted: the shell, the side panels and anything
+ * without a boundary stay live and clickable while a boundary animates.
+ * nav-forward and nav-back slide page content a short way in the direction
+ * of travel; text-morph carries a title from a list row to its page;
+ * row-enter and row-exit fade a list row that arrived or left while the rows
+ * around it move with the default group morph; skeleton-exit fades a loading
+ * skeleton under the content that replaced it; view-in and view-out swap
+ * two views inside a panel.
+ */
+::view-transition {
+  pointer-events: none;
 }
-.modal-pop-in {
-  animation: modal-pop 200ms var(--ease-out) both;
+::view-transition-old(root) {
+  display: none;
 }
-@keyframes modal-pop {
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(*) {
+  animation-duration: var(--duration-medium);
+  animation-timing-function: var(--ease-out);
+}
+/* The new title is drawn at full resolution while its box moves and resizes. */
+::view-transition-old(.text-morph) {
+  display: none;
+}
+::view-transition-new(.text-morph) {
+  animation: none;
+  object-fit: none;
+  object-position: left top;
+}
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    120ms var(--ease-out) both fade-out,
+    var(--duration-medium) var(--ease-out) both vt-slide-out;
+}
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    180ms var(--ease-out) 60ms both fade-in,
+    var(--duration-medium) var(--ease-out) both vt-slide-in;
+}
+::view-transition-old(.nav-forward),
+::view-transition-new(.nav-back) {
+  --vt-offset: -24px;
+}
+::view-transition-new(.nav-forward),
+::view-transition-old(.nav-back) {
+  --vt-offset: 24px;
+}
+::view-transition-old(.row-exit),
+::view-transition-old(.skeleton-exit) {
+  animation: 150ms var(--ease-out) both fade-out;
+}
+::view-transition-new(.row-enter) {
+  animation: 180ms var(--ease-out) 60ms both fade-in;
+}
+::view-transition-old(.view-out) {
+  animation: 120ms var(--ease-out) both fade-out;
+}
+::view-transition-new(.view-in) {
+  animation:
+    180ms var(--ease-out) 60ms both fade-in,
+    var(--duration-medium) var(--ease-out) both vt-rise;
+}
+@keyframes vt-rise {
   from {
-    opacity: 0;
-    transform: scale(0.98);
+    translate: 0 6px;
   }
   to {
-    opacity: 1;
-    transform: scale(1);
+    translate: 0 0;
   }
 }
-
-/* LogSheet: a bottom sheet below `sm`, a centered dialog above it.
-   Percentage translateY so the slide works at any sheet height. */
-.sheet-pop-in {
-  animation: sheet-slide-up var(--duration-medium) var(--ease-drawer) both;
-}
-@keyframes sheet-slide-up {
+@keyframes vt-slide-in {
   from {
-    opacity: 0;
-    transform: translateY(12%);
+    translate: var(--vt-offset) 0;
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    translate: 0 0;
   }
 }
-@media (min-width: 640px) {
-  .sheet-pop-in {
-    animation: modal-pop var(--duration-fast) var(--ease-out) both;
-  }
-}
-
-.mobile-sheet-enter {
-  animation: mobile-sheet-slide 280ms var(--ease-drawer) both;
-}
-@keyframes mobile-sheet-slide {
+@keyframes vt-slide-out {
   from {
-    transform: translateX(-100%);
+    translate: 0 0;
   }
   to {
-    transform: translateX(0);
+    translate: var(--vt-offset) 0;
   }
 }
 
-@keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* A switch is one of the few places a pill radius is still correct - the
-   shape is what communicates "this slides". */
-.toggle {
-  appearance: none;
-  width: 2.5rem;
-  height: 1.375rem;
-  border-radius: 9999px;
-  background: var(--color-charcoal-blue-300);
-  position: relative;
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-out);
-}
-
-.toggle::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 9999px;
-  background: white;
-  transition: transform var(--duration-fast) var(--ease-out);
-}
-
-.toggle:checked {
-  background: var(--color-verdigris-700);
-}
-
-.toggle:checked::after {
-  transform: translateX(1.125rem);
-}
-
-html.dark .toggle {
-  background: var(--color-charcoal-blue-700);
-}
-
-html.dark .toggle:checked {
-  background: var(--color-verdigris-400);
-}
-
-html.compact .btn,
-html.compact .btn-primary,
-html.compact .btn-secondary,
-html.compact .btn-accent,
-html.compact .btn-danger,
-html.compact .btn-ghost {
-  @apply px-4 py-2;
-}
-
-html.compact .input {
-  @apply py-2.5;
+:root.reduce-motion::view-transition-group(*),
+:root.reduce-motion::view-transition-old(*),
+:root.reduce-motion::view-transition-new(*) {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -753,39 +789,15 @@ html.reduce-motion *::after {
   transition-duration: 0.01ms !important;
 }
 
-/* ---------- Custom scrollbar ---------- */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-charcoal-blue-300) transparent;
+/* The AppShell is exactly viewport-tall and its <main> owns the scroll, so the
+   root layout's navigation, footer and page padding step aside. */
+body:has(.shell-fullbleed) {
+  height: 100dvh;
+  min-height: 0 !important;
+  overflow: hidden;
+  padding-bottom: 0 !important;
 }
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-charcoal-blue-300);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-charcoal-blue-400);
-  background-clip: padding-box;
-}
-html.dark .custom-scrollbar {
-  scrollbar-color: var(--color-charcoal-blue-700) transparent;
-}
-html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-charcoal-blue-700);
-  background-clip: padding-box;
-}
-
-/* ---------- App Shell overrides (dashboard / admin) ---------- */
-/* The AppShell is exactly viewport-tall and its <main> owns the scroll. */
-body:has(.shell-fullbleed) > nav,
-body:has(.shell-fullbleed) > footer {
+body:has(.shell-fullbleed) > :is(nav, footer) {
   display: none !important;
 }
 body:has(.shell-fullbleed) > main {
@@ -796,845 +808,9 @@ body:has(.shell-fullbleed) > main {
   width: 100% !important;
   min-height: 0 !important;
 }
-body:has(.shell-fullbleed) > main > div.page-transition {
+body:has(.shell-fullbleed) > main > div {
   padding: 0 !important;
   margin: 0 !important;
   max-width: none !important;
   height: 100%;
-}
-body:has(.shell-fullbleed) {
-  height: 100dvh;
-  min-height: 0 !important;
-  overflow: hidden;
-  padding-bottom: 0 !important;
-}
-
-/* ---------- Macro readouts ---------- */
-/* Text on paper, not a chip. The hue is the only differentiator it needs. */
-.macro-chip-calories {
-  color: var(--color-burnt-peach-700);
-}
-.macro-chip-protein {
-  color: var(--color-verdigris-700);
-}
-.macro-chip-carbs {
-  color: var(--color-tuscan-sun-700);
-}
-.macro-chip-fat {
-  color: var(--color-sandy-brown-700);
-}
-
-html.dark .macro-chip-calories {
-  color: var(--color-burnt-peach-400);
-}
-html.dark .macro-chip-protein {
-  color: var(--color-verdigris-400);
-}
-html.dark .macro-chip-carbs {
-  color: var(--color-tuscan-sun-400);
-}
-html.dark .macro-chip-fat {
-  color: var(--color-sandy-brown-400);
-}
-
-/* The streak was a gradient pill. It is a number with a flame next to it. */
-.streak-gradient {
-  background: transparent;
-  color: var(--color-burnt-peach-700);
-}
-html.dark .streak-gradient {
-  color: var(--color-burnt-peach-400);
-}
-
-/* A dead/urgent table row tints its background - the wash Main.dc.html rule
-   04 asks for, instead of a second coloured badge per row. */
-.wash-danger {
-  background: var(--danger-wash);
-}
-
-.ring-track {
-  stroke: var(--color-charcoal-blue-200);
-}
-html.dark .ring-track {
-  stroke: var(--color-charcoal-blue-700);
-}
-
-@keyframes marquee-loop {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-.animate-marquee {
-  animation: marquee-loop 32s linear infinite;
-}
-.marquee-hover:hover .animate-marquee {
-  animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
-    animation-duration: 0ms;
-  }
-}
-
-/* Daily log: the Ledger's ruled surfaces, with the recording action at hand. */
-.log-muted {
-  color: var(--muted-foreground);
-}
-.app-shell {
-  display: flex;
-  height: 100dvh;
-  background: var(--background);
-  color: var(--foreground);
-}
-.app-sidebar {
-  display: none;
-  flex: 0 0 224px;
-  flex-direction: column;
-  border-right: 1px solid var(--border);
-  background: var(--background);
-}
-.sidebar-brand {
-  display: flex;
-  min-height: 72px;
-  padding: 0 16px 0 20px;
-  align-items: center;
-  gap: 8px;
-}
-.sidebar-brand > a {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 21px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-.sidebar-brand > button {
-  margin-left: auto;
-}
-.sidebar-log {
-  padding: 22px 18px 16px;
-}
-.sidebar-navigation {
-  padding: 0 12px;
-  display: grid;
-  gap: 5px;
-}
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  min-height: 46px;
-  gap: 13px;
-  padding: 0 14px;
-  font-size: 14px;
-  color: var(--muted-foreground);
-  border-radius: 3px;
-  transition:
-    background-color 160ms ease-out,
-    color 160ms ease-out;
-}
-.sidebar-link[aria-current="page"] {
-  color: var(--foreground);
-  background: var(--muted);
-  font-weight: 600;
-}
-.sidebar-footer {
-  margin-top: auto;
-  padding: 20px;
-}
-.sidebar-profile {
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-}
-.user-initial {
-  flex-shrink: 0;
-  height: 30px;
-  width: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--muted);
-  color: var(--foreground);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-}
-.app-column {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-  height: 100%;
-}
-.app-topbar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 72px;
-  border-bottom: 1px solid var(--border);
-  padding: 0 32px;
-}
-.desktop-context {
-  font-size: 13px;
-}
-.mobile-brand {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 19px;
-}
-.account-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 6px;
-  font-size: 13px;
-  border-radius: 3px;
-}
-.account-popover {
-  width: 244px;
-  padding: 6px;
-  border-radius: 3px;
-}
-.account-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 10px 12px;
-  width: 100%;
-  font-size: 14px;
-}
-.app-content {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 38px 40px 48px;
-  scroll-padding-top: 24px;
-}
-.app-content-inner {
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-}
-.log-page {
-  max-width: 1060px;
-  margin: 0 auto;
-}
-.log-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-.log-page-header h1 {
-  font-size: 34px;
-  font-weight: 600;
-  line-height: 1.15;
-}
-.log-page h2 {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-.log-page-header p {
-  font-size: 14px;
-}
-.icon-button {
-  display: inline-flex;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted-foreground);
-  border-radius: 3px;
-}
-.icon-button:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-.date-navigator {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  background: var(--card);
-}
-.date-navigator input {
-  min-width: 0;
-  width: 140px;
-  min-height: 44px;
-  padding: 0 8px;
-  font-size: 13px;
-  background: transparent;
-}
-.text-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-  min-height: 36px;
-  color: var(--chart-1);
-  font-size: 13px;
-  font-weight: 500;
-  text-underline-offset: 4px;
-}
-.nutrition-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px;
-  padding: 24px 0 28px;
-  border-top: 1px solid var(--foreground);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 32px;
-}
-.nutrition-value {
-  font-size: 29px;
-  font-weight: 500;
-  margin: 8px 0 14px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-.target-track {
-  height: 3px;
-  background: var(--border);
-  overflow: hidden;
-}
-.target-track span {
-  display: block;
-  height: 100%;
-}
-.day-log-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(240px, 1fr);
-  gap: 48px;
-}
-.log-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 44px;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--foreground);
-}
-.day-side-log {
-  display: grid;
-  align-content: start;
-  gap: 32px;
-}
-.meal-group {
-  margin-top: 24px;
-}
-.meal-group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: var(--muted);
-  padding: 10px 12px;
-}
-.meal-group-header h3 {
-  font-size: 13px;
-  font-weight: 600;
-}
-.meal-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 36px;
-  gap: 12px;
-  align-items: center;
-  min-height: 78px;
-  border-bottom: 1px solid var(--border);
-  padding: 10px 0 10px 12px;
-  font-size: 14px;
-}
-.meal-row .icon-button {
-  width: 36px;
-}
-.recipe-log-group {
-  border-bottom: 1px solid var(--border);
-}
-.recipe-log-group > summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 12px;
-  font-size: 14px;
-  cursor: pointer;
-}
-.log-empty {
-  padding: 36px 16px 36px 0;
-}
-.history-period {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--foreground);
-  padding: 0 0 14px;
-}
-.history-period h2 {
-  font-size: 18px;
-}
-.history-column-labels,
-.history-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr 1fr 20px;
-  gap: 24px;
-  align-items: center;
-}
-.history-column-labels {
-  padding: 16px 16px 12px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-  border-bottom: 1px solid var(--border);
-}
-.history-row {
-  padding: 18px 16px;
-  border-bottom: 1px solid var(--border);
-  transition: background-color 160ms ease-out;
-}
-.history-activity {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-}
-.mobile-navigation {
-  display: none;
-}
-.skip-link {
-  position: fixed;
-  left: 16px;
-  top: -80px;
-  z-index: 200;
-  background: var(--foreground);
-  color: var(--background);
-  padding: 12px 18px;
-}
-.skip-link:focus {
-  top: 12px;
-}
-:where(button, a, input, select, textarea, summary):focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
-}
-input,
-textarea {
-  caret-color: var(--ring);
-}
-.input::placeholder {
-  color: var(--muted-foreground);
-  opacity: 1;
-}
-button:not(:disabled),
-summary {
-  cursor: pointer;
-}
-@media (hover: hover) and (pointer: fine) {
-  .sidebar-link:hover,
-  .account-link:hover,
-  .icon-button:not(:disabled):hover,
-  .history-row:hover,
-  .account-trigger:hover {
-    background: var(--muted);
-    color: var(--foreground);
-  }
-  .text-link:hover {
-    text-decoration: underline;
-  }
-  .delete-log:hover {
-    color: var(--destructive);
-  }
-}
-@media (min-width: 1024px) {
-  .app-sidebar {
-    display: flex;
-  }
-  .sidebar-collapsed .app-sidebar {
-    flex-basis: 80px;
-  }
-  .sidebar-collapsed .sidebar-brand {
-    padding: 16px 0 0;
-    flex-direction: column;
-  }
-  .sidebar-collapsed .sidebar-brand > button {
-    margin: 0;
-  }
-  .sidebar-collapsed .sidebar-log {
-    padding: 18px 12px 16px;
-  }
-  .sidebar-collapsed .sidebar-log button {
-    padding: 12px 0;
-  }
-  .sidebar-collapsed .sidebar-link {
-    justify-content: center;
-    padding: 0;
-  }
-  .sidebar-collapsed .sidebar-footer {
-    padding: 16px;
-  }
-  .sidebar-collapsed .sidebar-profile {
-    justify-content: center;
-  }
-}
-@media (max-width: 1279px) {
-  .app-content {
-    padding: 32px 28px 44px;
-  }
-  .nutrition-strip {
-    gap: 20px;
-  }
-  .nutrition-value {
-    font-size: 26px;
-  }
-  .day-log-grid {
-    gap: 28px;
-  }
-}
-@media (max-width: 1023px) {
-  .mobile-brand {
-    display: flex;
-  }
-  .desktop-context {
-    display: none;
-  }
-  .app-topbar {
-    min-height: 64px;
-    padding: 0 24px;
-  }
-  .app-content {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
-  }
-  .mobile-navigation {
-    display: flex;
-    position: fixed;
-    z-index: 30;
-    bottom: 0;
-    inset-inline: 0;
-    align-items: stretch;
-    padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px));
-    background: var(--background);
-    border-top: 1px solid var(--border);
-  }
-  .bottom-nav-link {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    min-height: 52px;
-    color: var(--muted-foreground);
-    font-size: 11px;
-  }
-  .bottom-nav-link[aria-current="page"] {
-    color: var(--chart-1);
-    font-weight: 600;
-  }
-  .mobile-log {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .mobile-log > span:first-child {
-    display: flex;
-    width: 50px;
-    height: 48px;
-    align-items: center;
-    justify-content: center;
-    background: var(--foreground);
-    color: var(--background);
-    border-radius: 3px;
-  }
-}
-@media (max-width: 639px) {
-  .app-topbar {
-    padding: 0 18px;
-  }
-  .account-name {
-    display: none;
-  }
-  .app-content {
-    padding: 28px 20px calc(100px + env(safe-area-inset-bottom, 0px));
-  }
-  .log-page-header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 24px;
-  }
-  .log-page-header h1 {
-    font-size: 30px;
-  }
-  .log-page-header > div:last-child {
-    max-width: 100%;
-  }
-  .log-page-header .btn-primary {
-    display: none;
-  }
-  .nutrition-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-    padding: 22px 0;
-  }
-  .nutrition-value {
-    font-size: 27px;
-  }
-  .day-log-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-  .day-side-log {
-    gap: 28px;
-  }
-  .meal-row {
-    gap: 8px;
-    padding-left: 4px;
-  }
-  .history-column-labels {
-    display: none;
-  }
-  .history-row {
-    grid-template-columns: 1fr 1fr 16px;
-    gap: 8px 12px;
-    padding: 18px 4px;
-  }
-  .history-activity {
-    grid-column: 2;
-    font-size: 12px;
-  }
-  .history-row > svg {
-    grid-column: 3;
-    grid-row: 1 / 3;
-  }
-  .history-period h2 {
-    font-size: 15px;
-  }
-  .text-link {
-    min-height: 44px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  .app-shell *,
-  .app-shell *::before,
-  .app-shell *::after {
-    animation: none !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-.period-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 32px;
-}
-.period-tabs a {
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  padding: 0 20px 12px;
-  font-size: 14px;
-  color: var(--muted-foreground);
-  border-bottom: 2px solid transparent;
-}
-.period-tabs a[aria-current="page"] {
-  color: var(--foreground);
-  border-bottom-color: var(--foreground);
-  font-weight: 600;
-}
-.progress-sections {
-  display: grid;
-  gap: 40px;
-}
-.trend-chart {
-  height: 240px;
-  margin: 16px -4px 8px;
-}
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
-.chart-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.chart-legend i {
-  display: inline-block;
-  width: 14px;
-  height: 2px;
-}
-.chart-data {
-  margin-top: 16px;
-  font-size: 12px;
-}
-.chart-data summary {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  color: var(--chart-1);
-}
-.chart-data table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.chart-data th,
-.chart-data td {
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
-  text-align: right;
-}
-.chart-data th:first-child,
-.chart-data td:first-child {
-  text-align: left;
-}
-.strength-controls {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: end;
-  gap: 20px;
-  margin-top: 20px;
-}
-.strength-controls select {
-  min-width: 220px;
-}
-@media (max-width: 639px) {
-  .trend-chart {
-    height: 220px;
-  }
-  .chart-legend {
-    gap: 12px;
-    font-size: 11px;
-  }
-  .progress-sections {
-    gap: 32px;
-  }
-}
-.directory-search {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--input);
-  border-radius: 3px;
-  background: var(--card);
-  padding: 0 14px;
-  margin-bottom: 32px;
-  max-width: 520px;
-}
-.directory-search svg {
-  color: var(--muted-foreground);
-  flex-shrink: 0;
-}
-.directory-search input {
-  min-height: 48px;
-  min-width: 0;
-  flex: 1;
-  font-size: 14px;
-  background: transparent;
-  outline: none;
-}
-.directory-search:focus-within {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
-}
-.directory-search input::placeholder {
-  color: var(--muted-foreground);
-}
-.feature-directory {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 36px 56px;
-  align-items: start;
-}
-.feature-directory h2 {
-  font-size: 18px;
-  font-weight: 600;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--foreground);
-}
-.directory-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 60px;
-  padding: 14px 4px;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-  transition: background-color 160ms ease-out;
-}
-.directory-row > svg {
-  color: var(--muted-foreground);
-  flex-shrink: 0;
-}
-@media (hover: hover) and (pointer: fine) {
-  .directory-row:hover {
-    background: var(--muted);
-  }
-}
-@media (max-width: 639px) {
-  .feature-directory {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-}
-.workout-start-row {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 20px;
-  min-height: 96px;
-  padding: 22px 16px;
-  text-align: left;
-}
-.workout-start-row > svg {
-  flex-shrink: 0;
-  color: var(--muted-foreground);
-}
-@media (hover: hover) and (pointer: fine) {
-  .workout-start-row:hover {
-    background: var(--muted);
-  }
-}
-.recipe-library {
-  border-top: 1px solid var(--foreground);
-}
-.recipe-library-row {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 24px 4px;
-  border-bottom: 1px solid var(--border);
-}
-.recipe-ingredient-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px 4px;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
 }

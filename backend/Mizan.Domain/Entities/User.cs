@@ -22,12 +22,29 @@ public class User
     /// the previous day, and their streak never advances.
     /// </summary>
     public string? TimeZoneId { get; set; }
+
+    /// <summary>The <see cref="PriceRegion"/> whose prices the person sees. Null means the default region.</summary>
+    public string? PriceRegionCode { get; set; }
     public string? PasswordHash { get; set; }
     public int AccessFailedCount { get; set; }
     public DateTime? LockoutEnd { get; set; }
     public string ThemePreference { get; set; } = "system";
     public bool CompactMode { get; set; }
     public bool ReduceAnimations { get; set; }
+
+    /// <summary>
+    /// Whether notifications also go to the linked Telegram chat. Off until the
+    /// person turns it on: linking the bot alone starts no messages, and
+    /// unlinking turns it off again (docs/TELEGRAM.md#notifications-in-telegram).
+    /// </summary>
+    public bool NotifyByTelegram { get; set; }
+
+    /// <summary>
+    /// Quiet hours on the person's own clock: Telegram, push and email wait until they end. Both null,
+    /// or equal, means none (docs/ARCHITECTURE.md#notifications).
+    /// </summary>
+    public TimeOnly? QuietHoursStart { get; set; }
+    public TimeOnly? QuietHoursEnd { get; set; }
     public string Role { get; set; } = "user";
     public bool Banned { get; set; } = false;
     public string? BanReason { get; set; }

@@ -35,13 +35,8 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         var email = $"system-mcp-{userId:N}@example.com";
         await _apiFixture.SeedUserAsync(userId, email);
 
-        using var apiClient = _apiFixture.CreateAuthenticatedClient(userId, email);
-
-        // 2. Create MCP Token via Main API
-        var createResponse = await apiClient.PostAsJsonAsync("/api/McpTokens", new { Name = "system-test" });
-        createResponse.EnsureSuccessStatusCode();
-        var created = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResponse>();
-        var mcpToken = created!.PlaintextToken;
+        // 2. Mint an OAuth access token the way the authorization server would
+        var mcpToken = (await _apiFixture.CreateMcpAccessAsync(userId)).Token;
 
         // 3. Configure MCP Server to talk to In-Memory Main API
         var mcpClient = _mcpFactory.WithWebHostBuilder(builder =>
@@ -118,5 +113,4 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         jsonResponse.Result.Should().NotBeNull();
     }
 
-    private sealed record CreateMcpTokenResponse(Guid Id, string PlaintextToken, string Name);
 }

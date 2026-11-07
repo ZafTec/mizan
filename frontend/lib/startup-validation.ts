@@ -10,7 +10,9 @@ export function validateStartupConfig(): void {
   // The frontend holds no secrets since v2: no database, no signing key, no
   // SMTP credentials. It needs to know where the API is and nothing else.
   if (!process.env.NEXT_PUBLIC_API_URL) {
-    warnings.push("NEXT_PUBLIC_API_URL not set; browser calls will default to http://localhost:5000");
+    warnings.push(
+      "NEXT_PUBLIC_API_URL not set; browser calls will default to http://localhost:5000",
+    );
   }
 
   if (!process.env.API_URL) {
@@ -20,7 +22,7 @@ export function validateStartupConfig(): void {
   if (errors.length > 0) {
     startupLogger.error("Critical startup configuration errors", { errors });
     throw new Error(
-      `CRITICAL STARTUP FAILURE - Missing required environment variables:\n${errors.map(e => `  - ${e}`).join('\n')}\n\nThe application cannot start without these variables.`
+      `CRITICAL STARTUP FAILURE - Missing required environment variables:\n${errors.map((e) => `  - ${e}`).join("\n")}\n\nThe application cannot start without these variables.`,
     );
   }
 

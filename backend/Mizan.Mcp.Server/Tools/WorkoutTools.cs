@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Mizan.Contracts.Workouts;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
@@ -38,9 +39,16 @@ public sealed class WorkoutTools
         }, ct);
 
     [McpServerTool(Name = "update_workout", Idempotent = true)]
-    [Description("Update a workout using its full JSON contract.")]
+    [Description("Update a workout using its full JSON contract (as get_workout returns it). The id comes from the id argument; the body need not repeat it.")]
     public Task<string> UpdateWorkout(string id, string body, CancellationToken ct = default)
-        => _api.PutAsync($"/api/Workouts/{id}", JsonSerializer.Deserialize<object>(body)!, ct);
+    {
+        var workoutId = ToolArguments.ParseId(id, "id");
+        JsonObject json;
+        try { json = JsonNode.Parse(body) as JsonObject ?? throw new ArgumentException("body must be a JSON object."); }
+        catch (JsonException ex) { throw new ArgumentException($"body is not valid JSON: {ex.Message}"); }
+        json["id"] = workoutId.ToString();
+        return _api.PutAsync($"/api/Workouts/{workoutId}", json, ct);
+    }
 
     [McpServerTool(Name = "delete_workout", Destructive = true)]
     [Description("Delete an owned workout.")]
@@ -52,9 +60,21 @@ public sealed class WorkoutTools
         => _api.GetAsync($"/api/Workouts/stats?from={from}&to={to}", ct);
 
     [McpServerTool(Name = "get_workout_draft", ReadOnly = true, Idempotent = true)]
-    public Task<string> Draft(CancellationToken ct = default) => _api.GetAsync("/api/Workouts/draft", ct);
+    [Description("Get the workout in progress that the web log keeps as a draft. With none saved, returns {\"draft\":null} and says so.")]
+    public async Task<string> Draft(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _api.GetAsync("/api/Workouts/draft", ct);
+        }
+        catch (BackendApiException ex) when (ex.Status == System.Net.HttpStatusCode.NotFound)
+        {
+            return JsonSerializer.Serialize(new { draft = (object?)null, message = "No workout draft is saved." });
+        }
+    }
 
     [McpServerTool(Name = "save_workout_draft", Idempotent = true)]
+    [Description("Save the workout in progress as the draft the web log resumes. payloadJson is an object: {name?, workoutDate?, exercises:[{exerciseId, sets:[{reps?,weightKg?,...}]}]}. A different shape is refused.")]
     public Task<string> SaveDraft(string payloadJson, CancellationToken ct = default) => _api.PutAsync("/api/Workouts/draft", new { payload = payloadJson }, ct);
 
     [McpServerTool(Name = "delete_workout_draft", Destructive = true)]

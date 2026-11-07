@@ -23,7 +23,7 @@ export default function DashboardError({
           aria-hidden="true"
         />
         <h1 className="text-2xl font-semibold">Something went wrong</h1>
-        <p className="log-muted mt-3 leading-relaxed">
+        <p className="text-muted-foreground mt-3 leading-relaxed">
           This page couldn't load. Your saved entries are still there. Try again
           to reconnect.
         </p>

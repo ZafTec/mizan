@@ -17,7 +17,12 @@ public record ExternalLoginCommand(
     string? Name,
     string? Image,
     string? IpAddress,
-    string? UserAgent) : IRequest<string>;
+    string? UserAgent) : IRequest<string>, IRedactedAudit
+{
+    // ProviderKey is the provider's subject id, not a credential, but it is named like one, so
+    // the details are spelled out rather than left to the serializer.
+    object IRedactedAudit.AuditDetails => new { Provider, ProviderKey, Email, Name, IpAddress, UserAgent };
+}
 
 public class ExternalLoginCommandHandler : IRequestHandler<ExternalLoginCommand, string>
 {

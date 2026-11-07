@@ -21,7 +21,10 @@ public record CreateAdminUserCommand(
     string Password,
     string? Name,
     string Role,
-    bool EmailVerified) : IRequest<Guid>;
+    bool EmailVerified) : IRequest<Guid>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Email, Name, Role, EmailVerified };
+}
 
 public class CreateAdminUserCommandValidator : AbstractValidator<CreateAdminUserCommand>
 {
@@ -83,7 +86,10 @@ public record UpdateAdminUserCommand(
     string? BanReason = null,
     DateTime? BanExpires = null,
     bool? EmailVerified = null,
-    string? NewPassword = null) : IRequest<Unit>;
+    string? NewPassword = null) : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { UserId, Role, Banned, BanReason, BanExpires, EmailVerified, PasswordChanged = NewPassword is not null };
+}
 
 public class UpdateAdminUserCommandValidator : AbstractValidator<UpdateAdminUserCommand>
 {

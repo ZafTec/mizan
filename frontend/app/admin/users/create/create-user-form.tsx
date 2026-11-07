@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createAdminUser } from "@/lib/api/admin-users";
 import { useRouter } from "next/navigation";
+import { Select } from "@/components/ui/select";
 
 export function CreateUserForm() {
   const router = useRouter();
@@ -53,80 +54,76 @@ export function CreateUserForm() {
     }
   }
 
-	  return (
-	    <form onSubmit={handleSubmit} className="space-y-6">
-	      {error && (
-	        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
-	          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-	        </div>
-	      )}
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+        </div>
+      )}
 
       <div>
-	        <label htmlFor="email" className="label mb-2">
-	          Email <span className="text-red-500">*</span>
-	        </label>
+        <label htmlFor="email" className="label">
+          Email <span className="text-red-500">*</span>
+        </label>
         <input
           type="email"
           id="email"
           required
           value={formData.email}
-          onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
-          }
-	          className="input"
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="input"
           placeholder="user@example.com"
           disabled={isLoading}
         />
       </div>
 
       <div>
-	        <label htmlFor="name" className="label mb-2">
-	          Full Name <span className="text-red-500">*</span>
-	        </label>
+        <label htmlFor="name" className="label">
+          Full Name <span className="text-red-500">*</span>
+        </label>
         <input
           type="text"
           id="name"
           required
           value={formData.name}
-          onChange={(e) =>
-            setFormData({ ...formData, name: e.target.value })
-          }
-	          className="input"
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="input"
           placeholder="John Doe"
           disabled={isLoading}
         />
       </div>
 
       <div>
-	        <label htmlFor="role" className="label mb-2">
-	          Role <span className="text-red-500">*</span>
-	        </label>
-        <select
+        <label htmlFor="role" className="label">
+          Role <span className="text-red-500">*</span>
+        </label>
+        <Select
           id="role"
           required
           value={formData.role}
-          onChange={(e) =>
+          onChange={(next) =>
             setFormData({
               ...formData,
-              role: e.target.value as "user" | "admin" | "trainer",
+              role: next as "user" | "admin" | "trainer",
             })
           }
-	          className="input"
-	          disabled={isLoading}
-	        >
-          <option value="user">User</option>
-          <option value="trainer">Trainer</option>
-          <option value="admin">Admin</option>
-        </select>
-	        <p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-	          Select the role for this user. Admins have full system access.
-	        </p>
-	      </div>
+          disabled={isLoading}
+          options={[
+            { value: "user", label: "User" },
+            { value: "trainer", label: "Trainer" },
+            { value: "admin", label: "Admin" },
+          ]}
+        />
+        <p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          Select the role for this user. Admins have full system access.
+        </p>
+      </div>
 
-	      <div>
-	        <label htmlFor="password" className="label mb-2">
-	          Password <span className="text-red-500">*</span>
-	        </label>
+      <div>
+        <label htmlFor="password" className="label">
+          Password <span className="text-red-500">*</span>
+        </label>
         <input
           type="password"
           id="password"
@@ -136,16 +133,16 @@ export function CreateUserForm() {
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
           }
-	          className="input"
+          className="input"
           placeholder="Minimum 8 characters"
           disabled={isLoading}
         />
       </div>
 
-	      <div>
-	        <label htmlFor="confirmPassword" className="label mb-2">
-	          Confirm Password <span className="text-red-500">*</span>
-	        </label>
+      <div>
+        <label htmlFor="confirmPassword" className="label">
+          Confirm Password <span className="text-red-500">*</span>
+        </label>
         <input
           type="password"
           id="confirmPassword"
@@ -155,24 +152,24 @@ export function CreateUserForm() {
           onChange={(e) =>
             setFormData({ ...formData, confirmPassword: e.target.value })
           }
-	          className="input"
+          className="input"
           placeholder="Re-enter password"
           disabled={isLoading}
         />
         {formData.password &&
           formData.confirmPassword &&
           formData.password !== formData.confirmPassword && (
-	            <p className="mt-2 text-sm text-red-600 dark:text-red-300">
+            <p className="mt-2 text-sm text-red-600 dark:text-red-300">
               Passwords do not match
             </p>
           )}
       </div>
 
-	      <div className="flex gap-4 pt-4">
+      <div className="flex gap-4 pt-4">
         <button
           type="submit"
           disabled={isLoading || formData.password !== formData.confirmPassword}
-	          className="btn-primary flex-1 py-3"
+          className="btn-primary flex-1"
         >
           {isLoading ? "Creating..." : "Create User"}
         </button>
@@ -180,14 +177,14 @@ export function CreateUserForm() {
           type="button"
           onClick={() => router.back()}
           disabled={isLoading}
-	          className="btn-secondary"
+          className="btn-secondary"
         >
           Cancel
         </button>
       </div>
 
-	      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
-	        <p className="text-sm text-blue-800 dark:text-blue-200">
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
+        <p className="text-sm text-blue-800 dark:text-blue-200">
           <strong>Note:</strong> The user will not receive an email verification
           link. They can log in immediately with the credentials provided.
         </p>

@@ -11,10 +11,20 @@ public enum StorageFolder
 
     /// <summary>
     /// Photos sent to the assistant - a plate from the website or from
-    /// Telegram. Kept rather than discarded after analysis so the entry it
-    /// produced can be checked against the picture it came from.
+    /// Telegram. Kept after analysis so the entry it produced can be checked
+    /// against the picture; an analysis photo is removed 30 days on, or when
+    /// the person deletes it (AnalysisPhotos).
     /// </summary>
     Meals = 2,
+
+    /// <summary>Images and clips that belong to exercises. Curated by an administrator.</summary>
+    Exercises = 3,
+
+    /// <summary>3D models (glTF binary) made for the app, such as the rigged exercise figures. Administrator only.</summary>
+    Models = 4,
+
+    /// <summary>Achievement badges. Rendered offline, uploaded by an administrator, shown at 28px in the list.</summary>
+    Achievements = 5,
 }
 
 public record StorageUpload(
@@ -28,9 +38,9 @@ public record StorageUpload(
 public record StoredObject(string Key, string Url);
 
 /// <summary>
-/// Object storage behind one interface - docs/ARCHITECTURE.md#storage-caching-and-jobs. The v2
-/// implementation speaks S3, which covers self-hosted MinIO and Cloudflare R2
-/// with nothing but configuration between them.
+/// Object storage behind one interface - docs/ARCHITECTURE.md#storage-caching-and-jobs. The
+/// implementation speaks S3, which covers self-hosted MinIO and Cloudflare R2 with nothing but the
+/// Storage runtime settings between them. Without an endpoint every upload is refused.
 /// </summary>
 public interface IStorageService
 {
@@ -49,5 +59,5 @@ public interface IStorageService
     /// The key a stored URL refers to, or null when the URL is not ours -
     /// an OAuth avatar on googleusercontent, say. Deleting needs this.
     /// </summary>
-    string? TryGetKey(string? url);
+    Task<string?> TryGetKeyAsync(string? url, CancellationToken cancellationToken = default);
 }

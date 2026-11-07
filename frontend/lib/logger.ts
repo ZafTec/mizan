@@ -1,7 +1,8 @@
 type LogLevel = "fatal" | "error" | "warn" | "info" | "debug" | "trace";
 
 const isProd = process.env.NODE_ENV === "production";
-const level: LogLevel = (process.env.LOG_LEVEL as LogLevel) || (isProd ? "info" : "debug");
+const level: LogLevel =
+  (process.env.LOG_LEVEL as LogLevel) || (isProd ? "info" : "debug");
 
 const levelPriority: Record<LogLevel, number> = {
   trace: 0,

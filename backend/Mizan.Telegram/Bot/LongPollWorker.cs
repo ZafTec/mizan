@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Options;
-
 namespace Mizan.Telegram.Bot;
 
 /// <summary>
@@ -15,35 +13,59 @@ public sealed class LongPollWorker : BackgroundService
     private const int PollSeconds = 30;
 
     private readonly IServiceScopeFactory _scopes;
-    private readonly TelegramBotOptions _options;
+    private readonly BotSettings _settings;
     private readonly ILogger<LongPollWorker> _logger;
 
-    public LongPollWorker(
-        IServiceScopeFactory scopes,
-        IOptions<TelegramBotOptions> options,
-        ILogger<LongPollWorker> logger)
+    public LongPollWorker(IServiceScopeFactory scopes, BotSettings settings, ILogger<LongPollWorker> logger)
     {
         _scopes = scopes;
-        _options = options.Value;
+        _settings = settings;
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_options.IsConfigured || _options.UseWebhook)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation(
-                "Long polling disabled ({Reason})",
-                _options.IsConfigured ? "webhook mode" : "no bot token");
-            return;
-        }
+            // Settings change while the bot runs, so the mode is decided per round: a change ends the
+            // current round, and the next one polls, or waits, with the new settings.
+            var changed = _settings.WaitForChangeAsync(stoppingToken);
+            var options = _settings.Current;
 
+            try
+            {
+                if (!options.IsConfigured || options.UseWebhook)
+                {
+                    if (_settings.Loaded)
+                    {
+                        _logger.LogInformation(
+                            "Long polling off ({Reason})", options.IsConfigured ? "webhook mode" : "no bot token");
+                    }
+
+                    await changed;
+                    continue;
+                }
+
+                using var round = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                var polling = PollAsync(round.Token);
+                if (await Task.WhenAny(polling, changed) == changed) await round.CancelAsync();
+                await polling;
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+        }
+    }
+
+    private async Task PollAsync(CancellationToken ct)
+    {
         _logger.LogInformation("Telegram long polling started");
 
         long offset = 0;
         var backoff = TimeSpan.FromSeconds(1);
 
-        while (!stoppingToken.IsCancellationRequested)
+        while (!ct.IsCancellationRequested)
         {
             try
             {
@@ -51,7 +73,7 @@ public sealed class LongPollWorker : BackgroundService
                 var telegram = scope.ServiceProvider.GetRequiredService<TelegramClient>();
                 var handler = scope.ServiceProvider.GetRequiredService<UpdateHandler>();
 
-                var updates = await telegram.GetUpdatesAsync(offset, PollSeconds, stoppingToken);
+                var updates = await telegram.GetUpdatesAsync(offset, PollSeconds, ct);
                 backoff = TimeSpan.FromSeconds(1);
 
                 foreach (var update in updates)
@@ -60,17 +82,18 @@ public sealed class LongPollWorker : BackgroundService
                     // a message the handler chokes on cannot wedge the loop
                     // forever - the failure is logged and the queue moves on.
                     offset = update.UpdateId + 1;
-                    await handler.HandleAsync(update, stoppingToken);
+                    await handler.HandleAsync(update, ct);
                 }
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 return;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Long poll failed; retrying in {Seconds}s", backoff.TotalSeconds);
-                await Task.Delay(backoff, stoppingToken);
+                try { await Task.Delay(backoff, ct); }
+                catch (OperationCanceledException) { return; }
                 backoff = TimeSpan.FromSeconds(Math.Min(backoff.TotalSeconds * 2, 60));
             }
         }

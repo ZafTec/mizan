@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
-using Mizan.Application.Services;
+using Mizan.Domain.Goals;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -38,9 +38,9 @@ public class CreateUserGoalCommandValidator : AbstractValidator<CreateUserGoalCo
     public CreateUserGoalCommandValidator()
     {
         RuleFor(x => x.GoalType).MaximumLength(100)
-            .Must(g => g == null || new[] { "weight_loss", "muscle_gain", "maintenance", "general" }.Contains(g.ToLower()))
+            .Must(GoalTypes.IsKnown)
             .When(x => x.GoalType != null)
-            .WithMessage("Goal type must be weight_loss, muscle_gain, maintenance, or general");
+            .WithMessage($"Goal type must be {GoalTypes.Described}.");
         RuleFor(x => x.TargetCalories).GreaterThan(0).When(x => x.TargetCalories.HasValue);
         RuleFor(x => x.TargetProteinGrams).GreaterThan(0).When(x => x.TargetProteinGrams.HasValue);
         RuleFor(x => x.TargetCarbsGrams).GreaterThan(0).When(x => x.TargetCarbsGrams.HasValue);

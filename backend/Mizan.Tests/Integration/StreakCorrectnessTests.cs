@@ -1,4 +1,6 @@
+using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -147,6 +149,65 @@ public class StreakCorrectnessTests
         (await client.DeleteAsync($"/api/Meals/{id}")).EnsureSuccessStatusCode();
 
         (await CountersAsync(userId)).MealsLogged.Should().Be(0);
+    }
+
+    /// <summary>
+    /// A meal logged three days late used to be saved and then answered 500,
+    /// because the streak refused a day that far from today, so a retry logged
+    /// it twice. A date years away, usually a typo, failed the same way.
+    /// </summary>
+    [Fact]
+    public async Task AMealLoggedDaysLateIsSaved_AndADateYearsAwayIsRefusedWithAReason()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync(timeZone: "Pacific/Kiritimati"); // UTC+14
+        await SeedStreakAsync(userId, count: 4, daysAgo: 0, relativeToUsersZone: true);
+        var food = await _fixture.SeedFoodAsync($"Lentils {Guid.NewGuid():N}", 116, 9, 20, 0.4m);
+        var lateDay = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-3);
+
+        var late = await client.PostAsJsonAsync("/api/Meals", new
+        {
+            name = "Shiro",
+            entryDate = lateDay.ToString("yyyy-MM-dd"),
+            mealType = "DINNER",
+            servings = 1,
+            calories = 420,
+        });
+
+        late.StatusCode.Should().Be(HttpStatusCode.Created, await late.Content.ReadAsStringAsync());
+        (await late.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("streak").ValueKind
+            .Should().Be(JsonValueKind.Null, "a day that far back fills the diary and leaves the streak alone");
+
+        foreach (var (date, reason) in new[] { ("1900-01-01", "10 years back"), ("2500-01-01", "a year ahead") })
+        {
+            var far = await client.PostAsJsonAsync("/api/Meals", new
+            {
+                name = "Shiro",
+                entryDate = date,
+                mealType = "DINNER",
+                servings = 1,
+                calories = 420,
+            });
+
+            far.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            var problem = await far.Content.ReadFromJsonAsync<JsonElement>();
+            problem.GetProperty("errorCode").GetString().Should().Be("validation_failed");
+            problem.GetProperty("error").GetString().Should().Contain(reason).And.Contain(date);
+        }
+
+        // The food log takes the same range, and without a date it is today in the user's zone, the streak's day.
+        var farFood = await client.PostAsJsonAsync("/api/Nutrition/log", new { foodId = food.Id, entryDate = "2500-01-01", mealType = "LUNCH", servings = 1 });
+        farFood.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await farFood.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("error").GetString().Should().Contain("2500-01-01");
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new { foodId = food.Id, mealType = "LUNCH", servings = 1 }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        using var scope = _fixture.Services.CreateScope();
+        var theirToday = await scope.ServiceProvider.GetRequiredService<IUserClock>().TodayAsync(userId);
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        (await db.FoodDiaryEntries.Where(e => e.UserId == userId).Select(e => e.EntryDate).ToListAsync())
+            .Should().BeEquivalentTo([lateDay, theirToday]);
+        (await db.Streaks.SingleAsync(s => s.UserId == userId)).CurrentCount.Should().Be(4);
     }
 
     private async Task<(HttpClient Client, Guid UserId)> UserAsync(string? timeZone = null)

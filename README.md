@@ -11,7 +11,7 @@ Recipes, meal plans, shopping lists, trainers, households, messaging, billing, a
 - PostgreSQL 18 owns all application and identity data. Next.js has no database connection.
 - Redis provides distributed caching and the SignalR backplane.
 - S3-compatible storage supports MinIO and Cloudflare R2.
-- Backend session cookies authenticate browsers. User MCP tokens authenticate external MCP clients.
+- Backend session cookies authenticate browsers. OAuth grants authenticate connected MCP clients and the native app.
 
 ## Run with Docker
 
@@ -21,7 +21,7 @@ Install Docker with Compose, then:
 cp .env.example .env
 ```
 
-Set `DB_PASSWORD`, `REDIS_PASSWORD`, `MCP_SERVICE_KEY`, `MCP_ADMIN_SERVICE_KEY`, `STORAGE_ACCESS_KEY_ID`, and `STORAGE_SECRET_ACCESS_KEY` to local development values. Set `PUBLIC_APP_URL=http://localhost:3000`. These service credentials are required by Compose; SMTP, OAuth, Paddle, AI, and Telegram are optional for basic logging.
+Set `DB_PASSWORD`, `REDIS_PASSWORD`, `MCP_SERVICE_KEY`, `MCP_ADMIN_SERVICE_KEY`, `STORAGE_ACCESS_KEY_ID`, and `STORAGE_SECRET_ACCESS_KEY` to local development values. Set `PUBLIC_APP_URL=http://localhost:3000`. The two storage values are the local MinIO container's credentials. Email, storage, AI, Telegram, push and billing are set by an administrator under **Admin → Settings** ([runtime settings](docs/ADMIN.md#runtime-settings)); basic logging needs none of them.
 
 ```sh
 docker compose up -d
@@ -39,12 +39,37 @@ docker compose ps
 
 An untracked `docker-compose.override.yml` may change local ports; `docker compose ps` shows actual addresses. Development startup applies EF migrations. Production configuration lives in `docker-compose.prod.yml`; each deploy backs up the database and applies migrations before the app starts (see [migrations](docs/ARCHITECTURE.md#data-and-migrations)).
 
-Register through the app and confirm your email. With SMTP unset in Development, the backend prints the verification message to its console. There is no default administrator password. Verification links are credentials; keep them out of shared reports.
+Register through the app and confirm your email. With email unset in Development, the backend prints the verification message to its console. There is no default administrator password: make your account an administrator with `dotnet run --project backend/Mizan.Api -- --create-admin you@example.com` against the same database, and open the link it prints ([first administrator](docs/ADMIN.md#first-administrator)). Verification and password links are credentials; keep them out of shared reports.
 
 ```sh
 docker compose logs -f backend frontend
 docker compose down
 ```
+
+## Environment
+
+The environment holds only what a process needs before it can read the database, or to find and prove itself to another service. Everything else, including Google and GitHub sign-in and the Paddle client token, is a runtime setting stored by the API ([runtime settings](docs/ADMIN.md#runtime-settings)); `ConfigurationAllowlistTests` fails when code binds another options section from configuration.
+
+| Variable | Service | Why it stays in the environment |
+| --- | --- | --- |
+| `ConnectionStrings__PostgreSQL` | backend | The settings live in this database. |
+| `ConnectionStrings__Redis`, `Prices__Redis` | backend, prices | Caching, the settings-changed signal and the crawl lock; read before the settings. |
+| `DataProtection__KeysPath` | backend | Where the key ring that decrypts stored secrets lives. Empty keeps it in the database. |
+| `Mcp__ServiceApiKey`, `Mcp__AdminServiceApiKey` | backend, MCP, Telegram, prices | How the other services prove themselves to the API before they can read settings. |
+| `App__PublicUrl`, `App__CookieDomain`, `Mcp__PublicUrl`, `Mcp__AuthorizationServer`, `TelegramBot__PublicUrl` | backend, MCP, Telegram | The public origin: cookies, the OAuth issuer, the MCP resource and the webhook address, fixed per deployment. |
+| `Cors__Origins__*`, `ReverseProxy__KnownProxy`, `TelegramBot__TrustedProxies` | backend, Telegram | Built into the CORS and forwarded-headers middleware at startup. |
+| `API_URL`, `BACKEND_API_URL`, `TELEGRAM_BOT_URL`, `TelegramBot__ApiUrl`, `Prices__ApiUrl`, `Prices__WorkerUrl` | all | Addresses on the internal network. |
+| `Outbox__Enabled`, `Mcp__Stateless` | backend, MCP | Per-instance topology: whether this instance runs background jobs, and whether MCP keeps sessions. |
+| `OpenApi__Enabled`, `OTLP_ENDPOINT_URL`, `LOKI_OTLP_ENDPOINT`, `ASPNETCORE_*` | .NET services | Startup wiring: Swagger, telemetry, environment name and listen address. |
+| `NEXT_PUBLIC_*`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | frontend | Baked into the build (public URLs, the image host allowlist, analytics), or needed by Next.js itself. |
+
+`Smtp__*`, `Ai__*`, `Storage__*`, `Push__*`, `Paddle__*`, `OAuth__*`, `Telegram__*`, `Authentication__Google__*`, `Authentication__GitHub__*` (`GOOGLE_*`, `GITHUB_*`), the frontend build's `NEXT_PUBLIC_PADDLE_ENV` and `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `TelegramBot__BotToken`, `TelegramBot__UseWebhook`, `TelegramBot__WebhookSecret`, `TelegramBot__MiniAppUrl` and the crawler's `Prices__UserAgent`, `Prices__RequestDelayMs` and `Prices__MaxProductsPerRun` are no longer read. Operator commands, each run once against the deployment's database:
+
+| Command | What it does |
+| --- | --- |
+| `Mizan.Api --create-admin <email>` | Creates or promotes a verified administrator and prints a one-time link that sets the password ([first administrator](docs/ADMIN.md#first-administrator)). |
+| `Mizan.Api --import-env-settings` | Copies the old variables above into the runtime settings, encrypting secrets, before an upgrade ([moving settings](docs/ADMIN.md#moving-settings-out-of-the-environment)). |
+| `Mizan.Api --migrate` | Applies pending EF migrations and exits. |
 
 ## Run on the host
 
@@ -81,7 +106,7 @@ bunx playwright install chromium
 bun run test:e2e
 ```
 
-If Windows fork workers fail to start, use `bunx vitest run --pool=threads --maxWorkers=1`. Playwright starts the real Next.js UI on port 3100 and a synthetic API on port 5100. It checks browser navigation, forms, persisted fixture writes, keyboard interaction, and layout. **It does not verify the .NET API, PostgreSQL, or external services.**
+If Windows fork workers fail to start, use `bunx vitest run --pool=threads --maxWorkers=1`. Playwright starts the real Next.js UI on port 3100 and a synthetic API on port 5100; with `CI` set it builds the app and serves the standalone output instead of `next dev`. It checks browser navigation, forms, persisted fixture writes, keyboard interaction, and layout. **It does not verify the .NET API, PostgreSQL, or external services.**
 
 Set `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_API_URL` to change ports. `PLAYWRIGHT_EXTERNAL=1` disables service startup; the suite still needs its fixture session endpoints. With the fixture services running, capture a synthetic screenshot using `bun e2e/capture.ts /today`; add `--mobile --empty` or `--dark` as needed. Reports and screenshots are Git-ignored.
 
@@ -93,15 +118,24 @@ docker compose --profile test run --rm test
 
 The integration fixture truncates its database between tests. Use only a disposable database whose name contains `test`; `TEST_DB_CONNECTION` can select one for a host run. With no connection configured, the fixture creates a PostgreSQL Testcontainer. Never target a development or production database.
 
-After API contract changes, run the API and `bun run codegen` in `frontend` to regenerate `types/api.generated.ts`. Zod form validation is maintained separately; there is no `codegen:zod` script.
+After API contract changes, run the API and `bun run codegen` in `frontend` to regenerate `types/api.generated.ts`. Zod form validation is maintained separately; there is no `codegen:zod` script. CI regenerates the types from the built API's `/swagger/v1/swagger.json` and fails when the result differs from the committed file. Commit the regenerated `types/api.generated.ts` with every contract change.
 
 ## Maintain the database
 
-Keep the current EF migration history and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
+Keep the EF migration history on `master` and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
 
 ```sh
 dotnet ef migrations has-pending-model-changes --project Mizan.Infrastructure --startup-project Mizan.Api
 ```
+
+An unmerged branch carries one migration. After a model change on such a branch, remove that migration and generate it again with the EF tools, from `backend`:
+
+```sh
+dotnet ef migrations remove --project Mizan.Infrastructure --startup-project Mizan.Api
+dotnet ef migrations add <Name> --project Mizan.Infrastructure --startup-project Mizan.Api
+```
+
+Never edit a migration file by hand.
 
 ## Releases
 
@@ -119,9 +153,12 @@ Production Compose currently follows `latest`. To pin a release, use its version
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Design](DESIGN.md)
-- [MCP setup and tools](docs/MCP.md)
+- [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
+- [Administration: health, mail, contact, households, runtime settings, feature flags, usage limits, and usage](docs/ADMIN.md)
 - [Telegram setup](docs/TELEGRAM.md)
+- [Meal planning, shopping lists, and prices](docs/PLANNING.md)
+- [Administration](docs/ADMIN.md)
 - [Contributor and agent guidance](CLAUDE.md)
 - [Security policy](SECURITY.md)
 

@@ -22,10 +22,16 @@ function isLocalHostname(hostname: string): boolean {
 }
 
 export function resolvePublicApiOrigin(): string {
-  const configuredClientOrigin = normalizeApiOrigin(process.env.NEXT_PUBLIC_API_URL);
+  const configuredClientOrigin = normalizeApiOrigin(
+    process.env.NEXT_PUBLIC_API_URL,
+  );
 
   if (typeof window === "undefined") {
-    return configuredClientOrigin ?? normalizeApiOrigin(process.env.API_URL) ?? LOCAL_API_ORIGIN;
+    return (
+      configuredClientOrigin ??
+      normalizeApiOrigin(process.env.API_URL) ??
+      LOCAL_API_ORIGIN
+    );
   }
 
   if (configuredClientOrigin) {

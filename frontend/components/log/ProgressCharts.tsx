@@ -16,6 +16,7 @@ import type { DailyNutritionSummary } from "@/data/meal";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
 import type { LogWorkout } from "@/data/log";
 import { LogEntryButton } from "@/components/logging/LogEntryButton";
+import { Select } from "@/components/ui/select";
 
 const axis = { fill: "var(--muted-foreground)", fontSize: 11 };
 const dateTick = (date: string) =>
@@ -28,6 +29,10 @@ const tooltipStyle = {
   fontSize: 12,
 };
 
+const LEGEND =
+  "flex flex-wrap gap-x-5 gap-y-3 text-[12px] text-muted-foreground max-sm:gap-3 max-sm:text-[11px] [&_i]:inline-block [&_i]:h-0.5 [&_i]:w-3.5 [&_span]:inline-flex [&_span]:items-center [&_span]:gap-1.5";
+const TREND_CHART = "-mx-1 mt-4 mb-2 h-60 max-sm:h-[220px]";
+
 function DataRows({
   rows,
   columns,
@@ -36,7 +41,7 @@ function DataRows({
   columns: Array<{ key: string; label: string }>;
 }) {
   return (
-    <details className="chart-data">
+    <details className="mt-4 text-[12px] [&_:is(th,td)]:border-b [&_:is(th,td)]:border-border [&_:is(th,td)]:p-2.5 [&_:is(th,td)]:text-right [&_:is(th,td):first-child]:text-left [&_summary]:flex [&_summary]:min-h-9 [&_summary]:items-center [&_summary]:text-chart-1 [&_table]:w-full [&_table]:border-collapse">
       <summary>View data</summary>
       <div className="overflow-x-auto">
         <table>
@@ -53,7 +58,7 @@ function DataRows({
               <tr key={`${row.date}-${index}`}>
                 <td>{dateTick(row.date)}</td>
                 {columns.map((column) => (
-                  <td className="num" key={column.key}>
+                  <td className="tabular-nums" key={column.key}>
                     {row[column.key]?.toLocaleString() ?? "—"}
                   </td>
                 ))}
@@ -94,11 +99,11 @@ export default function ProgressCharts({
     };
   });
   return (
-    <div className="progress-sections">
+    <div className="grid gap-10 max-sm:gap-8">
       <section aria-labelledby="nutrition-trend">
         <header className="log-section-header">
           <h2 id="nutrition-trend">Nutrition</h2>
-          <div className="chart-legend">
+          <div className={LEGEND}>
             <span>
               <i style={{ background: "var(--foreground)" }} />
               Calories
@@ -111,10 +116,10 @@ export default function ProgressCharts({
         </header>
         {nutrition.length ? (
           <>
-            <p className="log-muted text-sm mt-4">
+            <p className="text-muted-foreground text-sm mt-4">
               Daily intake. Gaps are days without a meal entry.
             </p>
-            <div className="trend-chart">
+            <div className={TREND_CHART}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={nutritionPoints}
@@ -193,11 +198,11 @@ export default function ProgressCharts({
       <section aria-labelledby="weight-trend">
         <header className="log-section-header">
           <h2 id="weight-trend">Bodyweight</h2>
-          <span className="text-xs log-muted">Kilograms</span>
+          <span className="text-xs text-muted-foreground">Kilograms</span>
         </header>
         {weightPoints.length ? (
           <>
-            <p className="log-muted text-sm mt-4">
+            <p className="text-muted-foreground text-sm mt-4">
               {weightPoints.length}{" "}
               {weightPoints.length === 1 ? "weigh-in" : "weigh-ins"} in this
               period
@@ -205,7 +210,7 @@ export default function ProgressCharts({
                 ? ` · ${Math.round((weightPoints.at(-1)!.weight - weightPoints[0].weight) * 10) / 10 > 0 ? "+" : ""}${Math.round((weightPoints.at(-1)!.weight - weightPoints[0].weight) * 10) / 10} kg change`
                 : " · Add another to see a trend"}
             </p>
-            <div className="trend-chart">
+            <div className={TREND_CHART}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={weightPoints}
@@ -263,7 +268,7 @@ export default function ProgressCharts({
         ) : (
           <div className="log-empty">
             <p>A little perspective on your weight.</p>
-            <p className="log-muted text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               Add a weigh-in to start seeing change over time.
             </p>
             <LogEntryButton kind="measurement" className="text-link mt-3">
@@ -278,25 +283,22 @@ export default function ProgressCharts({
         </header>
         {selected ? (
           <>
-            <div className="strength-controls">
+            <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
               <div>
                 <label className="label" htmlFor="trend-exercise">
                   Exercise
                 </label>
-                <select
+                <Select
                   id="trend-exercise"
-                  className="input"
                   value={selected.id}
-                  onChange={(event) => setExerciseId(event.target.value)}
-                >
-                  {exercises.map((exercise) => (
-                    <option key={exercise.id} value={exercise.id}>
-                      {exercise.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setExerciseId}
+                  options={exercises.map((exercise) => ({
+                    value: exercise.id,
+                    label: exercise.name,
+                  }))}
+                />
               </div>
-              <div className="chart-legend">
+              <div className={LEGEND}>
                 <span>
                   <i style={{ background: "var(--foreground)" }} />
                   Volume (kg)
@@ -307,7 +309,7 @@ export default function ProgressCharts({
                 </span>
               </div>
             </div>
-            <div className="trend-chart">
+            <div className={TREND_CHART}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={selected.points}
@@ -363,7 +365,7 @@ export default function ProgressCharts({
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs log-muted">
+            <p className="text-xs text-muted-foreground">
               Volume is weight × reps across completed sets. Estimated one-rep
               max uses the Epley formula for sets of up to 12 reps.
             </p>
@@ -378,7 +380,7 @@ export default function ProgressCharts({
         ) : (
           <div className="log-empty">
             <p>See the work add up.</p>
-            <p className="log-muted text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               Complete weighted sets to compare volume and estimated strength
               here.
             </p>

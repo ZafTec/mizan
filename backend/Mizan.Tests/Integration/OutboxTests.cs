@@ -36,7 +36,7 @@ public class OutboxTests
         var outbox = scope.ServiceProvider.GetRequiredService<IOutbox>();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
 
-        await outbox.EnqueueAsync(OutboxJobTypes.Email, new EmailMessage("queued@example.com", "Staged", "<p>hi</p>", "hi"));
+        await outbox.EnqueueAsync(OutboxJobTypes.Email, new OutgoingEmail("queued@example.com", "Staged", "<p>hi</p>", "hi"));
 
         // Nothing yet: the point of an outbox is that the job lands with the
         // rest of the caller's unit of work, not before it.
@@ -55,7 +55,7 @@ public class OutboxTests
         using (var scope = _fixture.Services.CreateScope())
         {
             var outbox = scope.ServiceProvider.GetRequiredService<IOutbox>();
-            await outbox.EnqueueAsync(OutboxJobTypes.Email, new EmailMessage("never@example.com", "Discarded", "<p>hi</p>", "hi"));
+            await outbox.EnqueueAsync(OutboxJobTypes.Email, new OutgoingEmail("never@example.com", "Discarded", "<p>hi</p>", "hi"));
 
             // Scope disposed without saving - the same shape as a handler that
             // threw after staging the job.
@@ -117,7 +117,7 @@ public class OutboxTests
 
         // No recipient: the handler raises OutboxPermanentException rather than
         // spending five attempts proving a missing address stays missing.
-        await QueueAsync(OutboxJobTypes.Email, new EmailMessage("", "Nowhere", "<p>hi</p>", "hi"));
+        await QueueAsync(OutboxJobTypes.Email, new OutgoingEmail("", "Nowhere", "<p>hi</p>", "hi"));
 
         await _fixture.DrainOutboxAsync();
 
@@ -248,7 +248,7 @@ public class OutboxTests
 
     // ---- Helpers ----------------------------------------------------------
 
-    private static EmailMessage Message(string to) => new(to, "Test", "<p>hi</p>", "hi");
+    private static OutgoingEmail Message(string to) => new(to, "Test", "<p>hi</p>", "hi");
 
     private async Task<HttpClient> AdminAsync()
     {

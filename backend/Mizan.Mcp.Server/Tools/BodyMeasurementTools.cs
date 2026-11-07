@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Mizan.Contracts.Measurements;
 using Mizan.Mcp.Server.Services;
+using ModelContextProtocol.Extensions.Apps;
 using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
@@ -14,6 +15,7 @@ public sealed class BodyMeasurementTools
     public BodyMeasurementTools(IBackendApiClient api) => _api = api;
 
     [McpServerTool(Name = "list_body_measurements", ReadOnly = true, Idempotent = true)]
+    [McpAppUi(ResourceUri = Mizan.Mcp.Server.Apps.MizanApps.BodyTrend)]
     [Description("List body measurements (weight, body fat, muscle mass, circumferences) over time.")]
     public async Task<string> ListMeasurements(
         [Description("Page number (default 1)")] int page = 1,

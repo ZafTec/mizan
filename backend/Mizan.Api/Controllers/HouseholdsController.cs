@@ -152,6 +152,12 @@ public class HouseholdsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>One household for support: members with roles and join dates, the owner, invitations, plan and list counts.</summary>
+    [HttpGet("admin/{id:guid}")]
+    [Authorize(Policy = "RequireAdmin")]
+    public async Task<ActionResult<Mizan.Contracts.Admin.AdminHouseholdDetailDto>> AdminGet(Guid id)
+        => Ok(await _mediator.Send(new GetAdminHouseholdQuery(id)));
+
     [HttpDelete("admin/{id:guid}")]
     [Authorize(Policy = "RequireAdmin")]
     public async Task<ActionResult<AdminDeleteHouseholdResult>> AdminDelete(Guid id)

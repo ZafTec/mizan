@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Mcp;
 using Mizan.Domain.Ai;
 using Mizan.Domain.Entities;
 
@@ -21,11 +23,16 @@ namespace Mizan.Infrastructure.Ai;
 public class DataAccessPolicy : IDataAccessPolicy
 {
     private static readonly DataAxis[] AllAxes =
-        [DataAxis.Nutrition, DataAxis.Training, DataAxis.Body];
+        [DataAxis.Nutrition, DataAxis.Training, DataAxis.Body, DataAxis.Planning];
 
     private readonly IMizanDbContext _context;
+    private readonly ICurrentUserService? _currentUser;
 
-    public DataAccessPolicy(IMizanDbContext context) => _context = context;
+    public DataAccessPolicy(IMizanDbContext context, ICurrentUserService? currentUser = null)
+    {
+        _context = context;
+        _currentUser = currentUser;
+    }
 
     public async Task<bool> CanReadAsync(
         Guid principalId,
@@ -51,16 +58,26 @@ public class DataAccessPolicy : IDataAccessPolicy
             ? await ConsentAsync(subjectId, cancellationToken)
             : null;
 
+        // A connected app holds only what its user allowed it, on top of whatever
+        // the user themselves could do. It never widens anything.
+        var connection = _currentUser?.Grant is { } held && _currentUser.UserId == principalId ? held : null;
+
         if (principalId == subjectId)
         {
-            return Freeze(AllAxes.Where(axis => consent is null || consent.Allows(axis)));
+            return Freeze(AllAxes.Where(axis =>
+                (consent is null || consent.Allows(axis))
+                && (connection is null || connection.Allows(GrantAxes.ReadScope(axis)))));
         }
+
+        // Reading a client's data is the coaching area, so the app needs coaching:read. The app's
+        // nutrition, training and body areas are the trainer's own data and say nothing about a
+        // client's: what the client shared with the coach and their AI consent decide that.
+        if (connection is not null && !connection.Allows(McpScopes.TrainerRead)) return Freeze([]);
 
         var grants = await GrantsAsync(principalId, subjectId, cancellationToken);
         if (grants is null) return Freeze([]);
 
-        return Freeze(AllAxes.Where(axis =>
-            grants.Grants(axis) && (consent is null || consent.Allows(axis))));
+        return Freeze(AllAxes.Where(axis => grants.Grants(axis) && (consent is null || consent.Allows(axis))));
     }
 
     private async Task<UserAiConsent> ConsentAsync(Guid userId, CancellationToken cancellationToken)

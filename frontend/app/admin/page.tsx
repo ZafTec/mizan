@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { getAdminOverview } from "@/data/admin/users";
 import LiveAuditLog from "./LiveAuditLog";
 import { getAuditLogs } from "@/data/audit";
+import { getSystemHealthServer } from "@/lib/api/admin-ops.server";
+import HealthGrid from "./HealthGrid";
 
 export const metadata = {
   title: "Admin Dashboard | Mizan",
@@ -23,7 +25,10 @@ export default async function AdminDashboard() {
   if (!user) redirect("/login");
   if (user.role !== "admin") redirect("/");
 
-  const stats = await getAdminStats();
+  const [stats, health] = await Promise.all([
+    getAdminStats(),
+    getSystemHealthServer(),
+  ]);
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -65,6 +70,8 @@ export default async function AdminDashboard() {
           linkText="Manage sessions"
         />
       </div>
+
+      <HealthGrid health={health} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         <div className="lg:col-span-2 bg-card rounded-lg border p-6">

@@ -28,8 +28,8 @@ public class UpdateUserCommandTests
 
         var objects = new HashSet<string> { SharedKey };
         var storage = new Mock<IStorageService>(MockBehavior.Strict);
-        storage.Setup(service => service.TryGetKey(It.IsAny<string?>()))
-            .Returns<string?>(url => url == SharedImage ? SharedKey : null);
+        storage.Setup(service => service.TryGetKeyAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Returns<string?, CancellationToken>((url, _) => Task.FromResult(url == SharedImage ? SharedKey : null));
         storage.Setup(service => service.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback<string, CancellationToken>((key, _) => objects.Remove(key))
             .Returns(Task.CompletedTask);
@@ -61,8 +61,11 @@ public class UpdateUserCommandTests
         var previousUpdate = DateTime.UtcNow.AddDays(-1);
         var user = new User
         {
-            Id = Guid.NewGuid(), Email = "profile@example.test", Name = "Original name",
-            Image = SharedImage, UpdatedAt = previousUpdate,
+            Id = Guid.NewGuid(),
+            Email = "profile@example.test",
+            Name = "Original name",
+            Image = SharedImage,
+            UpdatedAt = previousUpdate,
         };
         db.Users.Add(user);
         await db.SaveChangesAsync();

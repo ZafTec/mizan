@@ -110,6 +110,44 @@ public class NutritionGoalsTests
         history.ProgressEntries[0].ActualCalories.Should().Be(1750m);
     }
 
+    [Fact]
+    public async Task A_person_deletes_a_check_in_and_then_the_goal_and_is_left_without_targets()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var userId = Guid.NewGuid();
+        var email = $"goal-delete-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email);
+        var strangerId = Guid.NewGuid();
+        await _fixture.SeedUserAsync(strangerId, "stranger@example.com");
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        using var stranger = _fixture.CreateAuthenticatedClient(strangerId, "stranger@example.com");
+
+        var created = await client.PostAsJsonAsync("/api/Goals", new { GoalType = "general", TargetCalories = 2100 });
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        (await client.PostAsJsonAsync("/api/Goals/progress", new { Date = today.AddDays(-1), ActualCalories = 1900 })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/Goals/progress", new { Date = today, ActualCalories = 2000 })).EnsureSuccessStatusCode();
+        var history = await client.GetFromJsonAsync<GoalProgressHistoryResponse>("/api/Goals/progress?days=7");
+        var yesterday = history!.ProgressEntries.Single(e => e.Date == today.AddDays(-1));
+
+        // Someone else's check-in is not found, so nothing is removed.
+        (await stranger.DeleteAsync($"/api/Goals/progress/{yesterday.Id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await client.DeleteAsync($"/api/Goals/progress/{yesterday.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        history = await client.GetFromJsonAsync<GoalProgressHistoryResponse>("/api/Goals/progress?days=7");
+        history!.ProgressEntries.Should().ContainSingle().Which.Date.Should().Be(today);
+
+        var goal = await client.GetFromJsonAsync<GoalIdResponse>("/api/Goals");
+        (await client.DeleteAsync($"/api/Goals/{goal!.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        (await client.GetAsync("/api/Goals")).Content.Headers.ContentLength.Should().Be(0);
+        var daily = await client.GetFromJsonAsync<DailyNutritionResponse>($"/api/Nutrition/daily?date={today:yyyy-MM-dd}");
+        daily!.TargetCalories.Should().BeNull();
+        history = await client.GetFromJsonAsync<GoalProgressHistoryResponse>("/api/Goals/progress?days=7");
+        history!.ProgressEntries.Should().BeEmpty();
+    }
+
+    private sealed record GoalIdResponse(Guid Id);
+
     private sealed record DailyNutritionResponse(
         DateOnly Date,
         decimal TotalCalories,

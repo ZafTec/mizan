@@ -8,239 +8,302 @@ import { revalidatePath } from "next/cache";
 const householdLogger = logger.createModuleLogger("household");
 
 function apiErrorMessage(error: unknown, fallback: string): string {
-	if (error instanceof ApiError && error.body && typeof error.body === "object") {
-		const message = (error.body as { error?: unknown }).error;
-		if (typeof message === "string" && message.trim()) return message;
-	}
-	return fallback;
+  if (
+    error instanceof ApiError &&
+    error.body &&
+    typeof error.body === "object"
+  ) {
+    const message = (error.body as { error?: unknown }).error;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return fallback;
 }
 
 export interface HouseholdSummary {
-	id: string;
-	name: string;
-	myRole: string;
-	memberCount: number;
-	joinedAt: string;
-	isActive: boolean;
+  id: string;
+  name: string;
+  myRole: string;
+  memberCount: number;
+  joinedAt: string;
+  isActive: boolean;
 }
 
 export interface HouseholdInvitationSummary {
-	id: string;
-	householdId: string;
-	householdName: string;
-	role: string;
-	invitedByName: string;
-	createdAt: string;
-	expiresAt: string;
+  id: string;
+  householdId: string;
+  householdName: string;
+  role: string;
+  invitedByName: string;
+  createdAt: string;
+  expiresAt: string;
 }
 
 export interface MyHouseholds {
-	households: HouseholdSummary[];
-	pendingInvitations: HouseholdInvitationSummary[];
-	activeHouseholdId?: string | null;
+  households: HouseholdSummary[];
+  pendingInvitations: HouseholdInvitationSummary[];
+  activeHouseholdId?: string | null;
 }
 
 export interface HouseholdMemberDto {
-	userId: string;
-	name?: string | null;
-	email?: string | null;
-	role?: string | null;
-	joinedAt: string;
+  userId: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  joinedAt: string;
 }
 
 export interface HouseholdDetail {
-	id: string;
-	name: string;
-	createdBy?: string | null;
-	createdAt: string;
-	members: HouseholdMemberDto[];
+  id: string;
+  name: string;
+  createdBy?: string | null;
+  createdAt: string;
+  members: HouseholdMemberDto[];
 }
 
 export interface PendingInviteAdminDto {
-	id: string;
-	householdId: string;
-	invitedEmail: string;
-	invitedName?: string | null;
-	role: string;
-	status: string;
-	createdAt: string;
-	expiresAt: string;
+  id: string;
+  householdId: string;
+  invitedEmail: string;
+  invitedName?: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
+  expiresAt: string;
 }
 
 export async function getMyHouseholds(): Promise<MyHouseholds> {
-	try {
-		return await serverApi<MyHouseholds>("/api/Households/mine");
-	} catch (error) {
-		householdLogger.error("Failed to load households", { error });
-		return { households: [], pendingInvitations: [], activeHouseholdId: null };
-	}
+  try {
+    return await serverApi<MyHouseholds>("/api/Households/mine");
+  } catch (error) {
+    householdLogger.error("Failed to load households", { error });
+    return { households: [], pendingInvitations: [], activeHouseholdId: null };
+  }
 }
 
-export async function getHousehold(id: string): Promise<HouseholdDetail | null> {
-	try {
-		return await serverApi<HouseholdDetail>(`/api/Households/${id}`);
-	} catch (error) {
-		householdLogger.error("Failed to load household", { error, id });
-		return null;
-	}
+export async function getHousehold(
+  id: string,
+): Promise<HouseholdDetail | null> {
+  try {
+    return await serverApi<HouseholdDetail>(`/api/Households/${id}`);
+  } catch (error) {
+    householdLogger.error("Failed to load household", { error, id });
+    return null;
+  }
 }
 
-export async function getHouseholdPendingInvites(id: string): Promise<PendingInviteAdminDto[]> {
-	try {
-		return await serverApi<PendingInviteAdminDto[]>(`/api/Households/${id}/invitations`);
-	} catch (error) {
-		householdLogger.error("Failed to load pending invites", { error, id });
-		return [];
-	}
+export async function getHouseholdPendingInvites(
+  id: string,
+): Promise<PendingInviteAdminDto[]> {
+  try {
+    return await serverApi<PendingInviteAdminDto[]>(
+      `/api/Households/${id}/invitations`,
+    );
+  } catch (error) {
+    householdLogger.error("Failed to load pending invites", { error, id });
+    return [];
+  }
 }
 
-export async function createHousehold(name: string): Promise<{ id: string } | null> {
-	try {
-		const id = await serverApi<string>("/api/Households", {
-			method: "POST",
-			body: { name },
-		});
-		revalidatePath("/settings/household");
-		return { id };
-	} catch (error) {
-		householdLogger.error("Create household failed", { error });
-		return null;
-	}
+export async function createHousehold(
+  name: string,
+): Promise<{ id: string } | null> {
+  try {
+    const id = await serverApi<string>("/api/Households", {
+      method: "POST",
+      body: { name },
+    });
+    revalidatePath("/settings/household");
+    return { id };
+  } catch (error) {
+    householdLogger.error("Create household failed", { error });
+    return null;
+  }
 }
 
-export async function inviteToHousehold(householdId: string, email: string, role: "admin" | "member" = "member") {
-	try {
-		const result = await serverApi<{ success: boolean; invitationId?: string; message?: string }>(
-			`/api/Households/${householdId}/invitations`,
-			{ method: "POST", body: { email, role } },
-		);
-		revalidatePath("/settings/household");
-		return result;
-	} catch (error) {
-		householdLogger.error("Invite failed", { error, householdId });
-		return { success: false, message: apiErrorMessage(error, "Could not send invitation.") };
-	}
+export async function inviteToHousehold(
+  householdId: string,
+  email: string,
+  role: "admin" | "member" = "member",
+) {
+  try {
+    const result = await serverApi<{
+      success: boolean;
+      invitationId?: string;
+      message?: string;
+    }>(`/api/Households/${householdId}/invitations`, {
+      method: "POST",
+      body: { email, role },
+    });
+    revalidatePath("/settings/household");
+    return result;
+  } catch (error) {
+    householdLogger.error("Invite failed", { error, householdId });
+    return {
+      success: false,
+      message: apiErrorMessage(error, "Could not send invitation."),
+    };
+  }
 }
 
-export async function respondToInvitation(invitationId: string, action: "accept" | "decline" | "revoke") {
-	try {
-		const result = await serverApi<{ success: boolean; message?: string; householdId?: string }>(
-			`/api/Households/invitations/${invitationId}/respond`,
-			{ method: "POST", body: { action } },
-		);
-		revalidatePath("/settings/household");
-		revalidatePath("/");
-		return result;
-	} catch (error) {
-		householdLogger.error("Respond to invitation failed", { error, invitationId });
-		return { success: false, message: "Could not respond to invitation." };
-	}
+export async function respondToInvitation(
+  invitationId: string,
+  action: "accept" | "decline" | "revoke",
+) {
+  try {
+    const result = await serverApi<{
+      success: boolean;
+      message?: string;
+      householdId?: string;
+    }>(`/api/Households/invitations/${invitationId}/respond`, {
+      method: "POST",
+      body: { action },
+    });
+    revalidatePath("/settings/household");
+    revalidatePath("/");
+    return result;
+  } catch (error) {
+    householdLogger.error("Respond to invitation failed", {
+      error,
+      invitationId,
+    });
+    return { success: false, message: "Could not respond to invitation." };
+  }
 }
 
 export async function setActiveHousehold(householdId: string | null) {
-	try {
-		const result = await serverApi<{ success: boolean; activeHouseholdId?: string | null; message?: string }>(
-			"/api/Households/active",
-			{ method: "PUT", body: { householdId } },
-		);
-		revalidatePath("/");
-		return result;
-	} catch (error) {
-		householdLogger.error("Set active household failed", { error, householdId });
-		return { success: false, message: "Could not switch household." };
-	}
+  try {
+    const result = await serverApi<{
+      success: boolean;
+      activeHouseholdId?: string | null;
+      message?: string;
+    }>("/api/Households/active", { method: "PUT", body: { householdId } });
+    revalidatePath("/");
+    return result;
+  } catch (error) {
+    householdLogger.error("Set active household failed", {
+      error,
+      householdId,
+    });
+    return { success: false, message: "Could not switch household." };
+  }
 }
 
 export async function leaveHousehold(householdId: string) {
-	try {
-		const result = await serverApi<{ success: boolean; message?: string }>(
-			`/api/Households/${householdId}/leave`,
-			{ method: "POST" },
-		);
-		revalidatePath("/settings/household");
-		return result;
-	} catch (error) {
-		householdLogger.error("Leave household failed", { error, householdId });
-		return { success: false, message: "Could not leave household." };
-	}
+  try {
+    const result = await serverApi<{ success: boolean; message?: string }>(
+      `/api/Households/${householdId}/leave`,
+      { method: "POST" },
+    );
+    revalidatePath("/settings/household");
+    return result;
+  } catch (error) {
+    householdLogger.error("Leave household failed", { error, householdId });
+    return { success: false, message: "Could not leave household." };
+  }
 }
 
-export async function removeHouseholdMember(householdId: string, userId: string) {
-	try {
-		const result = await serverApi<{ success: boolean; message?: string }>(
-			`/api/Households/${householdId}/members/${userId}`,
-			{ method: "DELETE" },
-		);
-		revalidatePath(`/settings/household`);
-		return result;
-	} catch (error) {
-		householdLogger.error("Remove member failed", { error, householdId, userId });
-		return { success: false, message: "Could not remove member." };
-	}
+export async function removeHouseholdMember(
+  householdId: string,
+  userId: string,
+) {
+  try {
+    const result = await serverApi<{ success: boolean; message?: string }>(
+      `/api/Households/${householdId}/members/${userId}`,
+      { method: "DELETE" },
+    );
+    revalidatePath(`/settings/household`);
+    return result;
+  } catch (error) {
+    householdLogger.error("Remove member failed", {
+      error,
+      householdId,
+      userId,
+    });
+    return { success: false, message: "Could not remove member." };
+  }
 }
 
 export interface HouseholdDeletionPreview {
-	householdId: string;
-	householdName: string;
-	otherMemberCount: number;
-	shoppingListCount: number;
-	shoppingListItemCount: number;
-	mealPlanCount: number;
-	mealPlanRecipeCount: number;
-	pendingInvitationCount: number;
-	version: string;
+  householdId: string;
+  householdName: string;
+  otherMemberCount: number;
+  shoppingListCount: number;
+  shoppingListItemCount: number;
+  mealPlanCount: number;
+  mealPlanRecipeCount: number;
+  pendingInvitationCount: number;
+  version: string;
 }
 
 export type HouseholdDeletionStatus =
-	| "Ready"
-	| "Deleted"
-	| "NotFound"
-	| "NotOwner"
-	| "HasOtherMembers"
-	| "PlansNotConfirmed"
-	| "Stale";
+  | "Ready"
+  | "Deleted"
+  | "NotFound"
+  | "NotOwner"
+  | "HasOtherMembers"
+  | "PlansNotConfirmed"
+  | "Stale";
 
 export interface HouseholdDeletionResult {
-	status: HouseholdDeletionStatus;
-	message?: string | null;
-	preview?: HouseholdDeletionPreview | null;
+  status: HouseholdDeletionStatus;
+  message?: string | null;
+  preview?: HouseholdDeletionPreview | null;
 }
 
 // Refusals (403, 404, 409) carry the same result shape with a fresh preview,
 // so they are returned rather than thrown.
 function deletionResult(error: unknown): HouseholdDeletionResult | null {
-	if (error instanceof ApiError && error.body && typeof error.body === "object" && "status" in error.body)
-		return error.body as HouseholdDeletionResult;
-	return null;
+  if (
+    error instanceof ApiError &&
+    error.body &&
+    typeof error.body === "object" &&
+    "status" in error.body
+  )
+    return error.body as HouseholdDeletionResult;
+  return null;
 }
 
-export async function getHouseholdDeletionPreview(householdId: string): Promise<HouseholdDeletionResult> {
-	try {
-		return await serverApi<HouseholdDeletionResult>(`/api/Households/${householdId}/deletion`);
-	} catch (error) {
-		const refusal = deletionResult(error);
-		if (refusal) return refusal;
-		householdLogger.error("Household deletion preview failed", { error, householdId });
-		return { status: "NotFound", message: "Could not check this household." };
-	}
+export async function getHouseholdDeletionPreview(
+  householdId: string,
+): Promise<HouseholdDeletionResult> {
+  try {
+    return await serverApi<HouseholdDeletionResult>(
+      `/api/Households/${householdId}/deletion`,
+    );
+  } catch (error) {
+    const refusal = deletionResult(error);
+    if (refusal) return refusal;
+    householdLogger.error("Household deletion preview failed", {
+      error,
+      householdId,
+    });
+    return { status: "NotFound", message: "Could not check this household." };
+  }
 }
 
 export async function deleteHousehold(
-	householdId: string,
-	version: string,
-	deletePlans: boolean,
+  householdId: string,
+  version: string,
+  deletePlans: boolean,
 ): Promise<HouseholdDeletionResult> {
-	try {
-		const result = await serverApi<HouseholdDeletionResult>(`/api/Households/${householdId}`, {
-			method: "DELETE",
-			body: { version, deletePlans },
-		});
-		revalidatePath("/", "layout");
-		return result;
-	} catch (error) {
-		const refusal = deletionResult(error);
-		if (refusal) return refusal;
-		householdLogger.error("Delete household failed", { error, householdId });
-		return { status: "Stale", message: "Could not delete the household. Nothing was changed. Try again." };
-	}
+  try {
+    const result = await serverApi<HouseholdDeletionResult>(
+      `/api/Households/${householdId}`,
+      {
+        method: "DELETE",
+        body: { version, deletePlans },
+      },
+    );
+    revalidatePath("/", "layout");
+    return result;
+  } catch (error) {
+    const refusal = deletionResult(error);
+    if (refusal) return refusal;
+    householdLogger.error("Delete household failed", { error, householdId });
+    return {
+      status: "Stale",
+      message:
+        "Could not delete the household. Nothing was changed. Try again.",
+    };
+  }
 }

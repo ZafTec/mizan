@@ -34,6 +34,13 @@ public enum AiQuotaLine
     /// them rate-limited by activity that is not theirs (docs/AI.md#consent).
     /// </summary>
     TrainerClient = 3,
+
+    /// <summary>
+    /// Generating a meal plan. A plan is one large structured call the person asked for on
+    /// purpose; billing it to chat would mean a Free account could plan or talk on a given day,
+    /// not both. Free gets one plan a day (docs/AI.md#metering).
+    /// </summary>
+    Planning = 4,
 }
 
 public static class AiQuotaLines
@@ -43,6 +50,7 @@ public static class AiQuotaLines
         AiFeatures.Eval => AiQuotaLine.Eval,
         AiFeatures.Onboarding => AiQuotaLine.Onboarding,
         AiFeatures.TrainerClient => AiQuotaLine.TrainerClient,
+        AiFeatures.Planning => AiQuotaLine.Planning,
         _ => AiQuotaLine.Personal,
     };
 

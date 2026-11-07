@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
+using Mizan.Mcp.Server.Authorization;
 
 namespace Mizan.Mcp.Server.Services;
 
@@ -24,11 +25,34 @@ public interface IBackendApiClient
         string fileName,
         string contentType,
         CancellationToken ct = default);
-    Task<TokenValidation?> ValidateTokenAsync(string token, CancellationToken ct = default);
-    Task LogUsageAsync(Guid tokenId, Guid userId, string toolName, string? parameters, bool success, string? error, int elapsedMs);
+    /// <summary>
+    /// Asks the API what an access token is. <see cref="TokenIntrospection.Inactive"/> when the API
+    /// says the token is no good; null when the API cannot be reached or fails, which says nothing
+    /// about the token and must not be treated as a rejection.
+    /// </summary>
+    Task<TokenIntrospection?> IntrospectAsync(string token, CancellationToken ct = default);
+    Task LogUsageAsync(Guid grantId, Guid userId, string kind, string name, bool success, string? error, int elapsedMs);
 }
 
-public sealed record TokenValidation(Guid UserId, Guid TokenId, string Role = "user", string Plan = "free", int? MonthlyLimit = null, int UsedThisMonth = 0, int? RemainingThisMonth = null);
+/// <summary>What the API says about an access token: who it is for and what it may do.</summary>
+public sealed record TokenIntrospection
+{
+    public bool Active { get; init; }
+    public Guid UserId { get; init; }
+    public Guid GrantId { get; init; }
+    public Guid ClientRowId { get; init; }
+    public string ClientId { get; init; } = string.Empty;
+    public string ClientName { get; init; } = string.Empty;
+    public IReadOnlyList<string> Scopes { get; init; } = [];
+    public string HouseholdMode { get; init; } = "none";
+    public IReadOnlyList<Guid> HouseholdIds { get; init; } = [];
+    public string Role { get; init; } = "user";
+    public string Plan { get; init; } = "free";
+    public int? MonthlyLimit { get; init; }
+    public int UsedThisMonth { get; init; }
+
+    public static TokenIntrospection Inactive { get; } = new();
+}
 
 public sealed class BackendApiException : Exception
 {
@@ -46,10 +70,12 @@ public sealed class BackendApiClient : IBackendApiClient
     private readonly ILogger<BackendApiClient> _logger;
     private readonly string _serviceApiKey;
     private readonly string _adminServiceApiKey;
+    private readonly McpLinks _links;
 
-    public BackendApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor, ILogger<BackendApiClient> logger, IConfiguration? configuration = null)
+    public BackendApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor, ILogger<BackendApiClient> logger, IConfiguration? configuration = null, McpLinks? links = null)
     {
         _http = http; _httpContextAccessor = httpContextAccessor; _logger = logger;
+        _links = links ?? new McpLinks(configuration);
         _serviceApiKey = configuration is null ? "test-api-key" : configuration["Mcp:ServiceApiKey"] ?? configuration["ServiceApiKey"] ?? throw new InvalidOperationException("ServiceApiKey not configured");
         _adminServiceApiKey = configuration is null ? "test-admin-api-key" : configuration["Mcp:AdminServiceApiKey"] ?? configuration["AdminServiceApiKey"] ?? throw new InvalidOperationException("AdminServiceApiKey not configured");
         if (string.Equals(_serviceApiKey, _adminServiceApiKey, StringComparison.Ordinal))
@@ -60,21 +86,42 @@ public sealed class BackendApiClient : IBackendApiClient
 
     private Guid GetUserId()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var user = McpCallIdentity.Of(_httpContextAccessor.HttpContext);
         var claim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user?.FindFirst("sub")?.Value;
         return Guid.Parse(claim ?? throw new UnauthorizedAccessException("No user context"));
     }
 
     private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, object? body = null)
     {
-        var request = new HttpRequestMessage(method, endpoint);
-        var user = _httpContextAccessor.HttpContext?.User;
-        var isAdmin = user?.IsInRole("admin") == true || string.Equals(user?.FindFirst("role")?.Value, "admin", StringComparison.OrdinalIgnoreCase);
-        request.Headers.Add("X-Api-Key", isAdmin ? _adminServiceApiKey : _serviceApiKey);
-        request.Headers.Add("X-Impersonate-User", GetUserId().ToString());
+        var user = McpCallIdentity.Of(_httpContextAccessor.HttpContext);
+        var request = ActingFor(method, endpoint, GetUserId(), user);
+
+        // Names the connection, so the API applies what the user allowed it. The API
+        // reads the grant from its own database and never trusts anything in this header.
+        if (user?.FindFirst("grant_id")?.Value is { } grantId) request.Headers.Add("X-Mcp-Grant", grantId);
         if (body != null) request.Content = JsonContent.Create(body);
         return request;
     }
+
+    /// <summary>
+    /// The service headers for a call made on <paramref name="userId"/>'s behalf. Every call that
+    /// acts for a person goes through here, so the key choice cannot drift between paths: the admin
+    /// key only for an administrator's own connection, the regular key otherwise. The API serves
+    /// the regular key as an ordinary user even for an administrator.
+    /// </summary>
+    private HttpRequestMessage ActingFor(HttpMethod method, string endpoint, Guid userId, ClaimsPrincipal? caller)
+    {
+        var request = new HttpRequestMessage(method, endpoint);
+        var isAdmin = caller is not null
+            && (caller.IsInRole("admin") || string.Equals(caller.FindFirst("role")?.Value, "admin", StringComparison.OrdinalIgnoreCase))
+            && GetCallerId(caller) == userId;
+        request.Headers.Add("X-Api-Key", isAdmin ? _adminServiceApiKey : _serviceApiKey);
+        request.Headers.Add("X-Impersonate-User", userId.ToString());
+        return request;
+    }
+
+    private static Guid? GetCallerId(ClaimsPrincipal caller) =>
+        Guid.TryParse(caller.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? caller.FindFirst("sub")?.Value, out var id) ? id : null;
 
     private async Task<string> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
@@ -116,10 +163,10 @@ public sealed class BackendApiClient : IBackendApiClient
         return string.Empty;
     }
 
-    private static string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
+    private string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
     {
-        HttpStatusCode.Unauthorized => "MCP token is no longer valid. Create a new token in Profile → MCP.",
-        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.zaftech.co/billing",
+        HttpStatusCode.Unauthorized => "This connection is no longer valid. Connect Mizan again from your MCP client.",
+        HttpStatusCode.Forbidden when code == "upgrade_required" => _links.UpgradeRequired(message),
         HttpStatusCode.Forbidden => message,
         HttpStatusCode.NotFound => $"Not found: {message}",
         HttpStatusCode.TooManyRequests => $"Rate limited: {message}. Wait before retrying.",
@@ -152,38 +199,43 @@ public sealed class BackendApiClient : IBackendApiClient
         return SendAsync(request, ct);
     }
 
-    public async Task<TokenValidation?> ValidateTokenAsync(string token, CancellationToken ct = default)
+    public async Task<TokenIntrospection?> IntrospectAsync(string token, CancellationToken ct = default)
     {
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "/api/McpTokens/validate") { Content = JsonContent.Create(new { token }) };
-            var response = await _http.SendAsync(request, ct); if (!response.IsSuccessStatusCode) return null;
-            var result = await response.Content.ReadFromJsonAsync<ValidateResponse>(ct);
-            return result?.IsValid == true ? new TokenValidation(result.UserId, result.TokenId, result.Role, result.Plan, result.MonthlyLimit, result.UsedThisMonth, result.RemainingThisMonth) : null;
-        }
-        catch (Exception ex) { _logger.LogError(ex, "Token validation failed"); return null; }
-    }
-
-    public async Task LogUsageAsync(Guid tokenId, Guid userId, string toolName, string? parameters, bool success, string? error, int elapsedMs)
-    {
-        try
-        {
-            var request = new HttpRequestMessage(HttpMethod.Post, "/api/McpTokens/usage")
-            { Content = JsonContent.Create(new { McpTokenId = tokenId, ToolName = toolName, Parameters = parameters, Success = success, ErrorMessage = error, ExecutionTimeMs = elapsedMs }) };
+            var request = new HttpRequestMessage(HttpMethod.Post, "/api/oauth/introspect")
+            {
+                Content = JsonContent.Create(new { token, audience = "mcp" })
+            };
             request.Headers.Add("X-Api-Key", _serviceApiKey);
-            request.Headers.Add("X-Impersonate-User", userId.ToString()); await _http.SendAsync(request);
+            var response = await _http.SendAsync(request, ct);
+
+            // The API answered and refused the token (or this service's key): the token is not good.
+            // The API failing is a different thing, and must not read as "token rejected".
+            if ((int)response.StatusCode >= 500)
+            {
+                _logger.LogError("Token introspection failed: the API answered {Status}", (int)response.StatusCode);
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode) return TokenIntrospection.Inactive;
+            return await response.Content.ReadFromJsonAsync<TokenIntrospection>(ct) ?? TokenIntrospection.Inactive;
         }
-        catch (Exception ex) { _logger.LogWarning(ex, "Failed to log MCP usage for {Tool}", toolName); }
+        catch (Exception ex) { _logger.LogError(ex, "Token introspection failed: the API could not be reached"); return null; }
     }
 
-    private sealed class ValidateResponse
+    public async Task LogUsageAsync(Guid grantId, Guid userId, string kind, string name, bool success, string? error, int elapsedMs)
     {
-        public Guid UserId { get; set; }
-        public Guid TokenId { get; set; }
-        public bool IsValid { get; set; }
-        public string Role { get; set; } = "user";
-        public string Plan { get; set; } = "free"; public int? MonthlyLimit { get; set; }
-        public int UsedThisMonth { get; set; }
-        public int? RemainingThisMonth { get; set; }
+        try
+        {
+            using var request = ActingFor(HttpMethod.Post, "/api/McpConnections/usage", userId, McpCallIdentity.Of(_httpContextAccessor.HttpContext));
+            request.Content = JsonContent.Create(new { GrantId = grantId, Kind = kind, ToolName = name, Success = success, ErrorMessage = error, ExecutionTimeMs = elapsedMs });
+            using var response = await _http.SendAsync(request);
+
+            // Best effort, but never silent: a refused usage call is a hole in the person's Usage page.
+            if (!response.IsSuccessStatusCode)
+                _logger.LogWarning("The API refused the usage record for {Name} with {Status}", name, (int)response.StatusCode);
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Failed to log MCP usage for {Name}", name); }
     }
 }

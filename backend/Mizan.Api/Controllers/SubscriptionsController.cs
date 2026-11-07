@@ -28,6 +28,15 @@ public class SubscriptionsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>The client-side token and environment the browser opens checkout with. Public, like the plans.</summary>
+    [HttpGet("checkout-settings")]
+    [AllowAnonymous]
+    public async Task<ActionResult<CheckoutSettingsDto>> GetCheckoutSettings()
+    {
+        var result = await _mediator.Send(new GetCheckoutSettingsQuery());
+        return Ok(result);
+    }
+
     [HttpGet("me")]
     public async Task<ActionResult<MySubscriptionDto>> GetMySubscription()
     {

@@ -26,9 +26,11 @@ public class GetHouseholdQueryHandler : IRequestHandler<GetHouseholdQuery, House
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IHouseholdAccess _households;
 
-    public GetHouseholdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetHouseholdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
     }
@@ -51,7 +53,8 @@ public class GetHouseholdQueryHandler : IRequestHandler<GetHouseholdQuery, House
         }
 
         // Authorization: User must be a member of the household
-        var isMember = household.Members.Any(m => m.UserId == _currentUser.UserId.Value);
+        var isMember = household.Members.Any(m => m.UserId == _currentUser.UserId.Value)
+            && await _households.CanAccessAsync(household.Id, cancellationToken);
         if (!isMember)
         {
             return null;

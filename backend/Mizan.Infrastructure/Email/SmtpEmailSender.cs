@@ -1,7 +1,6 @@
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MimeKit;
 using Mizan.Application.Interfaces;
 
@@ -18,33 +17,35 @@ namespace Mizan.Infrastructure.Email;
 /// </summary>
 public class SmtpEmailSender : IEmailSender
 {
-    private readonly SmtpOptions _options;
+    private readonly IRuntimeOptions<SmtpOptions> _settings;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<SmtpEmailSender> _logger;
 
     public SmtpEmailSender(
-        IOptions<SmtpOptions> options,
+        IRuntimeOptions<SmtpOptions> settings,
         IHostEnvironment environment,
         ILogger<SmtpEmailSender> logger)
     {
-        _options = options.Value;
+        _settings = settings;
         _environment = environment;
         _logger = logger;
     }
 
-    public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    public async Task SendAsync(OutgoingEmail message, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_options.Host))
+        // Read per message: a host or password changed in the admin area applies to the next send.
+        var options = await _settings.GetAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(options.Host))
         {
             NotConfigured(message);
             return;
         }
 
-        var from = MailboxAddress.Parse(_options.FromAddress);
-        from.Name = _options.FromName;
-        var localDomain = string.IsNullOrWhiteSpace(_options.LocalDomain)
+        var from = MailboxAddress.Parse(options.FromAddress);
+        from.Name = options.FromName;
+        var localDomain = string.IsNullOrWhiteSpace(options.LocalDomain)
             ? from.Domain
-            : _options.LocalDomain.Trim();
+            : options.LocalDomain.Trim();
         if (string.IsNullOrWhiteSpace(localDomain))
         {
             throw new InvalidOperationException("The SMTP sender address must include a domain.");
@@ -59,14 +60,14 @@ public class SmtpEmailSender : IEmailSender
         using var client = new SmtpClient { LocalDomain = localDomain };
 
         await client.ConnectAsync(
-            _options.Host,
-            _options.Port,
-            _options.GetSocketOptions(),
+            options.Host,
+            options.Port,
+            options.GetSocketOptions(),
             cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(_options.Username))
+        if (!string.IsNullOrWhiteSpace(options.Username))
         {
-            await client.AuthenticateAsync(_options.Username, _options.Password ?? string.Empty, cancellationToken);
+            await client.AuthenticateAsync(options.Username, options.Password ?? string.Empty, cancellationToken);
         }
 
         await client.SendAsync(mime, cancellationToken);
@@ -84,11 +85,11 @@ public class SmtpEmailSender : IEmailSender
         }
     }
 
-    private void NotConfigured(EmailMessage message)
+    private void NotConfigured(OutgoingEmail message)
     {
         if (!_environment.IsDevelopment())
         {
-            throw new InvalidOperationException("SMTP is not configured; set Smtp:Host before sending email.");
+            throw new InvalidOperationException("SMTP is not configured; set Smtp:Host or the SMTP host in the admin area before sending email.");
         }
 
         // Deliberately Console and not the logger: Serilog also writes to

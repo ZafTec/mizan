@@ -6,158 +6,160 @@ const chatLogger = logger.createModuleLogger("signalr-chat-service");
 let connection: signalR.HubConnection | null = null;
 
 export interface ChatMessage {
-	id: string;
-	senderId: string;
-	senderName: string;
-	content: string;
-	messageType: string;
-	sentAt: string;
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  messageType: string;
+  sentAt: string;
 }
 
 export interface WorkoutProgress {
-	workoutId: string;
-	completedSets: number;
-	totalSets: number;
-	caloriesBurned?: number;
+  workoutId: string;
+  completedSets: number;
+  totalSets: number;
+  caloriesBurned?: number;
 }
 
 /**
  * Validates that timeout values are positive and within reasonable bounds
  */
 function validateTimeout(timeout: number): number {
-	// Ensure timeout is positive and within reasonable bounds
-	const validatedTimeout = Math.max(1000, Math.min(timeout, 300000)); // Between 1 second and 5 minutes
-	return validatedTimeout;
+  // Ensure timeout is positive and within reasonable bounds
+  const validatedTimeout = Math.max(1000, Math.min(timeout, 300000)); // Between 1 second and 5 minutes
+  return validatedTimeout;
 }
 
 export async function connectToChat(): Promise<signalR.HubConnection> {
-	if (connection?.state === signalR.HubConnectionState.Connected) {
-		return connection;
-	}
+  if (connection?.state === signalR.HubConnectionState.Connected) {
+    return connection;
+  }
 
-	const apiUrl = (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"]) || "http://localhost:5000";
+  const apiUrl =
+    (typeof process !== "undefined" && process.env["NEXT_PUBLIC_API_URL"]) ||
+    "http://localhost:5000";
 
-	connection = new signalR.HubConnectionBuilder()
-		// The session cookie authenticates the negotiate request and the socket;
-		// the API lives at /api on this same origin, so it rides along.
-		.withUrl(`${apiUrl}/hubs/chat`, { withCredentials: true })
-		.withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-		.withServerTimeout(validateTimeout(60000))
-		.withKeepAliveInterval(validateTimeout(15000))
-		.configureLogging(signalR.LogLevel.Information)
-		.build();
+  connection = new signalR.HubConnectionBuilder()
+    // The session cookie authenticates the negotiate request and the socket;
+    // the API lives at /api on this same origin, so it rides along.
+    .withUrl(`${apiUrl}/hubs/chat`, { withCredentials: true })
+    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+    .withServerTimeout(validateTimeout(60000))
+    .withKeepAliveInterval(validateTimeout(15000))
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
 
-	try {
-		await connection.start();
-		chatLogger.info("Connected to SignalR chat hub");
-	} catch (error) {
-		chatLogger.error("Failed to connect to SignalR chat hub", { error });
-		throw error;
-	}
+  try {
+    await connection.start();
+    chatLogger.info("Connected to SignalR chat hub");
+  } catch (error) {
+    chatLogger.error("Failed to connect to SignalR chat hub", { error });
+    throw error;
+  }
 
-	return connection;
+  return connection;
 }
 
 export function disconnectFromChat(): void {
-	if (connection) {
-		connection.stop();
-		connection = null;
-	}
+  if (connection) {
+    connection.stop();
+    connection = null;
+  }
 }
 
 export function onReceiveMessage(
-	callback: (message: ChatMessage) => void
+  callback: (message: ChatMessage) => void,
 ): void {
-	connection?.on("ReceiveMessage", callback);
+  connection?.on("ReceiveMessage", callback);
 }
 
 export function onNewMessageNotification(
-	callback: (notification: {
-		conversationId: string;
-		senderId: string;
-		senderName: string;
-		preview: string;
-	}) => void
+  callback: (notification: {
+    conversationId: string;
+    senderId: string;
+    senderName: string;
+    preview: string;
+  }) => void,
 ): void {
-	connection?.on("NewMessageNotification", callback);
+  connection?.on("NewMessageNotification", callback);
 }
 
 export function onUserTyping(
-	callback: (data: { userId: string; isTyping: boolean }) => void
+  callback: (data: { userId: string; isTyping: boolean }) => void,
 ): void {
-	connection?.on("UserTyping", callback);
+  connection?.on("UserTyping", callback);
 }
 
 export function onWorkoutProgressUpdated(
-	callback: (progress: WorkoutProgress) => void
+  callback: (progress: WorkoutProgress) => void,
 ): void {
-	connection?.on("WorkoutProgressUpdated", callback);
+  connection?.on("WorkoutProgressUpdated", callback);
 }
 
 export async function sendMessage(
-	conversationId: string,
-	content: string,
-	messageType: string = "text"
+  conversationId: string,
+  content: string,
+  messageType: string = "text",
 ): Promise<void> {
-	if (!connection) {
-		throw new Error("Not connected to chat");
-	}
+  if (!connection) {
+    throw new Error("Not connected to chat");
+  }
 
-	await connection.invoke("SendMessage", {
-		conversationId,
-		content,
-		messageType,
-	});
+  await connection.invoke("SendMessage", {
+    conversationId,
+    content,
+    messageType,
+  });
 }
 
 export async function joinConversation(conversationId: string): Promise<void> {
-	if (!connection) {
-		throw new Error("Not connected to chat");
-	}
+  if (!connection) {
+    throw new Error("Not connected to chat");
+  }
 
-	await connection.invoke("JoinConversation", conversationId);
+  await connection.invoke("JoinConversation", conversationId);
 }
 
 export async function leaveConversation(conversationId: string): Promise<void> {
-	if (!connection) {
-		throw new Error("Not connected to chat");
-	}
+  if (!connection) {
+    throw new Error("Not connected to chat");
+  }
 
-	await connection.invoke("LeaveConversation", conversationId);
+  await connection.invoke("LeaveConversation", conversationId);
 }
 
 export async function sendTypingIndicator(
-	conversationId: string,
-	isTyping: boolean
+  conversationId: string,
+  isTyping: boolean,
 ): Promise<void> {
-	if (!connection) return;
+  if (!connection) return;
 
-	await connection.invoke("TypingIndicator", conversationId, isTyping);
+  await connection.invoke("TypingIndicator", conversationId, isTyping);
 }
 
 export async function syncWorkoutProgress(
-	progress: WorkoutProgress
+  progress: WorkoutProgress,
 ): Promise<void> {
-	if (!connection) {
-		throw new Error("Not connected to chat");
-	}
+  if (!connection) {
+    throw new Error("Not connected to chat");
+  }
 
-	await connection.invoke("SyncWorkoutProgress", progress);
+  await connection.invoke("SyncWorkoutProgress", progress);
 }
 
 // React hook for SignalR connection
 export function useSignalR() {
-	return {
-		connect: connectToChat,
-		disconnect: disconnectFromChat,
-		onReceiveMessage,
-		onNewMessageNotification,
-		onUserTyping,
-		onWorkoutProgressUpdated,
-		sendMessage,
-		joinConversation,
-		leaveConversation,
-		sendTypingIndicator,
-		syncWorkoutProgress,
-	};
+  return {
+    connect: connectToChat,
+    disconnect: disconnectFromChat,
+    onReceiveMessage,
+    onNewMessageNotification,
+    onUserTyping,
+    onWorkoutProgressUpdated,
+    sendMessage,
+    joinConversation,
+    leaveConversation,
+    sendTypingIndicator,
+    syncWorkoutProgress,
+  };
 }

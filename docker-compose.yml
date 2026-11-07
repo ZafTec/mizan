@@ -100,6 +100,9 @@ services:
 
       # Backend API (internal network - server-side)
       - API_URL=${SERVER_API_URL:-http://backend:8080}
+      # The bot service, for the Mini App's POST /telegram/miniapp/session
+      # (server-side; production routes that path to the bot at the proxy).
+      - TELEGRAM_BOT_URL=${TELEGRAM_BOT_URL:-http://telegram:5002}
 
       # Public URLs
       - NEXT_PUBLIC_APP_URL=${PUBLIC_APP_URL:-http://localhost:3000}
@@ -109,9 +112,6 @@ services:
       # External services
       # Public origin of the object store, for next/image's host allowlist.
       - NEXT_PUBLIC_MEDIA_URL=${STORAGE_PUBLIC_BASE_URL:-}
-      # Paddle (sandbox)
-      - NEXT_PUBLIC_PADDLE_ENV=${NEXT_PUBLIC_PADDLE_ENV:-sandbox}
-      - NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:-}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
@@ -150,56 +150,22 @@ services:
       # Redis
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
 
-      # Identity - session cookies, email, OAuth
+      # Email, storage, AI, Telegram, push and billing are runtime settings in
+      # Admin, Settings, not environment variables. To copy older .env values in
+      # once, see docs/ADMIN.md#moving-settings-out-of-the-environment.
       - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
-      # The bot's @name, so the API can build a working t.me deep link. Empty
-      # hides the Telegram settings page entirely.
-      - Telegram__BotUsername=${TELEGRAM_BOT_USERNAME:-}
       - App__CookieDomain=${COOKIE_DOMAIN:-}
-      - Smtp__Host=${SMTP_HOST:-}
-      - Smtp__Port=${SMTP_PORT:-587}
-      - Smtp__Username=${SMTP_USER:-}
-      - Smtp__Password=${SMTP_PASS:-}
-      - Smtp__FromAddress=${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
-      - Smtp__FromName=${SMTP_FROM_NAME:-Mizan}
-      - Smtp__Security=${Smtp__Security:-Auto}
-      - Smtp__LocalDomain=${Smtp__LocalDomain:-}
-      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
-      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
-      - Authentication__GitHub__ClientId=${GITHUB_CLIENT_ID:-}
-      - Authentication__GitHub__ClientSecret=${GITHUB_CLIENT_SECRET:-}
-      # Object storage - any S3-compatible endpoint (MinIO, Cloudflare R2)
-      - Storage__ServiceUrl=${STORAGE_SERVICE_URL:-}
-      - Storage__Region=${STORAGE_REGION:-auto}
-      - Storage__AccessKeyId=${STORAGE_ACCESS_KEY_ID:-}
-      - Storage__SecretAccessKey=${STORAGE_SECRET_ACCESS_KEY:-}
-      - Storage__Bucket=${STORAGE_BUCKET:-mizan}
-      - Storage__PublicBaseUrl=${STORAGE_PUBLIC_BASE_URL:-}
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - Cors__Origins__2=${PUBLIC_APP_URL:-http://localhost:3000}
-      # AI platform. One OpenAI-compatible endpoint; the model is config.
-      - Ai__BaseUrl=${AI_BASE_URL:-}
-      - Ai__ApiKey=${AI_API_KEY:-}
-      - Ai__Model=${AI_MODEL:-gpt-5.6-luna}
-      - Ai__SupportsTemperature=${AI_SUPPORTS_TEMPERATURE:-true}
-      - Ai__ReasoningEffort=${AI_REASONING_EFFORT:-}
-      - Ai__GlobalDailyTokens=${AI_GLOBAL_DAILY_TOKENS:-5000000}
-      - Ai__GlobalDailyCostMicros=${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
       # MCP service-to-service API keys
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - Mcp__AdminServiceApiKey=${MCP_ADMIN_SERVICE_KEY:?MCP_ADMIN_SERVICE_KEY is required}
+      # The prices worker's Run now endpoint, called with the service key above.
+      - Prices__WorkerUrl=${PRICES_WORKER_URL:-http://prices:5003}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
-      # Paddle (sandbox)
-      - Paddle__Environment=${PADDLE_ENVIRONMENT:-sandbox}
-      - Paddle__ApiKey=${PADDLE_API_KEY:-}
-      - Paddle__WebhookSecret=${PADDLE_WEBHOOK_SECRET:-}
-      - Paddle__GraceDays=${PADDLE_GRACE_DAYS:-3}
-      # No longer sold - kept only so a webhook replay for an existing
-      # lifetime customer still resolves correctly. Set by hand if ever needed.
-      - Paddle__LifetimePriceId=${PADDLE_PRICE_LIFETIME_LEGACY:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -221,9 +187,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
-      - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan;Username=mizan;Password=${DB_PASSWORD:?DB_PASSWORD is required}
       # Backend API connection (internal network)
       - BACKEND_API_URL=http://backend:8080
+      # The web app, for the billing link in limit and upgrade messages
+      - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
       # Service API keys for backend authentication
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - Mcp__AdminServiceApiKey=${MCP_ADMIN_SERVICE_KEY:?MCP_ADMIN_SERVICE_KEY is required}
@@ -241,8 +208,9 @@ services:
       - mizan-network
 
   # Telegram bot. Long polling by default, so no public hostname is needed in
-  # development; production sets TELEGRAM_USE_WEBHOOK and puts nginx in front
-  # of /telegram/webhook. Starts and idles when no token is configured.
+  # development; production turns on Telegram.UseWebhook in Admin, Settings and
+  # puts nginx in front of /telegram/webhook. Starts and idles until a token is
+  # set there.
   telegram:
     build:
       context: ./backend
@@ -253,18 +221,46 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5002
-      - TelegramBot__BotToken=${TELEGRAM_BOT_TOKEN:-}
-      - TelegramBot__UseWebhook=${TELEGRAM_USE_WEBHOOK:-false}
-      - TelegramBot__WebhookSecret=${TELEGRAM_WEBHOOK_SECRET:-}
       - TelegramBot__ApiUrl=http://backend:8080
       # The same non-admin service key the MCP server uses. It is an internal
       # credential on an internal network; the bot needs impersonation for the
       # linked user and nothing beyond it.
       - TelegramBot__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - TelegramBot__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+      # Whose X-Forwarded-For the Mini App session believes: the frontend's
+      # route handler forwards the browser's address from inside Docker's
+      # default bridge range. See docs/TELEGRAM.md#configure-and-run.
+      - TelegramBot__TrustedProxies=${TELEGRAM_TRUSTED_PROXIES:-172.16.0.0/12}
     depends_on:
       backend:
         condition: service_started
+    networks:
+      - mizan-network
+
+  # Prices worker. Scrapes the enabled scraper sources on their cron, posts
+  # observations to the API and takes a Redis lock per source so a second
+  # instance never crawls the same shop at the same time. Starts and idles
+  # when the API URL or service key is missing.
+  prices:
+    build:
+      context: .
+      dockerfile: prices/Dockerfile
+    container_name: mizan-prices
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5003
+      - Prices__ApiUrl=http://backend:8080
+      # The same non-admin service key the MCP server and the bot use. The
+      # worker impersonates nobody; it only reaches /api/internal/prices/*.
+      - Prices__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
+      - Prices__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    depends_on:
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - mizan-network
 
