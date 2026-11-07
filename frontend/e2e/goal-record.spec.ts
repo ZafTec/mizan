@@ -28,20 +28,30 @@ test("a person deletes a check-in and then their goal, confirming each", async (
   await expect(record.getByRole("listitem")).toHaveCount(2);
 
   // Cancelling keeps the check-in.
-  await record.getByRole("button", { name: /Delete check-in for/ }).first().click();
-  const dialog = page.getByRole("alertdialog", { name: "Delete this check-in?" });
+  await record
+    .getByRole("button", { name: /Delete check-in for/ })
+    .first()
+    .click();
+  const dialog = page.getByRole("alertdialog", {
+    name: "Delete this check-in?",
+  });
   await expect(dialog).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   await expect(record.getByRole("listitem")).toHaveCount(2);
 
-  await record.getByRole("button", { name: /Delete check-in for/ }).first().click();
+  await record
+    .getByRole("button", { name: /Delete check-in for/ })
+    .first()
+    .click();
   await dialog.getByRole("button", { name: "Delete" }).click();
   await expect(page.getByText("Check-in deleted")).toBeVisible();
   await expect(record.getByRole("listitem")).toHaveCount(1);
 
   await record.getByRole("button", { name: "Delete goal" }).click();
-  const goalDialog = page.getByRole("alertdialog", { name: "Delete this goal?" });
+  const goalDialog = page.getByRole("alertdialog", {
+    name: "Delete this goal?",
+  });
   await expect(goalDialog).toContainText("no daily targets");
   await goalDialog.getByRole("button", { name: "Delete" }).click();
   await expect(page.getByText("Goal deleted")).toBeVisible();

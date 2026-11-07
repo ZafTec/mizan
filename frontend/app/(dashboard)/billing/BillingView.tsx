@@ -4,11 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 import { clientApi } from "@/lib/api.client";
-import {
-  openCheckout,
-  getBillingPortal,
-  getPaddle,
-} from "@/lib/paddle";
+import { openCheckout, getBillingPortal, getPaddle } from "@/lib/paddle";
 import {
   cadence,
   describeDeal,

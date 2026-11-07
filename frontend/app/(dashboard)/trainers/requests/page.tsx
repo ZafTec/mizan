@@ -78,10 +78,7 @@ export default function TrainerRequestsPage() {
           <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">
             No pending trainer requests.
           </p>
-          <Link
-            href="/trainers"
-            className="btn-primary"
-          >
+          <Link href="/trainers" className="btn-primary">
             Find a Trainer
           </Link>
         </div>

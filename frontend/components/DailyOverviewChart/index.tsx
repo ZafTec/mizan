@@ -199,10 +199,7 @@ export default function DailyOverviewChart() {
                 : "No meals logged yet. Start with a quick entry and the dashboard will fill in."}
             </p>
           </div>
-          <Link
-            href="/meals"
-            className="btn-secondary w-full sm:w-auto"
-          >
+          <Link href="/meals" className="btn-secondary w-full sm:w-auto">
             Log meal
           </Link>
         </div>

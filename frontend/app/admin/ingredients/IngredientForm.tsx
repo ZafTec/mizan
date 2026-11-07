@@ -114,10 +114,7 @@ export default function IngredientForm({
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
-            <label
-              htmlFor="calories"
-              className="label"
-            >
+            <label htmlFor="calories" className="label">
               Calories
             </label>
             <input

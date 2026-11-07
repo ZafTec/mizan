@@ -125,7 +125,9 @@ export default async function HistoryPage({
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No meals logged</p>
+                  <p className="text-sm text-muted-foreground">
+                    No meals logged
+                  </p>
                 )}
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm max-sm:col-[2] max-sm:text-[12px]">

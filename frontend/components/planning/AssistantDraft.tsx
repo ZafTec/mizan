@@ -141,7 +141,10 @@ export default function AssistantDraft({ today }: { today: string }) {
     return (
       <section aria-labelledby={`${id}-title`} data-testid="assistant-draft">
         {heading}
-        <p className="mt-3 text-sm text-muted-foreground" data-testid="ai-consent-prompt">
+        <p
+          className="mt-3 text-sm text-muted-foreground"
+          data-testid="ai-consent-prompt"
+        >
           The assistant can draft a plan from your goal, recipes and local
           prices once you let it use your log.{" "}
           <Link href="/profile/settings#assistant" className="text-link">
@@ -291,7 +294,10 @@ export default function AssistantDraft({ today }: { today: string }) {
               aria-describedby={`${id}-budget-hint`}
               aria-invalid={errors.weeklyBudget ? true : undefined}
             />
-            <p id={`${id}-budget-hint`} className="mt-1 text-xs text-muted-foreground">
+            <p
+              id={`${id}-budget-hint`}
+              className="mt-1 text-xs text-muted-foreground"
+            >
               In your price region&apos;s currency.
             </p>
             {errors.weeklyBudget && (

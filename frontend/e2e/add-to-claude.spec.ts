@@ -47,7 +47,9 @@ test("a person finds how to add Mizan to Claude, downloads the plugin for this s
     "Only the connector",
   ])
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
-  await expect(page.getByText("No access, Read or Read and change")).toBeVisible();
+  await expect(
+    page.getByText("No access, Read or Read and change"),
+  ).toBeVisible();
 
   // From the keyboard: the first Copy button copies the connector address.
   const copyAddress = page.getByRole("button", { name: "Copy" }).first();

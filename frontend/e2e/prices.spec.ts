@@ -276,15 +276,21 @@ test("an administrator accepts suggested mappings together and sees the one skip
   const queue = page.getByRole("region", { name: "Review queue" });
   const oats = queue.getByRole("listitem", { name: "Quaker oats 500g" });
   await expect(oats).toContainText("Suggested: Rolled oats · 500 g");
-  const accept = queue.getByRole("button", { name: /^Accept \d+ suggestions?$/ });
+  const accept = queue.getByRole("button", {
+    name: /^Accept \d+ suggestions?$/,
+  });
   await expect(accept).toBeDisabled();
 
   await queue.getByRole("tab", { name: /Has a suggestion/ }).click();
   await expect(
     queue.getByRole("listitem", { name: "Reusable shopping bag" }),
   ).toHaveCount(0);
-  await queue.getByRole("checkbox", { name: "Select Quaker oats 500g" }).check();
-  await queue.getByRole("checkbox", { name: "Select Greek yogurt 1kg" }).check();
+  await queue
+    .getByRole("checkbox", { name: "Select Quaker oats 500g" })
+    .check();
+  await queue
+    .getByRole("checkbox", { name: "Select Greek yogurt 1kg" })
+    .check();
   await expect(accept).toHaveText("Accept 2 suggestions");
 
   // Another administrator ignores the yogurt before this one accepts.

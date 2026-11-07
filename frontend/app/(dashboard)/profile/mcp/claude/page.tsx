@@ -135,11 +135,10 @@ export default function AddMizanToClaudePage() {
           Give it only what it needs
         </h2>
         <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-          When you connect, Mizan shows a permission screen. Set each area to
-          No access, Read or Read and change, and choose which households
-          Claude may see. Logging food needs only Read and change on food and
-          nutrition. You can reduce access or disconnect
-          later under{" "}
+          When you connect, Mizan shows a permission screen. Set each area to No
+          access, Read or Read and change, and choose which households Claude
+          may see. Logging food needs only Read and change on food and
+          nutrition. You can reduce access or disconnect later under{" "}
           <Link href="/profile/mcp" className="underline">
             Connected apps
           </Link>

@@ -51,16 +51,15 @@ export default async function ExercisesPage({
           <h2 id="exercises-title">
             {filtered ? "Matching" : "All exercises"}
           </h2>
-          <span className="tabular-nums text-sm text-muted-foreground">{totalCount}</span>
+          <span className="tabular-nums text-sm text-muted-foreground">
+            {totalCount}
+          </span>
         </header>
         {exercises.length === 0 ? (
           <div className="log-empty">
             <p>No exercises match.</p>
             {filtered && (
-              <Link
-                href="/exercises"
-                className="text-link mt-3 text-sm"
-              >
+              <Link href="/exercises" className="text-link mt-3 text-sm">
                 Clear the search
               </Link>
             )}

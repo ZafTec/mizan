@@ -134,10 +134,7 @@ export default function MyTrainerPage() {
           <p className="text-charcoal-blue-500 mb-6">
             No active trainer relationship.
           </p>
-          <Link
-            href="/trainers"
-            className="btn-primary"
-          >
+          <Link href="/trainers" className="btn-primary">
             Find a trainer
           </Link>
         </div>

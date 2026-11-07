@@ -149,7 +149,10 @@ async function LayoutContent({
                   <span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">
                     |
                   </span>
-                  <Link href="/contact" className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100">
+                  <Link
+                    href="/contact"
+                    className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100"
+                  >
                     Contact
                   </Link>
                   <span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">

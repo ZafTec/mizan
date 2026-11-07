@@ -64,7 +64,9 @@ export default function SocialProfileManager() {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <section className="card space-y-4 p-6">
-        <h2 className="text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">Profile</h2>
+        <h2 className="text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
+          Profile
+        </h2>
         <label>
           <span className="label">Display name</span>
           <input
@@ -130,7 +132,9 @@ export default function SocialProfileManager() {
         )}
       </section>
       <section className="card p-6">
-        <h2 className="text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">Follow requests</h2>
+        <h2 className="text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
+          Follow requests
+        </h2>
         {!requests.length ? (
           <div className="py-8 text-center">
             <Image

@@ -31,7 +31,10 @@ test("a person turns news on in the app and sets quiet hours", async ({
 }) => {
   await signIn(context);
   await page.goto("/profile/settings#notifications");
-  const section = page.getByRole("region", { name: "Notifications", exact: true });
+  const section = page.getByRole("region", {
+    name: "Notifications",
+    exact: true,
+  });
 
   const news = section.getByRole("switch", { name: /News and offers/ });
   await expect(news).toHaveAttribute("aria-checked", "false");
@@ -59,7 +62,10 @@ test("choosing Telegram before linking it says so and still saves the choice", a
 }) => {
   await signIn(context);
   await page.goto("/profile/settings#notifications");
-  const section = page.getByRole("region", { name: "Notifications", exact: true });
+  const section = page.getByRole("region", {
+    name: "Notifications",
+    exact: true,
+  });
 
   await section.getByRole("combobox", { name: "Channel" }).focus();
   await page.keyboard.press("Enter");

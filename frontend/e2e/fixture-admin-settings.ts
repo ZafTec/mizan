@@ -237,7 +237,9 @@ const withNotices = (groups: Group[]): Group[] =>
   groups.map((group) => {
     const notice = NOTICES[group.id];
     const set = (key: string) =>
-      group.settings.some((s) => s.key === key && s.source === "database" && s.hasValue);
+      group.settings.some(
+        (s) => s.key === key && s.source === "database" && s.hasValue,
+      );
     return {
       ...group,
       notice: notice && !notice.keys.every(set) ? notice.message : null,

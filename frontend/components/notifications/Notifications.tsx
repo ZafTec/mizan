@@ -140,7 +140,12 @@ const TIME = {
   minute: "2-digit",
 } as const;
 
-function NotificationsInbox({ phone, covers, focusToken, close }: SidePanelContent) {
+function NotificationsInbox({
+  phone,
+  covers,
+  focusToken,
+  close,
+}: SidePanelContent) {
   const router = useRouter();
   const { unread, setUnread } = useNotifications();
   const [items, setItems] = useState<Notification[] | null>(null);

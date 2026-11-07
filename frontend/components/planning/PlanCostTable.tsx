@@ -32,7 +32,9 @@ export default function PlanCostTable({
       {!bare && (
         <header className="log-section-header">
           <Heading>{title}</Heading>
-          <span className="tabular-nums text-sm text-muted-foreground">{cost.regionCode}</span>
+          <span className="tabular-nums text-sm text-muted-foreground">
+            {cost.regionCode}
+          </span>
         </header>
       )}
       <dl className="facts-strip">

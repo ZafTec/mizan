@@ -27,7 +27,9 @@ export default function PlanPreviewCard({
     >
       <div>
         <p className="font-semibold break-words">{name}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{facts.join(" · ")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {facts.join(" · ")}
+        </p>
       </div>
       {data.weeklyCost != null && data.currency && (
         <p className="tabular-nums">

@@ -90,10 +90,7 @@ export function DeleteHouseholdButton({
       }}
     >
       <DialogTrigger asChild>
-        <button
-          type="button"
-          className="btn-ghost-destructive h-9"
-        >
+        <button type="button" className="btn-ghost-destructive h-9">
           Delete
         </button>
       </DialogTrigger>
@@ -114,53 +111,54 @@ export function DeleteHouseholdButton({
         </DialogHeader>
 
         <DialogBody className="space-y-4">
-        {preview && !blocked && hasPlans && (
-          <div className="space-y-2 text-sm text-foreground">
-            <p>These shared plans are deleted with the household:</p>
-            <ul className="list-disc space-y-1 pl-5">
-              {preview.shoppingListCount > 0 && (
-                <li>
-                  {plural(
-                    preview.shoppingListCount,
-                    "shopping list",
-                    "shopping lists",
-                  )}{" "}
-                  with {plural(preview.shoppingListItemCount, "item", "items")}
-                </li>
-              )}
-              {preview.mealPlanCount > 0 && (
-                <li>
-                  {plural(preview.mealPlanCount, "meal plan", "meal plans")}{" "}
-                  with{" "}
-                  {plural(
-                    preview.mealPlanRecipeCount,
-                    "planned meal",
-                    "planned meals",
-                  )}
-                </li>
-              )}
-            </ul>
-            <p className="text-muted-foreground">
-              Personal lists and plans are not affected.
+          {preview && !blocked && hasPlans && (
+            <div className="space-y-2 text-sm text-foreground">
+              <p>These shared plans are deleted with the household:</p>
+              <ul className="list-disc space-y-1 pl-5">
+                {preview.shoppingListCount > 0 && (
+                  <li>
+                    {plural(
+                      preview.shoppingListCount,
+                      "shopping list",
+                      "shopping lists",
+                    )}{" "}
+                    with{" "}
+                    {plural(preview.shoppingListItemCount, "item", "items")}
+                  </li>
+                )}
+                {preview.mealPlanCount > 0 && (
+                  <li>
+                    {plural(preview.mealPlanCount, "meal plan", "meal plans")}{" "}
+                    with{" "}
+                    {plural(
+                      preview.mealPlanRecipeCount,
+                      "planned meal",
+                      "planned meals",
+                    )}
+                  </li>
+                )}
+              </ul>
+              <p className="text-muted-foreground">
+                Personal lists and plans are not affected.
+              </p>
+            </div>
+          )}
+          {preview && !blocked && preview.pendingInvitationCount > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {plural(
+                preview.pendingInvitationCount,
+                "pending invitation is",
+                "pending invitations are",
+              )}{" "}
+              cancelled.
             </p>
-          </div>
-        )}
-        {preview && !blocked && preview.pendingInvitationCount > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {plural(
-              preview.pendingInvitationCount,
-              "pending invitation is",
-              "pending invitations are",
-            )}{" "}
-            cancelled.
-          </p>
-        )}
+          )}
 
-        {notice && (
-          <p role="alert" className="text-sm text-destructive">
-            {notice}
-          </p>
-        )}
+          {notice && (
+            <p role="alert" className="text-sm text-destructive">
+              {notice}
+            </p>
+          )}
         </DialogBody>
 
         <DialogFooter>

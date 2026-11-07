@@ -248,11 +248,7 @@ export default function EditIngredientForm({
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="btn-primary w-full"
-      >
+      <button type="submit" disabled={isPending} className="btn-primary w-full">
         {isPending ? (
           <>
             <Loading size="sm" />

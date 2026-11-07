@@ -31,7 +31,10 @@ export default function LogPlanEntryButton({
 
   if (entry.kind === "Text")
     return (
-      <span className="text-xs text-muted-foreground" title="A text line has no nutrition">
+      <span
+        className="text-xs text-muted-foreground"
+        title="A text line has no nutrition"
+      >
         Not loggable
       </span>
     );

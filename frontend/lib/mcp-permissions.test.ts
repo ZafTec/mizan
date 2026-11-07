@@ -55,7 +55,6 @@ describe("levelsFromScopes", () => {
       "write",
     );
   });
-
 });
 
 describe("scopesFromLevels", () => {
@@ -75,7 +74,6 @@ describe("scopesFromLevels", () => {
       scopes,
     );
   });
-
 });
 
 describe("defaultLevels", () => {

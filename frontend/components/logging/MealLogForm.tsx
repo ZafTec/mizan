@@ -440,7 +440,9 @@ export default function MealLogForm({
                               type="button"
                               className="underline underline-offset-2"
                               disabled={busy}
-                              onClick={() => void removePhoto(proposal.imageUrl!)}
+                              onClick={() =>
+                                void removePhoto(proposal.imageUrl!)
+                              }
                             >
                               Delete it now
                             </button>

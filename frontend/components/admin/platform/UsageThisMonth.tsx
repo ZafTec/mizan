@@ -62,7 +62,9 @@ export default async function UsageThisMonth({
           </div>
         </dl>
       ) : (
-        <p className="text-sm text-muted-foreground">Usage could not be loaded.</p>
+        <p className="text-sm text-muted-foreground">
+          Usage could not be loaded.
+        </p>
       )}
       <Link
         href={`/admin/usage?${usageQuery(filters)}`}

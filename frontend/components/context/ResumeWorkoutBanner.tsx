@@ -38,9 +38,7 @@ export default async function ResumeWorkoutBanner() {
           {progress} · saved {relativeTime(draft.updatedAt)}
         </p>
       </div>
-      <span className="btn-primary shrink-0 !rounded-2xl !py-2">
-        Resume
-      </span>
+      <span className="btn-primary shrink-0 !rounded-2xl !py-2">Resume</span>
     </Link>
   );
 }

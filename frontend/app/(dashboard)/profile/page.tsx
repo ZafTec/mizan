@@ -114,7 +114,6 @@ export default function ProfilePage() {
     },
   ];
 
-
   return (
     <div
       className="mx-auto flex max-w-[900px] flex-col gap-8"
@@ -150,7 +149,10 @@ export default function ProfilePage() {
             {since.length > 0 ? since.join(" · ") : user.email}
           </p>
         </div>
-        <Link href="/profile/settings#account" className="btn-secondary min-h-11">
+        <Link
+          href="/profile/settings#account"
+          className="btn-secondary min-h-11"
+        >
           Edit profile
         </Link>
       </header>
@@ -163,7 +165,9 @@ export default function ProfilePage() {
           <span className="tabular-nums text-[30px] leading-none">
             {facts ? plural(facts.streakCount, "day") : "—"}
           </span>
-          <span className="text-[13px] text-muted-foreground">Log today to keep it</span>
+          <span className="text-[13px] text-muted-foreground">
+            Log today to keep it
+          </span>
         </Fact>
         <Fact label="Goal">
           <span className="text-lg leading-snug">

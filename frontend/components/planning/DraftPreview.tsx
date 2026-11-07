@@ -49,7 +49,10 @@ export default function DraftPreview({
         >
           {name}
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm" data-testid="draft-facts">
+        <p
+          className="text-muted-foreground mt-1 text-sm"
+          data-testid="draft-facts"
+        >
           {["Draft", planDates(plan), DRAFTED_BY_ASSISTANT].join(" · ")}
         </p>
         {draft.note && <p className="mt-2 text-sm">{draft.note}</p>}

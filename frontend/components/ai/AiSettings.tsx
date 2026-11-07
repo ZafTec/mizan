@@ -52,9 +52,7 @@ const WRITE = [
 ] as const;
 
 type SwitchKey =
-  | (typeof SEE)[number]["key"]
-  | (typeof WRITE)[number]["key"]
-  | "act";
+  (typeof SEE)[number]["key"] | (typeof WRITE)[number]["key"] | "act";
 
 const NOTHING: AiConsent = {
   enabled: false,
@@ -134,13 +132,14 @@ export function AiSettings() {
     last?.key === key ? saveStatusText(last.status) : "";
   const seeing = (key: (typeof SEE)[number]["key"]) =>
     consent.enabled && consent[key];
-  const acting =
-    consent.allowWrites && WRITE.some((axis) => consent[axis.key]);
+  const acting = consent.allowWrites && WRITE.some((axis) => consent[axis.key]);
 
   const see = (key: (typeof SEE)[number]["key"], checked: boolean) => {
     const next = {
       ...consent,
-      ...(consent.enabled ? {} : { shareNutrition: false, shareTraining: false, shareBody: false }),
+      ...(consent.enabled
+        ? {}
+        : { shareNutrition: false, shareTraining: false, shareBody: false }),
       [key]: checked,
     };
     next.enabled = SEE.some((axis) => next[axis.key]);
@@ -245,7 +244,10 @@ function UsagePanel({ usage }: { usage: MyAiUsage }) {
       </div>
 
       {/* Its own allowance: drafting a plan never spends chat, nor chat a plan. */}
-      <div className="border-t border-border py-3" data-testid="ai-usage-planning">
+      <div
+        className="border-t border-border py-3"
+        data-testid="ai-usage-planning"
+      >
         <Meter
           label="Meal plans drafted"
           used={usage.planning.requestsUsed}
@@ -300,7 +302,9 @@ function Meter({
       </div>
       <div className="target-track mt-1.5">
         <span
-          className={percent >= 90 ? "bg-destructive" : "bg-brand-700 dark:bg-brand-300"}
+          className={
+            percent >= 90 ? "bg-destructive" : "bg-brand-700 dark:bg-brand-300"
+          }
           style={{ width: `${percent}%` }}
         />
       </div>

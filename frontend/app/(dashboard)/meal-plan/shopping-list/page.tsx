@@ -37,7 +37,9 @@ export default async function ShoppingListsPage() {
     <div className="log-page space-y-8" data-testid="shopping-lists-page">
       <header className="log-page-header block!">
         <h1>Shopping lists</h1>
-        <p className="text-muted-foreground mt-2">What your plans need you to buy.</p>
+        <p className="text-muted-foreground mt-2">
+          What your plans need you to buy.
+        </p>
       </header>
       {failed ? (
         <p className="log-empty">Your lists could not be loaded.</p>

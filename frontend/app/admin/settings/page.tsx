@@ -25,8 +25,8 @@ export default async function AdminSettingsPage() {
         <p className="text-muted-foreground mt-2">
           Email, storage, AI, Telegram, billing and the rest are set here, not
           in the environment. A change applies from the next email, call or
-          webhook, on every server and service. Clear a value to go back to
-          its default. Secrets are stored encrypted and never shown.
+          webhook, on every server and service. Clear a value to go back to its
+          default. Secrets are stored encrypted and never shown.
         </p>
       </header>
       <RuntimeSettingsAdmin settings={settings} />

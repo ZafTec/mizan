@@ -83,7 +83,8 @@ const scopeGroups = [
   {
     group: "nutrition",
     title: "Food and nutrition",
-    description: "Food diary, foods, recipes, prices, goals and check-ins. Photo and text estimates use your AI allowance.",
+    description:
+      "Food diary, foods, recipes, prices, goals and check-ins. Photo and text estimates use your AI allowance.",
     hasWrite: true,
     readScope: "nutrition:read",
     writeScope: "nutrition:write",
@@ -115,7 +116,8 @@ const scopeGroups = [
   {
     group: "social",
     title: "Social and notifications",
-    description: "Your profile page, feed, follows, comments and notifications.",
+    description:
+      "Your profile page, feed, follows, comments and notifications.",
     hasWrite: true,
     readScope: "social:read",
     writeScope: "social:write",
@@ -123,7 +125,8 @@ const scopeGroups = [
   {
     group: "coaching",
     title: "Coaching",
-    description: "Your trainer, requests and coach chat; for coaches, their clients. Client data still follows what each client shared.",
+    description:
+      "Your trainer, requests and coach chat; for coaches, their clients. Client data still follows what each client shared.",
     hasWrite: true,
     readScope: "coaching:read",
     writeScope: "coaching:write",

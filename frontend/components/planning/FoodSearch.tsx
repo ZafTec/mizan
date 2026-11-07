@@ -110,7 +110,9 @@ export default function FoodSearch({
       {results && (
         <ul className="divide-y divide-border border-b border-border">
           {results.length === 0 ? (
-            <li className="py-2 text-sm text-muted-foreground">No foods match.</li>
+            <li className="py-2 text-sm text-muted-foreground">
+              No foods match.
+            </li>
           ) : (
             results.map((food) => (
               <li key={food.id}>

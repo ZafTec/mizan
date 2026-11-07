@@ -103,7 +103,9 @@ export default function RecipeIngredients({ recipe }: { recipe: Recipe }) {
                     defaultValue={ingredient.amount ?? ""}
                     required={!!ingredient.foodId}
                   />
-                  <span className="text-xs text-muted-foreground">{ingredient.unit}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {ingredient.unit}
+                  </span>
                 </div>
               </div>
             ))}

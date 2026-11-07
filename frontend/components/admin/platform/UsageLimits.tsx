@@ -190,7 +190,9 @@ function AddSubject({
       {results && (
         <ul aria-label={`${scope === "User" ? "Users" : "Households"} found`}>
           {results.length === 0 ? (
-            <li className="mt-2 text-sm text-muted-foreground">Nothing matches.</li>
+            <li className="mt-2 text-sm text-muted-foreground">
+              Nothing matches.
+            </li>
           ) : (
             results.map((result) => (
               <li key={result.id} className="ledger-row flex-wrap">
@@ -309,7 +311,10 @@ function EffectiveTable({ subject }: { subject: UsageLimitSubject }) {
               {FIELDS.map((field) => {
                 const limit = row[field.key] as SourcedLimit;
                 return (
-                  <td key={field.key} className="tabular-nums px-3 py-2 text-right">
+                  <td
+                    key={field.key}
+                    className="tabular-nums px-3 py-2 text-right"
+                  >
                     <span className="block">{show(limit.value)}</span>
                     <span className="block text-[11px] text-muted-foreground">
                       {limit.source}

@@ -60,7 +60,9 @@ export default function PriceRegionField() {
     return (
       <div id="prices" className="setting-row setting-section">
         <span className="setting-label">Price region</span>
-        <p className="text-sm text-muted-foreground">Regions could not be loaded.</p>
+        <p className="text-sm text-muted-foreground">
+          Regions could not be loaded.
+        </p>
       </div>
     );
 

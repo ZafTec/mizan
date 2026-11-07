@@ -65,7 +65,9 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
           <p className="font-mono text-sm font-semibold break-words">
             {flag.key}
           </p>
-          <p className="mt-0.5 text-sm text-muted-foreground">{flag.description}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {flag.description}
+          </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {differs}
             {flag.defaultEnabled !== flag.catalogDefault &&
@@ -193,10 +195,7 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
       ) : (
         <ul aria-label={`Overrides for ${flag.key}`}>
           {overrides?.map((override) => (
-            <li
-              key={override.householdId}
-              className="ledger-row flex-wrap"
-            >
+            <li key={override.householdId} className="ledger-row flex-wrap">
               <span className="min-w-0 flex-1 basis-40">
                 <span className="block font-medium break-words">
                   {override.householdName}
@@ -266,7 +265,9 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
       {results && (
         <ul aria-label="Households found">
           {results.items.length === 0 ? (
-            <li className="text-sm text-muted-foreground">No household matches.</li>
+            <li className="text-sm text-muted-foreground">
+              No household matches.
+            </li>
           ) : (
             results.items.map((household) => (
               <li key={household.id} className="ledger-row flex-wrap">

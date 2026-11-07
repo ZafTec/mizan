@@ -90,9 +90,9 @@ test("a person drafts a week with the assistant and keeps it", async ({
   await expect(preview).toContainText(
     "1 rule is not met; the draft is saved for review.",
   );
-  await expect(
-    preview.getByRole("region", { name: "Not met" }),
-  ).toContainText("Day 2: 95 g protein is under the 120 g target.");
+  await expect(preview.getByRole("region", { name: "Not met" })).toContainText(
+    "Day 2: 95 g protein is under the 120 g target.",
+  );
   await expect(
     preview.getByRole("region", { name: "To review" }),
   ).toContainText("Shiro wat with injera");
@@ -402,9 +402,9 @@ test("a draft refused for want of foods shows the ways forward and the request",
   await asked.getByRole("button", { name: "Change request" }).focus();
   await page.keyboard.press("Enter");
   await expect(section.getByLabel("Start date")).toBeFocused();
-  await expect(section.getByLabel("What you would like (optional)")).toHaveValue(
-    "Keto",
-  );
+  await expect(
+    section.getByLabel("What you would like (optional)"),
+  ).toHaveValue("Keto");
   expect(
     writesTo(await state(context), /^\/api\/MealPlans\/generate$/),
   ).toHaveLength(1);
@@ -422,7 +422,9 @@ test("a person lets the assistant see meals from settings and sees it saved", as
   await meals.focus();
   await page.keyboard.press("Space");
   await expect(meals).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Saved" }),
+  ).toBeVisible();
 
   const writes = writesTo(await state(context), /^\/api\/Ai\/consent$/);
   expect(writes).toHaveLength(1);
@@ -434,11 +436,11 @@ test("a person lets the assistant see meals from settings and sees it saved", as
     allowWrites: false,
   });
 
-  await page
-    .getByRole("switch", { name: /Log and plan when I ask/ })
-    .click();
+  await page.getByRole("switch", { name: /Log and plan when I ask/ }).click();
   await expect
-    .poll(async () => writesTo(await state(context), /^\/api\/Ai\/consent$/).length)
+    .poll(
+      async () => writesTo(await state(context), /^\/api\/Ai\/consent$/).length,
+    )
     .toBe(2);
   const last = writesTo(await state(context), /^\/api\/Ai\/consent$/)[1];
   expect(last.body).toMatchObject({

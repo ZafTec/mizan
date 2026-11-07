@@ -25,9 +25,7 @@ export default async function SetupPrompt() {
           something
         </p>
       </div>
-      <span className="btn-primary shrink-0 !rounded-2xl !py-2">
-        Set up
-      </span>
+      <span className="btn-primary shrink-0 !rounded-2xl !py-2">Set up</span>
     </Link>
   );
 }

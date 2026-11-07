@@ -222,10 +222,7 @@ export default function AddMealFromRecipe({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div>
-            <label
-              htmlFor="calories"
-              className="label"
-            >
+            <label htmlFor="calories" className="label">
               Calories (kcal)
             </label>
             <input
@@ -243,10 +240,7 @@ export default function AddMealFromRecipe({
             <FieldError formState={formState} name="calories" />
           </div>
           <div>
-            <label
-              htmlFor="protein"
-              className="label"
-            >
+            <label htmlFor="protein" className="label">
               Protein (g)
             </label>
             <input
@@ -265,10 +259,7 @@ export default function AddMealFromRecipe({
             <FieldError formState={formState} name="protein" />
           </div>
           <div>
-            <label
-              htmlFor="carbs"
-              className="label"
-            >
+            <label htmlFor="carbs" className="label">
               Carbs (g)
             </label>
             <input
@@ -287,10 +278,7 @@ export default function AddMealFromRecipe({
             <FieldError formState={formState} name="carbs" />
           </div>
           <div>
-            <label
-              htmlFor="fat"
-              className="label"
-            >
+            <label htmlFor="fat" className="label">
               Fat (g)
             </label>
             <input
@@ -307,10 +295,7 @@ export default function AddMealFromRecipe({
             <FieldError formState={formState} name="fat" />
           </div>
           <div>
-            <label
-              htmlFor="fiber"
-              className="label"
-            >
+            <label htmlFor="fiber" className="label">
               Fiber (g)
             </label>
             <input
@@ -367,10 +352,7 @@ export default function AddMealFromRecipe({
         ) : null}
 
         {formState.status === "success" && formState.warnings?.length ? (
-          <Link
-            href="/meals"
-            className="btn-primary w-full"
-          >
+          <Link href="/meals" className="btn-primary w-full">
             Continue to Diary
           </Link>
         ) : (

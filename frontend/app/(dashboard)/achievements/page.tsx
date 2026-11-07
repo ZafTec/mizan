@@ -88,7 +88,9 @@ export default async function AchievementsPage() {
     <div className="log-page space-y-8" data-testid="achievements-page">
       <header className="log-page-header block!">
         <h1>Achievements</h1>
-        <p className="text-muted-foreground mt-2">Your streak and what it has earned.</p>
+        <p className="text-muted-foreground mt-2">
+          Your streak and what it has earned.
+        </p>
       </header>
 
       <section aria-label="Streak and level" className="facts-strip">
@@ -96,14 +98,20 @@ export default async function AchievementsPage() {
           <p className="text-sm text-muted-foreground">Streak</p>
           <p className="tabular-nums nutrition-value">
             {streak?.currentStreak || 0}
-            <span className="text-sm font-normal text-muted-foreground"> days</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {" "}
+              days
+            </span>
           </p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Longest</p>
           <p className="tabular-nums nutrition-value">
             {streak?.longestStreak || 0}
-            <span className="text-sm font-normal text-muted-foreground"> days</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {" "}
+              days
+            </span>
           </p>
         </div>
         <div>
@@ -130,7 +138,9 @@ export default async function AchievementsPage() {
       <section aria-labelledby="earned-title">
         <header className="log-section-header">
           <h2 id="earned-title">Earned</h2>
-          <span className="tabular-nums text-sm text-muted-foreground">{earnedCount}</span>
+          <span className="tabular-nums text-sm text-muted-foreground">
+            {earnedCount}
+          </span>
         </header>
         {earned.length === 0 ? (
           <div className="log-empty">
@@ -156,7 +166,9 @@ export default async function AchievementsPage() {
         <section aria-labelledby="to-earn-title">
           <header className="log-section-header">
             <h2 id="to-earn-title">Still to earn</h2>
-            <span className="tabular-nums text-sm text-muted-foreground">{unearned.length}</span>
+            <span className="tabular-nums text-sm text-muted-foreground">
+              {unearned.length}
+            </span>
           </header>
           <ul>
             {unearned.map((achievement) => (

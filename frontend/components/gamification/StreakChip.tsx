@@ -63,7 +63,9 @@ export default function StreakChip({
     >
       <span>{count}-day streak</span>
       {atRisk && left && (
-        <span className="tabular-nums text-xs font-medium opacity-80">{left} left</span>
+        <span className="tabular-nums text-xs font-medium opacity-80">
+          {left} left
+        </span>
       )}
     </div>
   );

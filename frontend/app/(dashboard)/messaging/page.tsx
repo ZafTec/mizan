@@ -111,10 +111,7 @@ export default async function MessagingPage({
               : "Connect with a coach to start messaging."}
           </p>
           {!isTrainer && (
-            <Link
-              href="/trainers"
-              className="btn-primary !rounded-2xl !py-2"
-            >
+            <Link href="/trainers" className="btn-primary !rounded-2xl !py-2">
               Find a coach
             </Link>
           )}

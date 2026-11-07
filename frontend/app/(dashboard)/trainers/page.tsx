@@ -89,8 +89,7 @@ export default function TrainersPage() {
     const query = debouncedQuery.toLowerCase();
     const specialties = trainer.specialties?.toLowerCase() ?? "";
     return (
-      trainer.name?.toLowerCase().includes(query) ||
-      specialties.includes(query)
+      trainer.name?.toLowerCase().includes(query) || specialties.includes(query)
     );
   });
 
@@ -138,10 +137,7 @@ export default function TrainersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTrainers.map((trainer) => (
-            <div
-              key={trainer.id}
-              className="card p-6"
-            >
+            <div key={trainer.id} className="card p-6">
               <div className="flex flex-col items-center text-center mb-4">
                 {trainer.image ? (
                   <Image

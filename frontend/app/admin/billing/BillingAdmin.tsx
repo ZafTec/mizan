@@ -180,7 +180,9 @@ export default function BillingAdmin({
                     <td className="px-3 py-3">
                       {plan.trialDays ? `${plan.trialDays} days` : "—"}
                     </td>
-                    <td className="tabular-nums px-3 py-3">{plan.subscribers}</td>
+                    <td className="tabular-nums px-3 py-3">
+                      {plan.subscribers}
+                    </td>
                     <td className="px-3 py-3">
                       {plan.isActive ? (
                         <Pill tone="good">On sale</Pill>

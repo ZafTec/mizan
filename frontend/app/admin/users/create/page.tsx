@@ -25,10 +25,7 @@ export default async function CreateUserPage() {
             Create a new user account with specified role.
           </p>
         </div>
-        <Link
-          href="/admin/users"
-          className="btn-ghost !rounded-2xl !py-2"
-        >
+        <Link href="/admin/users" className="btn-ghost !rounded-2xl !py-2">
           ← Back to Users
         </Link>
       </header>

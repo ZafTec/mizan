@@ -73,7 +73,9 @@ test("an administrator edits a setting, is told why a value is refused, and clea
     .click();
   await expect(port.getByTestId("setting-value")).toHaveText("587");
   await expect(port).toContainText("Default");
-  await expect(page.getByText("SMTP port uses the default again")).toBeVisible();
+  await expect(
+    page.getByText("SMTP port uses the default again"),
+  ).toBeVisible();
 
   const s = await state(context);
   expect(settingsWrites(s).map((w) => [w.path, w.body])).toEqual([

@@ -356,7 +356,10 @@ function TestButton({
 }) {
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
-      <p role="status" className="min-w-0 text-sm text-muted-foreground break-words">
+      <p
+        role="status"
+        className="min-w-0 text-sm text-muted-foreground break-words"
+      >
         {busy ? "Testing…" : children}
       </p>
       <button

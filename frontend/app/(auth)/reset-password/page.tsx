@@ -94,10 +94,7 @@ export default function ResetPasswordPage() {
                 </p>
               </div>
               <div className="space-y-3 pt-4">
-                <Link
-                  href="/forgot-password"
-                  className="btn-primary w-full"
-                >
+                <Link href="/forgot-password" className="btn-primary w-full">
                   Request new reset link
                 </Link>
                 <Link href="/login" className="btn-secondary w-full">

@@ -11,8 +11,7 @@ type CheckIn = components["schemas"]["GoalProgressEntryDto"];
 type History = components["schemas"]["GoalProgressHistoryDto"];
 
 type Pending =
-  | { kind: "goal"; id: string }
-  | { kind: "check-in"; id: string; date: string };
+  { kind: "goal"; id: string } | { kind: "check-in"; id: string; date: string };
 
 const dateLabel = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
@@ -127,7 +126,11 @@ export default function GoalRecord({
                 className="btn-ghost-destructive btn-sm shrink-0"
                 aria-label={`Delete check-in for ${dateLabel(entry.date)}`}
                 onClick={() =>
-                  setPending({ kind: "check-in", id: entry.id, date: entry.date })
+                  setPending({
+                    kind: "check-in",
+                    id: entry.id,
+                    date: entry.date,
+                  })
                 }
               >
                 Delete
@@ -141,7 +144,11 @@ export default function GoalRecord({
         open={pending !== null}
         onClose={() => setPending(null)}
         onConfirm={confirm}
-        title={pending?.kind === "goal" ? "Delete this goal?" : "Delete this check-in?"}
+        title={
+          pending?.kind === "goal"
+            ? "Delete this goal?"
+            : "Delete this check-in?"
+        }
         description={
           pending?.kind === "goal"
             ? "The goal and all its check-ins are removed. You will have no daily targets until you set a new goal."

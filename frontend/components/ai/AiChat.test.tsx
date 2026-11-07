@@ -517,7 +517,9 @@ describe("permission", () => {
       name: "Allow logging meals and plans",
     });
     // The card can render a moment before the send settles and the button is enabled.
-    await waitFor(() => expect(allowButton).not.toHaveProperty("disabled", true));
+    await waitFor(() =>
+      expect(allowButton).not.toHaveProperty("disabled", true),
+    );
     fireEvent.click(allowButton);
     await waitFor(() =>
       expect(api.updateAiConsent).toHaveBeenCalledWith({

@@ -49,10 +49,7 @@ export default async function TrainerStrip() {
 
       <div className="flex shrink-0 items-center gap-2">
         {trainer.canMessage && (
-          <Link
-            href="/messaging"
-            className="btn-ghost !rounded-2xl !py-2"
-          >
+          <Link href="/messaging" className="btn-ghost !rounded-2xl !py-2">
             Message
           </Link>
         )}
