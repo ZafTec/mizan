@@ -8,7 +8,11 @@ namespace Mizan.Application.Interfaces;
 /// the call was refused because the person has not allowed that axis.
 /// </summary>
 public record AiToolRun(
-    AiToolInvocation Invocation, IReadOnlyList<AiCardDto> Cards, AiConsentRequirement? ConsentRequired = null);
+    AiToolInvocation Invocation, IReadOnlyList<AiCardDto> Cards, AiConsentRequirement? ConsentRequired = null)
+{
+    /// <summary>What the model reads back, when it is more than the line the person sees.</summary>
+    public string? ModelText { get; init; }
+}
 
 /// <summary>
 /// Runs one allowlisted tool call as the calling user.

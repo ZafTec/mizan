@@ -86,8 +86,8 @@ public static class PlanningTools
                     Requests = [typeof(GetPlanDayQuery)],
                     Replaces = ["get_plan_day"],
                     Build = (args, _) => new GetPlanDayQuery(args.OptionalDate("date"), args.OptionalGuid("planId")),
-                    Shape = result => result ?? new { day = (object?)null, message = "No plan covers that date." },
-                    Describe = result => result is PlanDayViewDto day ? AiPlanningTools.DescribeDay(day) : "There is no plan for that day.",
+                    Shape = result => result ?? new { day = (object?)null, message = "No active plan covers that date. Drafts are not active until accepted; pass planId to read one." },
+                    Describe = result => result is PlanDayViewDto day ? AiPlanningTools.DescribeDay(day) : "No active plan covers that day. Drafts are not active until the person accepts them: list the plans to find one, then ask for its day with planId.",
                     Cards = result => result is PlanDayViewDto day
                         ? [new AiCardDraft(AiCardTypes.DayPlan, new DayPlanCardData(day.PlanId, day.PlanName, day.Day))]
                         : [],
