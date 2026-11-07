@@ -30,8 +30,10 @@ public static class TaskToolCatalogue
         tools.AddRange(AccountTools.All);
         tools.AddRange(SocialTools.All);
         tools.AddRange(CoachTools.All);
+        tools.AddRange(CoachingTools.All);
         tools.Add(DeleteTool());
         tools.AddRange(HouseholdTools.All);
+        tools.AddRange(AdminTools.All);
 
         var duplicate = tools.GroupBy(t => t.Name).FirstOrDefault(g => g.Count() > 1);
         if (duplicate is not null) throw new InvalidOperationException($"Two task tools are called {duplicate.Key}.");
@@ -51,6 +53,7 @@ public static class TaskToolCatalogue
         kinds.AddRange(PlanningTools.DeleteKinds);
         kinds.AddRange(SocialTools.DeleteKinds);
         kinds.AddRange(HouseholdTools.DeleteKinds);
+        kinds.AddRange(CoachingTools.DeleteKinds);
 
         return new TaskTool
         {
@@ -78,7 +81,7 @@ public static class TaskToolCatalogue
     /// <summary>A tool with a high-impact mode also gets the mode that confirms it, and the token argument.</summary>
     private static TaskTool WithConfirm(TaskTool tool)
     {
-        if (tool.Modes.All(m => m.Confirm is null)) return tool;
+        if (tool.Modes.All(m => m.Confirm is null) || tool.ConfirmTool is not null) return tool;
         var properties = (JsonObject)tool.Properties.DeepClone();
         properties["token"] = ToolSchema.String("confirm: the token a preview returned. It works once, for ten minutes.");
         return new TaskTool
@@ -92,6 +95,7 @@ public static class TaskToolCatalogue
             Properties = properties,
             Required = tool.Required,
             App = tool.App,
+            ModeHelp = tool.ModeHelp,
             Modes =
             [
                 .. tool.Modes,

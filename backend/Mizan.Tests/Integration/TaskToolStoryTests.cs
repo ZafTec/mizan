@@ -78,8 +78,9 @@ public class TaskToolStoryTests
         refused.GetProperty("errorCode").GetString().Should().Be("not_allowed");
         refused.GetProperty("needs").GetString().Should().Be(McpScopes.NutritionWrite);
 
-        var unknown = await CallAsync(app, "admin_lookup", new { });
-        unknown.GetProperty("errorCode").GetString().Should().Be("unknown_tool");
+        var admin = await CallAsync(app, "admin_lookup", new { });
+        admin.GetProperty("errorCode").GetString().Should().Be("not_allowed");
+        admin.GetProperty("needs").GetString().Should().Be("role:admin");
     }
 
     [Fact]

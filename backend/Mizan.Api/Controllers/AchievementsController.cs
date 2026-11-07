@@ -44,8 +44,7 @@ public class AchievementsController : ControllerBase
     [Authorize(Policy = "RequireAdmin")]
     public async Task<ActionResult<AchievementDto>> GetById(Guid id)
     {
-        var result = await _mediator.Send(new GetAchievementsQuery { Page = 1, PageSize = int.MaxValue });
-        var match = result.Items.FirstOrDefault(a => a.Id == id);
+        var match = await _mediator.Send(new Mizan.Application.Tools.Admin.GetAdminAchievementQuery(id));
         return match is null ? NotFound() : Ok(match);
     }
 

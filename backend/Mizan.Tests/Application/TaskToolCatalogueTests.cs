@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MediatR;
 using Mizan.Application.Tools;
+using Mizan.Application.Tools.Admin;
 using Mizan.Contracts.Mcp;
 using Xunit;
 
@@ -8,8 +9,8 @@ namespace Mizan.Tests.Application;
 
 /// <summary>
 /// The task tool catalogue's contract (docs/MCP.md#task-tools): every mode builds a real command
-/// with a handler, every mode is held to an area, and every personal or household capability of
-/// the legacy MCP tools is reachable from a mode.
+/// with a handler, every mode is held to an area, and every capability of
+/// the legacy MCP tools is reachable from a mode or the admin registry.
 /// </summary>
 public class TaskToolCatalogueTests
 {
@@ -20,17 +21,13 @@ public class TaskToolCatalogueTests
         .Select(i => i.GetGenericArguments()[0])
         .ToArray();
 
-    /// <summary>Legacy tools the catalogue leaves out on purpose: a resource, dropped tools, and the coaching tools of phase 2.</summary>
-    private static readonly HashSet<string> NotPersonal =
+    /// <summary>Legacy tools the catalogue leaves out on purpose: a resource, and dropped tools.</summary>
+    private static readonly HashSet<string> Dropped =
     [
         // A resource now: mizan://reference/price-regions.
         "list_price_regions",
         // Dropped from the connector.
         "ask_ai", "get_ai_conversation", "list_ai_threads", "get_ai_thread", "delete_ai_thread", "set_ai_consent", "export_profile",
-        // Coaching tools for trainers (phase 2).
-        "list_trainer_clients", "list_trainer_pending_requests", "get_client_nutrition", "get_client_workouts",
-        "respond_to_trainer_request", "create_plan_for_client", "apply_template_for_client", "create_template",
-        "update_template", "delete_template", "ask_ai_about_client",
     ];
 
     [Fact]
@@ -74,24 +71,68 @@ public class TaskToolCatalogueTests
     }
 
     [Fact]
-    public void EveryPersonalAndHouseholdLegacyTool_IsReachedByAMode()
+    public void EveryLegacyTool_IsReachedByAMode_ExceptTheDroppedOnes()
     {
         var replaced = TaskToolCatalogue.All.SelectMany(t => t.Modes).SelectMany(m => m.Replaces).ToHashSet();
-        var personal = McpToolScopes.All.Keys
-            .Where(name => !name.StartsWith("admin_", StringComparison.Ordinal) && !NotPersonal.Contains(name))
-            .ToList();
 
-        personal.Where(name => !replaced.Contains(name)).Should().BeEmpty(
-            "every personal or household capability of the legacy tools has a home in the task tools");
+        McpToolScopes.All.Keys.Where(name => !Dropped.Contains(name) && !replaced.Contains(name)).Should().BeEmpty(
+            "every personal, household, coaching and admin capability of the legacy tools has a home in the task tools");
+    }
+
+    [Fact]
+    public void TheAdminRegistry_HoldsEveryLegacyAdminTool_OnceEach()
+    {
+        var legacy = McpToolScopes.All.Keys.Where(name => name.StartsWith("admin_", StringComparison.Ordinal)).ToHashSet();
+
+        AdminActionRegistry.All.Select(a => a.Id).Should().OnlyHaveUniqueItems().And.BeEquivalentTo(legacy);
+        AdminActionRegistry.All.GroupBy(a => a.Kind).ToDictionary(g => g.Key, g => g.Count()).Should().BeEquivalentTo(new Dictionary<AdminActionKind, int>
+        {
+            [AdminActionKind.ReadOnly] = 40,
+            [AdminActionKind.RunsAtOnce] = 26,
+            [AdminActionKind.Destructive] = 26,
+            [AdminActionKind.SafetyStop] = 3,
+        });
+    }
+
+    [Fact]
+    public void EveryDestructiveAdminAction_HasAPreview_AndEveryActionDescribesItsArguments()
+    {
+        AdminActionRegistry.All.Where(a => a.Kind == AdminActionKind.Destructive).Select(a => a.Id)
+            .Should().BeEquivalentTo(GetAdminActionPreviewQueryHandler.Previewed);
+
+        foreach (var action in AdminActionRegistry.All)
+        {
+            Handlers.Should().Contain(action.Request, $"{action.Id} builds a request a handler answers");
+            action.Schema()["type"]!.GetValue<string>().Should().Be("object");
+        }
+
+        // A password never passes through a connected app.
+        AdminActionRegistry.Get("admin_update_user").Schema()["properties"]!.AsObject().ContainsKey("newPassword").Should().BeFalse();
     }
 
     [Fact]
     public void ThePeopleWhoUseTheConnector_SeeTwentySixTools_AndTheAssistantFifteen()
     {
         var user = new ToolCallContext(Guid.NewGuid(), ToolSurface.Mcp, "user", null);
-        TaskToolCatalogue.All.Count(t => ToolFilter.Describe(t, user) is not null).Should().Be(26);
+        Visible(user).Should().Be(26);
 
         var assistant = user with { Surface = ToolSurface.Assistant };
-        TaskToolCatalogue.All.Count(t => ToolFilter.Describe(t, assistant) is not null).Should().Be(15);
+        Visible(assistant).Should().Be(15);
     }
+
+    /// <summary>
+    /// A person holds one role. A trainer adds the five coaching tools, an administrator the six admin
+    /// tools; no one is both, so no one sees 37. Viewing Mizan as someone else leaves no admin tool.
+    /// </summary>
+    [Theory]
+    [InlineData("user", false, 26)]
+    [InlineData("trainer", false, 31)]
+    [InlineData("admin", false, 32)]
+    [InlineData("admin", true, 26)]
+    public void TheRoleSetsTheCeiling(string role, bool impersonating, int tools)
+    {
+        Visible(new ToolCallContext(Guid.NewGuid(), ToolSurface.Mcp, role, null, impersonating)).Should().Be(tools);
+    }
+
+    private static int Visible(ToolCallContext context) => TaskToolCatalogue.All.Count(t => ToolFilter.Describe(t, context) is not null);
 }
