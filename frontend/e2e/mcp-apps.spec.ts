@@ -6,12 +6,16 @@ const appsDir = resolve(__dirname, "../../backend/Mizan.Mcp.Server/Apps");
 const bridgeMarker = "<!-- mizan:bridge -->";
 const bridge = readFileSync(resolve(appsDir, "_bridge.js"), "utf8");
 // The same inlining MizanApps.Resources() does when the server serves a page.
-const page_ = (name: string) => {
+const page_ = (name: string, toolset: "legacy" | "tasks" = "legacy") => {
   const html = readFileSync(resolve(appsDir, `${name}.html`), "utf8");
   if (!html.includes(bridgeMarker)) {
     throw new Error(`${name}.html has no ${bridgeMarker} marker`);
   }
-  return html.replace(bridgeMarker, bridge);
+  return html.replace(
+    bridgeMarker,
+    `const toolset = "${toolset}";
+${bridge}`,
+  );
 };
 
 type Call = { name: string; arguments: Record<string, unknown> };
@@ -39,6 +43,7 @@ async function openApp(
   name: string,
   initial: ToolReply,
   reply: (call: Call) => ToolReply = () => text({}),
+  toolset: "legacy" | "tasks" = "legacy",
 ): Promise<FrameLocator> {
   await page.exposeFunction("hostReply", (call: Call) => reply(call));
   await page.setContent(
@@ -89,7 +94,7 @@ async function openApp(
       });
       frame.srcdoc = html;
     },
-    { html: page_(name), initial },
+    { html: page_(name, toolset), initial },
   );
   return page.frameLocator("#app");
 }
@@ -642,5 +647,105 @@ test.describe("MCP apps, inside a stand-in host", () => {
         () => (window as unknown as { pwned?: boolean }).pwned,
       ),
     ).toBeUndefined();
+  });
+  test("with the task tools, the meal plan logs an entry through log_food and builds the list from the plan", async ({
+    page,
+  }) => {
+    const planId = "11111111-1111-4111-8111-111111111111";
+    const nutrition = {
+      calories: 195,
+      proteinGrams: 4,
+      carbsGrams: 42,
+      fatGrams: 0.5,
+      fiberGrams: 0,
+    };
+    const plan = {
+      id: planId,
+      name: "Week of the 12th",
+      status: "Active",
+      startDate: "2026-10-12",
+      endDate: "2026-10-12",
+      durationDays: 1,
+      rules: {},
+      prepSessions: [],
+      violations: [],
+      days: [
+        {
+          dayIndex: 0,
+          date: "2026-10-12",
+          entryCount: 1,
+          loggedCount: 0,
+          unresolvedCount: 0,
+          totals: nutrition,
+          violations: [],
+          slots: [
+            {
+              slot: "LUNCH",
+              entries: [
+                {
+                  id: "e2",
+                  dayIndex: 0,
+                  date: "2026-10-12",
+                  slot: "LUNCH",
+                  logged: false,
+                  notes: null,
+                  prepSessionId: null,
+                  kind: "Food",
+                  foodId: "f1",
+                  foodName: "Rice",
+                  grams: 150,
+                  nutrition,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const app = await openApp(
+      page,
+      "meal-plan",
+      text(plan),
+      (call) =>
+        call.name === "update_shopping_list"
+          ? text({ listId: "l1", itemCount: 2, needsReviewCount: 0 })
+          : text({
+              complete: true,
+              completed: [
+                {
+                  index: 0,
+                  kind: "plan_entry",
+                  date: "2026-10-12",
+                  mealType: "LUNCH",
+                  entryIds: ["d1"],
+                  groupId: null,
+                  warnings: [],
+                },
+              ],
+              failed: null,
+              remaining: [],
+              guidance: null,
+            }),
+      "tasks",
+    );
+
+    await app.getByRole("button", { name: "Log Rice" }).click();
+    await expect(app.getByRole("status")).toContainText(
+      "Logged Rice on 2026-10-12",
+    );
+    await app.getByRole("button", { name: "Shopping list" }).click();
+    await expect(app.getByRole("status")).toContainText(
+      "Shopping list ready: 2 items",
+    );
+    expect(await calls(page)).toEqual([
+      {
+        name: "log_food",
+        arguments: { items: [{ planEntryId: "e2", planId }] },
+      },
+      {
+        name: "update_shopping_list",
+        arguments: { action: "from_plan", planId },
+      },
+    ]);
   });
 });
