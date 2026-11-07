@@ -206,7 +206,7 @@ public class NutritionAiService : INutritionAiService
 
                 messages.Add(new AiMessage(
                     AiRole.Tool,
-                    invocation.Succeeded ? invocation.Summary : $"Failed: {invocation.Error}")
+                    invocation.Succeeded ? run.ModelText ?? invocation.Summary : $"Failed: {invocation.Error}")
                 {
                     ToolCallId = call.Id,
                 });

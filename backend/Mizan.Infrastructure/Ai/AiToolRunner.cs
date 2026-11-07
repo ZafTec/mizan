@@ -97,7 +97,10 @@ public class AiToolRunner : IAiToolRunner
         var result = await _tasks.RunAsync(call.Name, args, callContext, cancellationToken);
         if (result.IsError) return Failed(call.Name, result.Text);
 
-        return new AiToolRun(new AiToolInvocation(call.Name, result.Text, true), Cards(call.Name, result.Cards));
+        return new AiToolRun(new AiToolInvocation(call.Name, AiActionLabel.For(call.Name, result.Text), true), Cards(call.Name, result.Cards))
+        {
+            ModelText = result.Text,
+        };
     }
 
     public async Task<AiToolInvocation> RunOnboardingAsync(
