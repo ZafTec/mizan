@@ -116,6 +116,38 @@ public class TrainersControllerTests
         result.Items[0].ClientName.Should().Be(seededClient.Name);
     }
 
+    /// <summary>
+    /// N-03, N-04: the list of trainers to ask offered the caller and an administrator with no trainer
+    /// role, and showed each trainer's email. It lists the other people with the trainer role, by
+    /// name, image and clients, and a request to someone it does not list is refused.
+    /// </summary>
+    [Fact]
+    public async Task SomeoneLookingForATrainer_SeesTheOtherTrainers_WithoutTheirEmail()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var me = Guid.NewGuid();
+        var myEmail = $"trainer-me-{me:N}@example.com";
+        await _fixture.SeedUserAsync(me, myEmail, role: "trainer");
+        var other = Guid.NewGuid();
+        await _fixture.SeedUserAsync(other, $"trainer-other-{other:N}@example.com", role: "trainer");
+        var admin = Guid.NewGuid();
+        await _fixture.SeedUserAsync(admin, $"admin-{admin:N}@example.com", role: "admin");
+        await _fixture.GrantProAsync(me);
+        using var client = _fixture.CreateAuthenticatedClient(me, myEmail, role: "trainer");
+
+        var response = await client.GetAsync("/api/Trainers/available");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        var items = json.GetProperty("items").EnumerateArray().ToList();
+        items.Select(i => i.GetProperty("id").GetGuid()).Should().Equal(other);
+        items[0].TryGetProperty("email", out _).Should().BeFalse();
+        json.GetProperty("totalCount").GetInt32().Should().Be(1);
+
+        (await client.PostAsJsonAsync("/api/Trainers/request", new { TrainerId = admin }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private async Task<Guid> SeedRelationshipAsync(Guid trainerId, Guid clientId, string status)
     {
         using var scope = _fixture.Services.CreateScope();

@@ -14,8 +14,11 @@ namespace Mizan.Application.Commands;
 /// and the pricing page advertises; with one, only a customer who enters the
 /// code gets it.
 /// </summary>
-public record CreateBillingDiscountCommand : IRequest<CreateBillingDiscountResult>
+public record CreateBillingDiscountCommand : IRequest<CreateBillingDiscountResult>, IRedactedAudit
 {
+    // The code is what a customer redeems, so the log records that there was one, not what it is.
+    object IRedactedAudit.AuditDetails => new { Label, HasCode = !string.IsNullOrEmpty(Code), Type, Amount, Recurring, MaximumRecurringIntervals, ExpiresAt, PlanIds };
+
     public string Label { get; init; } = string.Empty;
     public string? Code { get; init; }
     public string Type { get; init; } = BillingDiscountTypes.Percentage;

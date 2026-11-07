@@ -1,40 +1,29 @@
-import { getMealPlanById } from "@/data/mealPlan";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import MealPlanEditForm from "./MealPlanEditForm";
+import { notFound, redirect } from "next/navigation";
+import { getUserServer } from "@/helper/session";
+import { dateInTimeZone } from "@/lib/log-date";
+import { foodNamesServer, getMealPlanServer } from "@/lib/api/mealPlans.server";
+import PlanEditor from "@/components/planning/PlanEditor";
 
 export const dynamic = "force-dynamic";
 
-export default async function MealPlanEditPage({
-	params,
+export default async function EditMealPlanPage({
+  params,
 }: {
-	params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 }) {
-	const { id } = await params;
-	const plan = await getMealPlanById(id);
-
-	if (!plan) {
-		notFound();
-	}
-
-	return (
-		<div className="space-y-6" data-testid="meal-plan-edit-page">
-			<div>
-				<div className="flex items-center gap-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1">
-					<Link href="/meal-plan" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-						Meal Plans
-					</Link>
-					<i className="ri-arrow-right-s-line" />
-					<Link href={`/meal-plan/${plan.id}`} className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-						{plan.name || "Meal Plan"}
-					</Link>
-					<i className="ri-arrow-right-s-line" />
-					<span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">Edit</span>
-				</div>
-				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Edit Meal Plan</h1>
-			</div>
-
-			<MealPlanEditForm plan={plan} />
-		</div>
-	);
+  const [{ id }, user] = await Promise.all([params, getUserServer()]);
+  const plan = await getMealPlanServer(id);
+  if (!plan) notFound();
+  if (!plan.canEdit) redirect(`/meal-plan/${id}`);
+  const names = await foodNamesServer([
+    ...plan.rules.allowedFoodIds,
+    ...plan.rules.forbiddenFoodIds,
+  ]);
+  return (
+    <PlanEditor
+      plan={plan}
+      today={dateInTimeZone(user.timeZoneId || "UTC")}
+      foodNames={names}
+    />
+  );
 }

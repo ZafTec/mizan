@@ -56,17 +56,51 @@ public sealed class TelegramClient
     }
 
     public async Task SendMessageAsync(
+        long chatId, string text, object? replyMarkup = null, CancellationToken ct = default) =>
+        await TrySendMessageAsync(chatId, text, replyMarkup, ct);
+
+    /// <summary>The same send, saying whether Telegram took it, for a caller that retries.</summary>
+    public async Task<bool> TrySendMessageAsync(
         long chatId, string text, object? replyMarkup = null, CancellationToken ct = default)
     {
         var sent = await TrySendAsync(chatId, text, "HTML", replyMarkup, ct);
-        if (sent) return;
+        if (sent) return true;
 
         // Telegram rejects the whole message when the markup does not parse,
         // and PostAsync only logs that. Falling back to plain text means a
         // reply the converter mangled still reaches the user rather than
         // vanishing into a warning nobody reads.
         _logger.LogWarning("Telegram rejected an HTML message for chat {ChatId}; resending as plain text", chatId);
-        await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
+        return await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
+    }
+
+    /// <summary>
+    /// A picture with an HTML caption. Telegram fetches the picture itself, so it must be a public
+    /// https URL. Says whether Telegram took it; the caller falls back to a text message.
+    /// </summary>
+    public async Task<bool> TrySendPhotoAsync(
+        long chatId, string photoUrl, string caption, object? replyMarkup = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"{_base}/sendPhoto", new
+            {
+                chat_id = chatId,
+                photo = photoUrl,
+                caption,
+                parse_mode = "HTML",
+                reply_markup = replyMarkup,
+            }, Json, ct);
+
+            if (response.IsSuccessStatusCode) return true;
+            _logger.LogWarning("Telegram sendPhoto returned {Status}", (int)response.StatusCode);
+            return false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram sendPhoto failed");
+            return false;
+        }
     }
 
     private async Task<bool> TrySendAsync(
@@ -116,14 +150,38 @@ public sealed class TelegramClient
     public Task ClearKeyboardAsync(long chatId, long messageId, CancellationToken ct = default) =>
         PostAsync("editMessageReplyMarkup", new { chat_id = chatId, message_id = messageId }, ct);
 
-    /// <summary>Tells Telegram where to POST updates. Idempotent - safe to call on every startup.</summary>
-    public Task SetWebhookAsync(string url, string secretToken, CancellationToken ct = default) =>
-        PostAsync("setWebhook", new
+    /// <summary>
+    /// Tells Telegram where to POST updates. Idempotent - safe to call on every startup. Checked,
+    /// unlike the other calls: a webhook Telegram refused leaves the bot deaf, so the caller needs
+    /// Telegram's own reason (<c>description</c>) to log and retry on.
+    /// </summary>
+    public Task<TelegramCallResult> SetWebhookAsync(string url, string secretToken, CancellationToken ct = default) =>
+        CheckedPostAsync("setWebhook", new
         {
             url,
             secret_token = secretToken,
             allowed_updates = new[] { "message", "callback_query" },
         }, ct);
+
+    /// <summary>
+    /// What Telegram says about the registered webhook: its URL and the last delivery error, if
+    /// any. Null when Telegram could not be asked.
+    /// </summary>
+    public async Task<WebhookInfo?> GetWebhookInfoAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"{_base}/getWebhookInfo", new { }, Json, ct);
+            if (!response.IsSuccessStatusCode) return null;
+            var body = await response.Content.ReadFromJsonAsync<Response<WebhookInfo>>(Json, ct);
+            return body is { Ok: true } ? body.Result : null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram getWebhookInfo failed");
+            return null;
+        }
+    }
 
     /// <summary>
     /// Telegram refuses <c>getUpdates</c> with a 409 while a webhook is registered,
@@ -132,6 +190,19 @@ public sealed class TelegramClient
     public Task DeleteWebhookAsync(CancellationToken ct = default) =>
         PostAsync("deleteWebhook", new { }, ct);
 
+    /// <summary>
+    /// The button beside the chat input in every private chat with the bot. A <c>web_app</c> button
+    /// opens the Mini App in one tap; without an HTTPS URL, which Telegram requires, the button is
+    /// the commands menu again, so an earlier deployment's Mini App button does not linger.
+    /// </summary>
+    public Task SetMenuButtonAsync(string? miniAppUrl, CancellationToken ct = default) =>
+        PostAsync("setChatMenuButton", new
+        {
+            menu_button = miniAppUrl is null
+                ? (object)new { type = "commands" }
+                : new { type = "web_app", text = "Open Mizan", web_app = new { url = miniAppUrl } },
+        }, ct);
+
     public Task SetCommandsAsync(CancellationToken ct = default) =>
         PostAsync("setMyCommands", new
         {
@@ -139,6 +210,13 @@ public sealed class TelegramClient
             {
                 new { command = "today", description = "Today's totals against your targets" },
                 new { command = "weight", description = "Log a weigh-in, e.g. /weight 82.4" },
+                new { command = "plan", description = "Today's meal plan, or /plan tomorrow" },
+                new { command = "shop", description = "Your shopping list, ten items at a time" },
+                new { command = "fit", description = "Your recipes that best fit what is left today" },
+                new { command = "planme", description = "Draft a week of meals, e.g. /planme high protein, cheap" },
+                new { command = "notifications", description = "Get the app's notifications here, and choose which kinds" },
+                new { command = "remind", description = "Set a reminder" },
+                new { command = "reminders", description = "Your reminders, and stop one" },
                 new { command = "help", description = "What this bot can do" },
                 new { command = "unlink", description = "Disconnect this chat from your account" },
             },
@@ -155,6 +233,32 @@ public sealed class TelegramClient
 
         var bytes = await _http.GetByteArrayAsync($"{FileBase}/{file.FilePath}", ct);
         return bytes.Length > maxBytes ? null : bytes;
+    }
+
+    /// <summary>
+    /// A call whose outcome matters: success only when Telegram answers <c>ok: true</c>, whatever the
+    /// HTTP status, and Telegram's <c>description</c> otherwise. Never throws for a failure.
+    /// </summary>
+    private async Task<TelegramCallResult> CheckedPostAsync(string method, object payload, CancellationToken ct)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"{_base}/{method}", payload, Json, ct);
+            Response<JsonElement>? body = null;
+            try { body = await response.Content.ReadFromJsonAsync<Response<JsonElement>>(Json, ct); }
+            catch (JsonException) { }
+
+            if (response.IsSuccessStatusCode && body is { Ok: true }) return TelegramCallResult.Success;
+
+            var description = body?.Description is { Length: > 0 } text ? text : $"HTTP {(int)response.StatusCode}";
+            _logger.LogWarning("Telegram {Method} returned {Status}: {Description}", method, (int)response.StatusCode, description);
+            return new TelegramCallResult(false, description);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram {Method} failed", method);
+            return new TelegramCallResult(false, ex.Message);
+        }
     }
 
     private async Task PostAsync(string method, object payload, CancellationToken ct)
@@ -179,5 +283,20 @@ public sealed class TelegramClient
     {
         [JsonPropertyName("ok")] public bool Ok { get; init; }
         [JsonPropertyName("result")] public T? Result { get; init; }
+        [JsonPropertyName("description")] public string? Description { get; init; }
     }
+}
+
+/// <summary>A checked Bot API call: whether Telegram said <c>ok</c>, and its reason when it did not.</summary>
+public sealed record TelegramCallResult(bool Ok, string? Description)
+{
+    public static TelegramCallResult Success { get; } = new(true, null);
+}
+
+/// <summary>The part of <c>getWebhookInfo</c> the bot reads.</summary>
+public sealed record WebhookInfo
+{
+    [JsonPropertyName("url")] public string Url { get; init; } = string.Empty;
+    [JsonPropertyName("pending_update_count")] public int PendingUpdateCount { get; init; }
+    [JsonPropertyName("last_error_message")] public string? LastErrorMessage { get; init; }
 }

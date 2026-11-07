@@ -11,6 +11,7 @@ public static class AiPromptKeys
     public const string Suggestions = "nutrition.suggestions";
     public const string Onboarding = "onboarding.agent";
     public const string TrainerClient = "trainer.client";
+    public const string MealPlan = "meal.plan";
 
     public static readonly IReadOnlyDictionary<string, string> Descriptions =
         new Dictionary<string, string>
@@ -20,5 +21,6 @@ public static class AiPromptKeys
             [Suggestions] = "How meal ideas are proposed against the macros a user has left today.",
             [Onboarding] = "How a new user is set up through conversation instead of a six-screen form.",
             [TrainerClient] = "How a trainer is helped to read a client's shared log. Advisory, never authoritative.",
+            [MealPlan] = "How a meal plan draft is written against the person's rules, recipes, catalogue foods and prices. The model names foods and amounts; code computes nutrition and cost.",
         };
 }

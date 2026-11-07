@@ -1,10 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mizan.Application.Ai;
 using Mizan.Application.Commands;
-using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
-using Mizan.Domain.Media;
+using Mizan.Contracts.Media;
+using Mizan.Contracts.Nutrition;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Api.Controllers;
 
@@ -14,23 +17,10 @@ namespace Mizan.Api.Controllers;
 public class NutritionController : ControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly INutritionAiService _aiService;
-    private readonly ICurrentUserService _currentUser;
-    private readonly IStorageService _storage;
-    private readonly ILogger<NutritionController> _logger;
 
-    public NutritionController(
-        IMediator mediator,
-        INutritionAiService aiService,
-        ICurrentUserService currentUser,
-        IStorageService storage,
-        ILogger<NutritionController> logger)
+    public NutritionController(IMediator mediator)
     {
         _mediator = mediator;
-        _aiService = aiService;
-        _currentUser = currentUser;
-        _storage = storage;
-        _logger = logger;
     }
 
     [HttpPost("log")]
@@ -54,65 +44,55 @@ public class NutritionController : ControllerBase
 
     [HttpPost("ai/analyze-image")]
     [Authorize(Policy = "RequirePro")]
+    [RequiresFeature(FeatureFlags.AiAssistant)]
     [RequestSizeLimit(10_000_000)]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImage(IFormFile image)
     {
-        if (image.Length == 0)
-        {
-            return BadRequest("No image provided");
-        }
-
-        if (image.Length > 8_000_000)
-        {
-            return BadRequest("Image must be 8 MB or smaller");
-        }
-
-        if (!_currentUser.UserId.HasValue)
-        {
-            return Unauthorized();
-        }
-
         using var memoryStream = new MemoryStream();
         await image.CopyToAsync(memoryStream);
-        var imageBytes = memoryStream.ToArray();
-
-        // The bytes decide, not the Content-Type header - same rule the upload
-        // endpoint applies (docs/ARCHITECTURE.md#storage-caching-and-jobs).
-        var contentType = ImageFormat.Detect(imageBytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, imageBytes.Length)));
-        if (contentType is null or "image/gif")
-        {
-            return BadRequest("Image must be JPEG, PNG or WebP");
-        }
-
-        var result = await _aiService.AnalyzeFoodImageAsync(
-            _currentUser.UserId.Value, imageBytes, contentType);
-
-        // Stored after the analysis, not before: a photo the model could not
-        // read is not worth keeping, and this way a storage outage costs the
-        // picture rather than the whole request.
-        return Ok(result with { ImageUrl = await StoreAsync(imageBytes, contentType) });
+        return await EstimateAsync(new EstimateFoodFromPhotoCommand(Image: memoryStream.ToArray()));
     }
 
-    private async Task<string?> StoreAsync(byte[] bytes, string contentType)
+    /// <summary>
+    /// The same analysis for a photo at a public https address, which the API downloads (at most 4 MB, no
+    /// redirects). An MCP client passes the address of a photo it holds instead of writing out its bytes.
+    /// </summary>
+    [HttpPost("ai/analyze-image-url")]
+    [Authorize(Policy = "RequirePro")]
+    [RequiresFeature(FeatureFlags.AiAssistant)]
+    public Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImageUrl([FromBody] ImageUrlRequest request) =>
+        EstimateAsync(new EstimateFoodFromPhotoCommand(ImageUrl: request.ImageUrl ?? string.Empty));
+
+    /// <summary>An estimate's refused input is a 400 with its own error code, as it always was.</summary>
+    private async Task<ActionResult<FoodAnalysisResult>> EstimateAsync(IRequest<FoodAnalysisResult> command)
     {
         try
         {
-            await using var stream = new MemoryStream(bytes);
-            var stored = await _storage.UploadAsync(new StorageUpload(
-                StorageFolder.Meals,
-                $"meal{ImageFormat.Extension(contentType)}",
-                contentType,
-                stream,
-                bytes.Length));
-
-            return stored.Url;
+            return Ok(await _mediator.Send(command, HttpContext.RequestAborted));
         }
-        catch (Exception ex)
+        catch (FoodEstimateInputException ex)
         {
-            // The analysis is the answer; the photo is a record of it. Losing
-            // the second must not fail the first.
-            _logger.LogWarning(ex, "Could not store an analysed meal photo");
-            return null;
+            return BadRequest(new { errorCode = ex.ErrorCode, error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Deletes a photo the person sent for an analysis, before its removal 30 days on
+    /// (docs/AI.md#logging-a-meal-from-words-or-a-photo). 404 when it is not theirs or is already gone.
+    /// </summary>
+    [HttpDelete("ai/photo")]
+    public async Task<IActionResult> DeleteAnalysisPhoto([FromQuery] string imageUrl, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new Mizan.Application.Ai.DeleteAnalysisPhotoCommand(imageUrl), cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>
+    [HttpPost("ai/analyze-text")]
+    [Authorize(Policy = "RequirePro")]
+    [RequiresFeature(FeatureFlags.AiAssistant)]
+    public Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request) =>
+        EstimateAsync(new EstimateFoodFromTextCommand(request.Description));
+
+    public const int MaxDescriptionLength = EstimateFoodFromTextCommand.MaxDescriptionLength;
 }

@@ -40,6 +40,6 @@ public class Recipe
     public virtual User? User { get; set; }
     public virtual Household? Household { get; set; }
     public virtual ICollection<RecipeIngredient> Ingredients { get; set; } = new List<RecipeIngredient>();
-    public virtual ICollection<MealPlanRecipe> MealPlanRecipes { get; set; } = new List<MealPlanRecipe>();
+    public virtual ICollection<PlanEntry> PlanEntries { get; set; } = new List<PlanEntry>();
     public virtual ICollection<FoodDiaryEntry> DiaryEntries { get; set; } = new List<FoodDiaryEntry>();
 }

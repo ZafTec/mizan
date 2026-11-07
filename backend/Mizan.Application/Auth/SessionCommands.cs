@@ -26,7 +26,18 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, A
         var user = await _context.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        return user is null ? null : AuthUserMapper.ToDto(user);
+        if (user is null) return null;
+
+        var dto = AuthUserMapper.ToDto(user);
+        if (_currentUser.ImpersonatorId is not { } impersonatorId) return dto;
+
+        var name = await _context.Users.AsNoTracking()
+            .Where(u => u.Id == impersonatorId).Select(u => u.Name ?? u.Email).FirstOrDefaultAsync(cancellationToken);
+        return dto with
+        {
+            Impersonation = new ImpersonationDto(
+                impersonatorId, name, _currentUser.ImpersonationExpiresAt ?? DateTime.UtcNow.Add(Mizan.Application.Auth.ImpersonationRules.Lifetime)),
+        };
     }
 }
 

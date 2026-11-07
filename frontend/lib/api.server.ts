@@ -8,20 +8,20 @@ import { serverApiOrigin, sessionCookieHeader } from "@/lib/auth";
  * caches a token any more - see docs/ARCHITECTURE.md#identity.
  */
 export async function serverApi<T>(
-	path: string,
-	options: ApiRequestOptions = {},
+  path: string,
+  options: ApiRequestOptions = {},
 ): Promise<T> {
-	const cookie = await sessionCookieHeader();
-	const requireAuth = options.requireAuth !== false;
+  const cookie = await sessionCookieHeader();
+  const requireAuth = options.requireAuth !== false;
 
-	if (requireAuth && !cookie) {
-		throw new ApiError(401, "Unauthorized", { error: "Not authenticated" });
-	}
+  if (requireAuth && !cookie) {
+    throw new ApiError(401, "Unauthorized", { error: "Not authenticated" });
+  }
 
-	return request<T>(
-		serverApiOrigin(),
-		path,
-		cookie ? { mode: "cookie", cookie } : { mode: "none" },
-		options,
-	);
+  return request<T>(
+    serverApiOrigin(),
+    path,
+    cookie ? { mode: "cookie", cookie } : { mode: "none" },
+    options,
+  );
 }

@@ -41,6 +41,9 @@ function searchResponse(path: string) {
   if (path.includes("FavoritesOnly")) return { items: [bowl] };
   if (path.startsWith("/api/Recipes?")) return { items: [bowl] };
   if (path.startsWith("/api/Meals?")) return { entries: [] };
+  // The preview is the server's arithmetic; these stories only need it answered.
+  if (path === "/api/Meals/preview")
+    return { lines: [], calories: 0, proteinGrams: 0, complete: true };
   return { id: "saved" };
 }
 
@@ -63,6 +66,7 @@ describe("in-place logging", () => {
         onBusyChange={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Search foods" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Brown rice" }),
     );
@@ -78,7 +82,10 @@ describe("in-place logging", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalledWith("Dinner logged"));
     const writes = vi
       .mocked(clientApi)
-      .mock.calls.filter(([, options]) => options?.method === "POST");
+      .mock.calls.filter(
+        ([path, options]) =>
+          options?.method === "POST" && path !== "/api/Meals/preview",
+      );
     expect(writes).toEqual([
       [
         "/api/Nutrition/log",
@@ -86,9 +93,9 @@ describe("in-place logging", () => {
           method: "POST",
           body: {
             foodId: "rice",
+            amountGrams: 150,
             entryDate: "2026-09-05",
             mealType: "DINNER",
-            servings: 1.5,
           },
         },
       ],
@@ -126,6 +133,7 @@ describe("in-place logging", () => {
         onBusyChange={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Search foods" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Brown rice" }),
     );

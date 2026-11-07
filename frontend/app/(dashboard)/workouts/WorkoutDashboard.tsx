@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
+import { ApiError } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { appToast } from "@/lib/toast";
 import { GamificationToaster } from "@/components/gamification/GamificationToaster";
@@ -295,18 +296,22 @@ export default function WorkoutDashboard({
             setResume(null);
             selectTab("log");
           }}
-          onDiscard={() => {
-            setResume(null);
+          onDiscard={async () => {
+            // A draft kept only on this device has nothing on the server.
+            await clientApi("/api/Workouts/draft", { method: "DELETE" }).catch(
+              (error: unknown) => {
+                if (!(error instanceof ApiError && error.status === 404))
+                  throw error;
+              },
+            );
             if (draftKey) {
               try {
                 localStorage.removeItem(draftKey);
               } catch {
-                /* The server draft can still be discarded. */
+                /* The server draft is already gone. */
               }
             }
-            clientApi("/api/Workouts/draft", { method: "DELETE" }).catch(
-              () => {},
-            );
+            setResume(null);
           }}
         />
       )}
@@ -315,7 +320,7 @@ export default function WorkoutDashboard({
           <h1 className="text-3xl font-semibold tracking-tight">
             {sessionOnly ? "Workout" : "Workouts"}
           </h1>
-          <p className="mt-2 text-sm log-muted" role="status">
+          <p className="mt-2 text-sm text-muted-foreground" role="status">
             {saveState === "saving"
               ? "Saving session…"
               : saveState === "saved"

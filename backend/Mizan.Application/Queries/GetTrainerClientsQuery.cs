@@ -22,6 +22,7 @@ public record TrainerClientDto(
     bool CanViewNutrition,
     bool CanViewWorkouts,
     bool CanMessage,
+    bool CanPlanMeals,
     DateTime StartedAt,
     DateTime? EndedAt
 );
@@ -59,6 +60,7 @@ public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQu
                 r.CanViewNutrition,
                 r.CanViewWorkouts,
                 r.CanMessage,
+                r.CanPlanMeals,
                 r.StartedAt ?? r.CreatedAt,
                 r.EndedAt
             ))

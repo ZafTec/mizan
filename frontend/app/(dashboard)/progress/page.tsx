@@ -31,7 +31,7 @@ export default async function ProgressPage({
       <header className="log-page-header">
         <div>
           <h1>Progress</h1>
-          <p className="log-muted mt-2">
+          <p className="text-muted-foreground mt-2">
             {formatLogDate(start)} – {formatLogDate(end)}. A longer view of your
             log.
           </p>

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Users;
 
 namespace Mizan.Application.Queries;
 
@@ -15,7 +16,7 @@ public record GoalProgressHistoryDto
     public List<GoalProgressEntryDto> ProgressEntries { get; init; } = new();
 }
 
-// UserGoalSummaryDto is defined in GetUserGoalQuery.cs - reusing existing DTO
+// UserGoalSummaryDto is the one GET /api/Users/me returns (Mizan.Contracts.Users).
 
 public record GoalProgressEntryDto
 {

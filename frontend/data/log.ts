@@ -1,23 +1,15 @@
 import "server-only";
 import { serverApi } from "@/lib/api.server";
 import { ApiError } from "@/lib/api";
-import type {
-  MealEntry,
-  FoodDiaryResult,
-  DailyNutritionSummary,
-} from "@/data/meal";
+import type { DailyNutritionSummary } from "@/data/meal";
+import type { components } from "@/types/api.generated";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
 import type { WorkoutSummary } from "@/data/workout";
 import type { UserGoal } from "@/data/goal";
 
-export type LogMeal = MealEntry & {
-  groupId?: string | null;
-  groupName?: string | null;
-  amountGrams?: number | null;
-};
-export type DayDiary = Omit<FoodDiaryResult, "entries"> & {
-  entries: LogMeal[];
-};
+/** A diary row and the day as GET /api/Meals sends them, with the server's meal and recipe subtotals. */
+export type LogMeal = components["schemas"]["FoodDiaryEntryDto"];
+export type DayDiary = components["schemas"]["FoodDiaryResult"];
 export type LogWorkout = WorkoutSummary & {
   exercises: (WorkoutSummary["exercises"][number] & { exerciseId: string })[];
 };

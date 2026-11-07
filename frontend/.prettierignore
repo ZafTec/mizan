@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+public
+playwright-report
+test-results
+bun.lock
+types/api.generated.ts
+next-env.d.ts

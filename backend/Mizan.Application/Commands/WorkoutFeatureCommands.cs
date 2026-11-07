@@ -55,7 +55,10 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         var valid = await _context.Exercises.CountAsync(e => ids.Contains(e.Id) && (!e.IsCustom || e.CreatedByUserId == userId), ct);
         if (valid != ids.Length) throw new DomainValidationException("One or more exercises are invalid");
 
-        _context.WorkoutExercises.RemoveRange(workout.Exercises);
+        // The old exercises (and their sets) are removed and the new ones added as rows of their own. Swapping
+        // the navigation collection as well made EF delete the old rows twice, which failed every edit of a
+        // workout that already had exercises.
+        _context.WorkoutExercises.RemoveRange(workout.Exercises.ToList());
         workout.Name = request.Name;
         workout.WorkoutDate = request.WorkoutDate;
         workout.TemplateId = request.TemplateId;
@@ -65,7 +68,7 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         workout.DurationMinutes = request.DurationMinutes;
         workout.CaloriesBurned = request.CaloriesBurned;
         workout.Notes = request.Notes;
-        workout.Exercises = request.Exercises.Select((exercise, index) => new WorkoutExercise
+        var replacement = request.Exercises.Select((exercise, index) => new WorkoutExercise
         {
             Id = Guid.NewGuid(),
             WorkoutId = workout.Id,
@@ -88,6 +91,7 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
                 CompletedAt = set.CompletedAt
             }).ToList()
         }).ToList();
+        _context.WorkoutExercises.AddRange(replacement);
         await _context.SaveChangesAsync(ct);
     }
 }
@@ -95,8 +99,41 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
 public record SaveWorkoutDraftCommand(string Payload) : IRequest;
 public sealed class SaveWorkoutDraftCommandValidator : AbstractValidator<SaveWorkoutDraftCommand>
 {
-    public SaveWorkoutDraftCommandValidator() => RuleFor(x => x.Payload).NotEmpty().MaximumLength(1_000_000).Must(BeJson).WithMessage("Payload must be valid JSON");
-    private static bool BeJson(string value) { try { System.Text.Json.JsonDocument.Parse(value); return true; } catch { return false; } }
+    public SaveWorkoutDraftCommandValidator() => RuleFor(x => x.Payload).NotEmpty().MaximumLength(1_000_000)
+        .Custom((payload, context) => { if (ShapeProblem(payload) is { } problem) context.AddFailure(nameof(SaveWorkoutDraftCommand.Payload), problem); });
+
+    /// <summary>
+    /// The draft is the web log's workout in progress, kept as JSON so the log can grow fields
+    /// freely. Its frame is fixed: an object whose exercises are objects, each with an exerciseId
+    /// and a list of set objects. Anything else could not be resumed, so it is refused here.
+    /// </summary>
+    internal static string? ShapeProblem(string? payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload)) return null;
+        System.Text.Json.JsonDocument document;
+        try { document = System.Text.Json.JsonDocument.Parse(payload); }
+        catch (System.Text.Json.JsonException) { return "Payload must be valid JSON."; }
+        using (document)
+        {
+            var root = document.RootElement;
+            if (root.ValueKind != System.Text.Json.JsonValueKind.Object) return "Payload must be a JSON object with an exercises list.";
+            if (!root.TryGetProperty("exercises", out var exercises) || exercises.ValueKind != System.Text.Json.JsonValueKind.Array)
+                return "Payload.exercises must be a list.";
+            var index = 0;
+            foreach (var exercise in exercises.EnumerateArray())
+            {
+                if (exercise.ValueKind != System.Text.Json.JsonValueKind.Object) return $"Payload.exercises[{index}] must be an object.";
+                if (!exercise.TryGetProperty("exerciseId", out var id) || id.ValueKind != System.Text.Json.JsonValueKind.String || !Guid.TryParse(id.GetString(), out _))
+                    return $"Payload.exercises[{index}].exerciseId must be an exercise id.";
+                if (!exercise.TryGetProperty("sets", out var sets) || sets.ValueKind != System.Text.Json.JsonValueKind.Array)
+                    return $"Payload.exercises[{index}].sets must be a list.";
+                if (sets.EnumerateArray().Any(set => set.ValueKind != System.Text.Json.JsonValueKind.Object))
+                    return $"Payload.exercises[{index}].sets must hold set objects.";
+                index++;
+            }
+            return null;
+        }
+    }
 }
 public sealed class SaveWorkoutDraftCommandHandler : IRequestHandler<SaveWorkoutDraftCommand>
 {

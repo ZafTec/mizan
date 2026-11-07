@@ -12,6 +12,6 @@ public class UserCacheInvalidator : IUserCacheInvalidator
 
     public Task InvalidateAsync(Guid userId, CancellationToken cancellationToken = default) =>
         _cache.RemoveByTagAsync(
-            [CacheTags.UserStatus(userId), CacheTags.UserZone(userId)],
+            [CacheTags.UserStatus(userId), CacheTags.UserZone(userId), CacheTags.PriceRegion(userId)],
             cancellationToken).AsTask();
 }

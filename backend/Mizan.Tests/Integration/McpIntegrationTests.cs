@@ -2,10 +2,12 @@ extern alias McpServer;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -149,12 +151,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        jsonResponse.Should().NotBeNull();
-
-        var result = JsonSerializer.Deserialize<JsonElement>(jsonResponse!.Result!.ToString()!);
-        result.GetProperty("isError").GetBoolean().Should().BeTrue();
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.Headers.WwwAuthenticate.Should().ContainSingle(h => h.Scheme == "Bearer" && h.Parameter!.Contains("resource_metadata"));
     }
 
     [Fact]
@@ -177,12 +175,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        jsonResponse.Should().NotBeNull();
-
-        var result = JsonSerializer.Deserialize<JsonElement>(jsonResponse!.Result!.ToString()!);
-        result.GetProperty("isError").GetBoolean().Should().BeTrue();
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.Headers.WwwAuthenticate.Should().ContainSingle(h => h.Scheme == "Bearer" && h.Parameter!.Contains("resource_metadata"));
     }
 
     #endregion
@@ -492,6 +486,93 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
+    #region Goal tools
+
+    [Fact]
+    public async Task A_person_records_their_weight_through_a_connected_app_and_the_check_in_keeps_the_days_food()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "goal-checkin@example.com", emailVerified: true);
+        var food = await _apiFixture.SeedFoodAsync("Check-in oats", 100m, 10m, 20m, 5m);
+        using var web = _apiFixture.CreateAuthenticatedClient(userId, "goal-checkin@example.com");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        (await web.PostAsJsonAsync("/api/Nutrition/log", new { FoodId = food.Id, EntryDate = today, MealType = "lunch", Servings = 2m }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        _mcpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+        var goal = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "create_goal",
+            new { goalType = "weight_loss", targetCalories = 1900, targetCarbsGrams = 180, targetWeightKg = 78.5 })))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        goal!.Error.Should().BeNull();
+
+        var checkIn = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "record_goal_progress",
+            new { currentWeightKg = 82.4, notes = "Felt good" })))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        ExtractToolResultText(checkIn).Should().Contain("82.4");
+
+        var history = await web.GetFromJsonAsync<JsonElement>("/api/Goals/progress?days=7");
+        var entry = history.GetProperty("progressEntries").EnumerateArray().Should().ContainSingle().Subject;
+        entry.GetProperty("actualWeight").GetDecimal().Should().Be(82.4m);
+        entry.GetProperty("actualCalories").GetDecimal().Should().Be(200m);
+        entry.GetProperty("actualCarbsGrams").GetDecimal().Should().Be(40m);
+        history.GetProperty("goal").GetProperty("targetCarbsGrams").GetDecimal().Should().Be(180m);
+
+        var current = await web.GetFromJsonAsync<JsonElement>("/api/Goals");
+        current.GetProperty("targetWeight").GetDecimal().Should().Be(78.5m);
+    }
+
+    [Fact]
+    public async Task A_connected_app_allowed_only_nutrition_records_the_day_but_not_a_weight()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "goal-scope@example.com", emailVerified: true);
+        using var web = _apiFixture.CreateAuthenticatedClient(userId, "goal-scope@example.com");
+        (await web.PostAsJsonAsync("/api/Goals", new { GoalType = "general", TargetCalories = 2000 })).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var access = await _apiFixture.CreateMcpAccessAsync(userId, ["nutrition:read", "nutrition:write"]);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access.Token);
+
+        var refused = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "record_goal_progress",
+            new { currentWeightKg = 80 }))).Content.ReadFromJsonAsync<JsonRpcResponse>();
+        ExtractErrorMessage(refused).Should().Contain("body measurements");
+
+        var recorded = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "record_goal_progress",
+            new { notes = "Rest day" }))).Content.ReadFromJsonAsync<JsonRpcResponse>();
+        recorded!.Error.Should().BeNull();
+        var history = await web.GetFromJsonAsync<JsonElement>("/api/Goals/progress?days=7");
+        history.GetProperty("progressEntries").EnumerateArray().Should().ContainSingle()
+            .Which.GetProperty("actualWeight").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    #endregion
+
+    #region Trainer tools
+
+    [Fact]
+    public async Task A_coach_lists_their_clients_through_a_connected_app_and_a_person_without_the_trainer_role_cannot()
+    {
+        var coachId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(coachId, "mcp-coach@example.com", emailVerified: true, role: "trainer");
+        var coach = await _apiFixture.CreateMcpAccessAsync(coachId, ["trainer:read"]);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", coach.Token);
+
+        var listed = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "list_trainer_clients", null)))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        listed!.Error.Should().BeNull();
+        ExtractToolResultText(listed).Should().NotContain("do not have access", "the trainer endpoints accept the MCP service credential");
+
+        var personId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(personId, "mcp-not-coach@example.com", emailVerified: true);
+        var person = await _apiFixture.CreateMcpAccessAsync(personId, ["trainer:read"]);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", person.Token);
+        var refused = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "list_trainer_clients", null)))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        (ExtractErrorMessage(refused) ?? ExtractToolResultText(refused)).Should().Be("You do not have access to this.");
+    }
+
+    #endregion
+
     #region get_shopping_list Tool Tests
 
     [Fact]
@@ -585,6 +666,28 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         summary.Should().ContainKey("totalFat");
     }
 
+    [Fact]
+    public async Task AWidgetsTool_AnswersWithStructuredContent_ThatMatchesItsText()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "widget@example.com", emailVerified: true);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+
+        var widget = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "get_nutrition_summary", new { date = DateTime.UtcNow.ToString("yyyy-MM-dd") }));
+        var widgetResponse = await widget.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<JsonElement>(widgetResponse!.Result!.ToString()!);
+
+        (result.TryGetProperty("isError", out var isError) && isError.GetBoolean()).Should().BeFalse(ExtractToolResultText(widgetResponse));
+        var structured = result.GetProperty("structuredContent");
+        structured.GetProperty("totalCalories").ValueKind.Should().Be(JsonValueKind.Number);
+        JsonNode.DeepEquals(JsonNode.Parse(structured.GetRawText()), JsonNode.Parse(ExtractToolResultText(widgetResponse)!)).Should().BeTrue();
+
+        // A tool with no widget keeps its text-only answer.
+        var plain = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "get_daily_nutrition", new { date = DateTime.UtcNow.ToString("yyyy-MM-dd") }));
+        var plainResult = JsonSerializer.Deserialize<JsonElement>((await plain.Content.ReadFromJsonAsync<JsonRpcResponse>())!.Result!.ToString()!);
+        plainResult.TryGetProperty("structuredContent", out var none).Should().BeFalse(none.ToString());
+    }
+
     #endregion
 
     #region search_recipes Tool Tests
@@ -675,7 +778,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            date, mealType = "LUNCH", title = "Chicken and rice"
+            date,
+            mealType = "LUNCH",
+            title = "Chicken and rice"
         }));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var recipes = await _apiFixture.GetRecipesByUserId(userId);
@@ -693,12 +798,16 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
         await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "log_food", new
         {
-            date, foodId = food.Id, mealType = "LUNCH"
+            date,
+            foodId = food.Id,
+            mealType = "LUNCH"
         }));
 
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            date, mealType = "LUNCH", title = "Just rice"
+            date,
+            mealType = "LUNCH",
+            title = "Just rice"
         }));
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         ExtractErrorMessage(jsonResponse!).Should().Contain("at least 2");
@@ -1179,11 +1288,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #region Backend Integration Tests
 
-    [Fact]
-    public async Task BackendIntegration_LogsMcpUsage()
+    [Theory]
+    [InlineData("user")]
+    [InlineData("admin")]
+    public async Task AToolCallThroughAConnection_AppearsUnderUsage_ForAdminsAndOrdinaryUsersAlike(string role)
     {
         var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "integration@example.com", emailVerified: true);
+        var email = $"usage-{role}@example.com";
+        await _apiFixture.SeedUserAsync(userId, email, emailVerified: true, role: role);
         var token = await CreateMcpTokenAsync(userId);
 
         var food = await _apiFixture.SeedFoodAsync("Usage Food", 120, 10, 15, 5);
@@ -1202,19 +1314,15 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result.ToString()!);
         result.Should().ContainKey("content");
 
-        // LogUsageAsync is fire-and-forget in Program.cs: poll until it completes.
-        List<McpUsageLog> logs = [];
-        for (var i = 0; i < 20; i++)
-        {
-            logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
-            if (logs.Count >= 1) break;
-            await Task.Delay(100);
-        }
-        logs.Should().HaveCount(1);
-        logs.Should().OnlyContain(l => l.ToolName == "log_food");
+        // The tool filter in Program.cs awaits LogUsageAsync before it answers, so the call is on the Usage page by now.
+        using var browser = _apiFixture.CreateAuthenticatedClient(userId, email, role);
+        var analytics = await browser.GetFromJsonAsync<JsonElement>("/api/McpConnections/analytics");
+        analytics.GetProperty("overview").GetProperty("totalCalls").GetInt32().Should().Be(1);
+        var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
+        logs.Should().ContainSingle().Which.ToolName.Should().Be("log_food");
     }
 
     [Fact]
@@ -1223,18 +1331,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var userId = Guid.NewGuid();
         var email = $"quota-{userId:N}@example.com";
         await _apiFixture.SeedUserAsync(userId, email, emailVerified: true);
-        using var apiClient = _apiFixture.CreateAuthenticatedClient(userId, email);
-        var createResponse = await apiClient.PostAsJsonAsync("/api/McpTokens", new { Name = "Quota Token" });
-        createResponse.EnsureSuccessStatusCode();
-        var token = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResult>();
-        token.Should().NotBeNull();
+        var access = await _apiFixture.CreateMcpAccessAsync(userId);
 
         for (var call = 0; call < 15; call++)
         {
-            await _apiFixture.SeedMcpUsageLogAsync(token!.Id, userId, "search_foods", success: true, executionTimeMs: 1);
+            await _apiFixture.SeedMcpUsageLogAsync(access.GrantId, userId, "search_foods", success: true, executionTimeMs: 1);
         }
 
-        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token!.PlaintextToken);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access.Token);
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "search_foods", new { search = "test" }));
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
 
@@ -1245,26 +1349,283 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
+    #region Planning flow
+
+    [Fact]
+    public async Task APersonPlansAWeek_LogsAMealFromIt_AndShopsForIt_ThroughMcp()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, _) = await world.PersonAsync("planner");
+        var onion = await world.FoodAsync("Onion", 40, 1.1m, 9, 0.1m);
+        var rice = await world.FoodAsync("Rice", 130, 2.7m, 28, 0.3m);
+        var stew = await world.RecipeAsync(userId, "Stew", 2, false, (onion, 1, "kg", null));
+        var token = await CreateMcpTokenAsync(userId);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var start = new DateOnly(2026, 10, 12);
+
+        var created = await CallToolAsync("create_meal_plan", new
+        {
+            name = "Week",
+            startDate = "2026-10-12",
+            durationDays = 7,
+            rulesJson = """{"targetCalories":2000,"targetProtein":120,"prepStyle":"Batch","batchDays":[0]}""",
+            prepSessionsJson = """[{"dayIndex":0,"title":"Sunday batch"}]""",
+        });
+        var planId = created.GetProperty("id").GetGuid();
+        created.GetProperty("status").GetString().Should().Be("Active");
+
+        var plan = await CallToolAsync("get_meal_plan", new { id = planId });
+        var sessionId = plan.GetProperty("prepSessions")[0].GetProperty("id").GetGuid();
+        plan.GetProperty("rules").GetProperty("targetCalories").GetDecimal().Should().Be(2000);
+
+        var stewEntry = (await CallToolAsync("add_plan_entry", new { mealPlanId = planId, dayIndex = 0, slot = "dinner", kind = "Recipe", recipeId = stew.Id, servings = 1, prepSessionId = sessionId })).GetProperty("id").GetGuid();
+        var riceEntry = (await CallToolAsync("add_plan_entry", new { mealPlanId = planId, dayIndex = 0, slot = "LUNCH", kind = "Food", foodId = rice.Id, grams = 150 })).GetProperty("id").GetGuid();
+        await CallToolAsync("add_plan_entry", new { mealPlanId = planId, dayIndex = 0, slot = "BREAKFAST", kind = "Text", text = "Coffee from the cafe" });
+
+        var day = await CallToolAsync("get_plan_day", new { date = start.ToString("yyyy-MM-dd") });
+        day.GetProperty("planId").GetGuid().Should().Be(planId);
+        day.GetProperty("day").GetProperty("entryCount").GetInt32().Should().Be(3);
+        day.GetProperty("day").GetProperty("loggedCount").GetInt32().Should().Be(0);
+        var entries = day.GetProperty("day").GetProperty("slots").EnumerateArray().SelectMany(s => s.GetProperty("entries").EnumerateArray()).ToList();
+        entries.Single(e => e.GetProperty("id").GetGuid() == riceEntry).GetProperty("nutrition").GetProperty("calories").GetDecimal().Should().Be(195, "150 g of rice at 130 kcal per 100 g");
+        entries.Single(e => e.GetProperty("kind").GetString() == "Text").GetProperty("nutrition").ValueKind.Should().Be(JsonValueKind.Null);
+        entries.Single(e => e.GetProperty("id").GetGuid() == stewEntry).GetProperty("prepSessionId").GetGuid().Should().Be(sessionId);
+        day.GetProperty("day").GetProperty("violations").EnumerateArray().Should().NotBeEmpty("one lunch and a stew are far below 2000 kcal");
+
+        var logged = await CallToolAsync("log_plan_entry", new { mealPlanId = planId, entryId = riceEntry });
+        logged.GetProperty("calories").GetDecimal().Should().Be(195);
+        logged.GetProperty("date").GetString().Should().Be("2026-10-12");
+        logged.GetProperty("mealType").GetString().Should().Be("LUNCH");
+        var dayAfter = await CallToolAsync("get_plan_day", new { date = "2026-10-12" });
+        dayAfter.GetProperty("day").GetProperty("loggedCount").GetInt32().Should().Be(1);
+        (await CallToolAsync("get_plan_day", new { date = "2026-12-24" }, raw: true)).GetString().Should().Contain("No active plan covers that date");
+
+        var generated = await CallToolAsync("generate_shopping_list", new { mealPlanId = planId });
+        var listId = generated.GetProperty("listId").GetGuid();
+        generated.GetProperty("itemCount").GetInt32().Should().Be(3);
+        generated.GetProperty("needsReviewCount").GetInt32().Should().Be(1, "only the text line cannot be converted");
+
+        var list = await CallToolAsync("get_shopping_list", new { id = listId });
+        list.GetProperty("mealPlanId").GetGuid().Should().Be(planId);
+        var items = list.GetProperty("items").EnumerateArray().ToList();
+        items.Should().HaveCount(3);
+        var onionLine = items.Single(i => i.GetProperty("foodId").ValueKind != JsonValueKind.Null && i.GetProperty("foodId").GetGuid() == onion.Id);
+        onionLine.GetProperty("grams").GetDecimal().Should().Be(500, "one of the stew's two servings");
+        onionLine.GetProperty("prepSessionTitle").GetString().Should().Be("Sunday batch");
+        items.Single(i => i.GetProperty("itemName").GetString() == "Coffee from the cafe").GetProperty("needsReview").GetBoolean().Should().BeTrue();
+
+        var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
+        logs.Select(l => l.ToolName).Should().Contain(new[] { "create_meal_plan", "add_plan_entry", "get_plan_day", "log_plan_entry", "generate_shopping_list", "get_shopping_list" });
+        logs.Should().OnlyContain(l => l.Success);
+    }
+
+    #endregion
+
+    #region Telegram notifications
+
+    [Fact]
+    public async Task APersonTurnsOnTelegramNotifications_ThroughMcp_OnlyOnceAChatIsLinked()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, _) = await world.PersonAsync("mcp-telegram");
+        var token = await CreateMcpTokenAsync(userId);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var turnOn = new { body = """{"notifyByTelegram":true}""" };
+
+        var refused = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "update_my_profile", turnOn));
+        ExtractErrorMessage(await refused.Content.ReadFromJsonAsync<JsonRpcResponse>())
+            .Should().Contain("Connect a Telegram chat before turning on Telegram notifications.");
+
+        await world.DbAsync(db =>
+        {
+            db.TelegramLinks.Add(new TelegramLink { Id = Guid.NewGuid(), UserId = userId, TelegramUserId = 3003, LinkedAt = DateTime.UtcNow });
+            return db.SaveChangesAsync();
+        });
+        await CallToolAsync("update_my_profile", turnOn, raw: true);
+
+        (await CallToolAsync("get_my_profile", null)).GetProperty("notifyByTelegram").GetBoolean().Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Demo retest stories
+
+    /// <summary>
+    /// Issue #132: each MCP App reads fields from its tool's structured result. The fields each
+    /// page reads are listed here; a result without one leaves the widget blank on claude.ai.
+    /// </summary>
+    [Fact]
+    public async Task EachWidgetsToolResult_HasTheFieldsItsPageReads()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, client) = await world.PersonAsync("widgets");
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+        // A summary read before the goal exists is cached; setting the goal must show its targets.
+        await StructuredAsync("get_nutrition_summary", new { date = today });
+        await CallToolAsync("create_goal", new { goalType = "general", targetCalories = 2100, targetProteinGrams = 130, targetCarbsGrams = 200, targetFatGrams = 70 });
+        var day = await StructuredAsync("get_nutrition_summary", new { date = today });
+        foreach (var field in new[] { "date", "totalCalories", "totalProtein", "totalCarbs", "totalFat" }) day.TryGetProperty(field, out _).Should().BeTrue(field);
+        day.GetProperty("targetCalories").GetDecimal().Should().Be(2100);
+        day.GetProperty("targetProtein").GetDecimal().Should().Be(130);
+        day.GetProperty("targetCarbs").GetDecimal().Should().Be(200);
+        day.GetProperty("targetFat").GetDecimal().Should().Be(70);
+
+        (await client.PostAsJsonAsync("/api/BodyMeasurements", new { Date = DateTime.UtcNow, WeightKg = 80.5m, WaistCm = 88m })).EnsureSuccessStatusCode();
+        var point = (await StructuredAsync("list_body_measurements", null)).GetProperty("items")[0];
+        foreach (var field in new[] { "date", "weightKg", "bodyFatPercentage", "waistCm", "muscleMassKg" }) point.TryGetProperty(field, out _).Should().BeTrue(field);
+        point.GetProperty("weightKg").GetDecimal().Should().Be(80.5m);
+
+        var planId = (await CallToolAsync("create_meal_plan", new { name = "Week", startDate = today, durationDays = 2 })).GetProperty("id").GetGuid();
+        var plan = await StructuredAsync("get_meal_plan", new { id = planId });
+        foreach (var field in new[] { "id", "name", "status", "startDate", "endDate", "days", "prepSessions", "violations" }) plan.TryGetProperty(field, out _).Should().BeTrue(field);
+        var planDay = plan.GetProperty("days")[0];
+        foreach (var field in new[] { "date", "dayIndex", "slots", "totals", "violations" }) planDay.TryGetProperty(field, out _).Should().BeTrue(field);
+        var todayPlan = await StructuredAsync("get_plan_day", new { date = today });
+        foreach (var field in new[] { "planId", "planName", "date", "day" }) todayPlan.TryGetProperty(field, out _).Should().BeTrue(field);
+        foreach (var field in new[] { "entryCount", "loggedCount", "slots", "totals" }) todayPlan.GetProperty("day").TryGetProperty(field, out _).Should().BeTrue(field);
+    }
+
+    [Fact]
+    public async Task APersonWithNoGoalOrDraft_IsToldThereIsNone()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, $"none-{userId:N}@example.com");
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+
+        var goal = await CallToolAsync("get_current_goal", null);
+        goal.GetProperty("goal").ValueKind.Should().Be(JsonValueKind.Null);
+        goal.GetProperty("message").GetString().Should().Contain("No active goal");
+
+        var draft = await CallToolAsync("get_workout_draft", null);
+        draft.GetProperty("draft").ValueKind.Should().Be(JsonValueKind.Null);
+        draft.GetProperty("message").GetString().Should().Contain("No workout draft");
+    }
+
+    [Fact]
+    public async Task APersonEditsAWorkout_AndSavesADraft_ThroughMcp()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, _) = await world.PersonAsync("workout-edit");
+        var exerciseId = Guid.NewGuid();
+        await world.DbAsync(db =>
+        {
+            db.Exercises.Add(new Exercise { Id = exerciseId, Name = "Bench", Category = "Strength", IsCustom = true, IsApproved = true, CreatedByUserId = userId, CreatedAt = DateTime.UtcNow });
+            return db.SaveChangesAsync();
+        });
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var exercises = JsonSerializer.Serialize(new[] { new { exerciseId, sets = new[] { new { reps = 5, weightKg = 60m, completed = true } } } });
+        var logged = await CallToolAsync("log_workout", new { name = "Push", workoutDate = today, exercisesJson = exercises });
+        var workoutId = logged.GetProperty("id").GetGuid();
+
+        // The body leaves the id out; the argument names the workout.
+        var body = JsonSerializer.Serialize(new { name = "Push day", workoutDate = today, exercises = new[] { new { exerciseId, sets = new[] { new { reps = 3, weightKg = 60m, completed = true } } } } });
+        await CallToolAsync("update_workout", new { id = workoutId, body }, raw: true);
+        (await CallToolAsync("get_workout", new { id = workoutId })).GetProperty("name").GetString().Should().Be("Push day");
+
+        // Epley on 60 kg x 3 is 66: no long decimal tail.
+        var stats = await CallToolAsync("get_workout_stats", new { from = today, to = today });
+        stats.GetProperty("perExercise")[0].GetProperty("points")[0].GetProperty("estimatedOneRepMax").GetRawText().Should().Be("66.0");
+
+        var wrong = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "save_workout_draft", new { payloadJson = """{"name":"Push","exercises":{"exerciseId":"x"}}""" }));
+        ExtractErrorMessage(await wrong.Content.ReadFromJsonAsync<JsonRpcResponse>()).Should().Contain("exercises must be a list");
+        var draft = JsonSerializer.Serialize(new { name = "Push", workoutDate = today, exercises = new[] { new { exerciseId, sets = new[] { new { weightKg = 60 } } } } });
+        await CallToolAsync("save_workout_draft", new { payloadJson = draft }, raw: true);
+        (await CallToolAsync("get_workout_draft", null)).GetProperty("payload").GetString().Should().Contain(exerciseId.ToString());
+    }
+
+    [Fact]
+    public async Task APersonLogsARecipe_AndGetsItsGroupAndEveryRow()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, _) = await world.PersonAsync("recipe-rows");
+        var lentils = await world.FoodAsync("Red lentils", 350, 24, 60, 1);
+        var onion = await world.FoodAsync("Onion", 40, 1.1m, 9, 0.1m);
+        var wot = await world.RecipeAsync(userId, "Misir wot", 4, false, (lentils, 400, "g", null), (onion, 200, "g", null));
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+        var logged = await CallToolAsync("log_meal", new { recipeId = wot.Id, date = today, mealType = "LUNCH", servings = 1 });
+
+        var groupId = logged.GetProperty("groupId").GetGuid();
+        var rows = logged.GetProperty("entryIds").EnumerateArray().Select(e => e.GetGuid()).ToList();
+        rows.Should().HaveCount(2).And.Contain(logged.GetProperty("id").GetGuid());
+        await CallToolAsync("delete_meal_group", new { groupId }, raw: true);
+        (await CallToolAsync("get_food_diary", new { date = today })).GetRawText().Should().NotContain(rows[0].ToString());
+    }
+
+    [Fact]
+    public async Task APersonLogsADayWithOnlyAWeight_AndTheReceiptSaysTheWeightIsIn()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, $"day-weight-{userId:N}@example.com");
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+
+        var receipt = await CallToolAsync("log_day", new { date = DateTime.UtcNow.ToString("yyyy-MM-dd"), weightKg = 79.4m });
+
+        var write = receipt.GetProperty("completed").EnumerateArray().Should().ContainSingle().Subject;
+        write.GetProperty("kind").GetString().Should().Be("measurement");
+        write.GetProperty("includesWeight").GetBoolean().Should().BeTrue();
+    }
+
+    /// <summary>M-05: a household made over a grant that cannot see households would be invisible to it.</summary>
+    [Fact]
+    public async Task AConnectedAppWithoutHouseholdAccess_CannotCreateOrChangeAHousehold()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, client) = await world.PersonAsync("no-households");
+        var home = await world.HouseholdAsync(userId);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer", (await _apiFixture.CreateMcpAccessAsync(userId, householdMode: "none")).Token);
+
+        var created = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "create_household", new { name = "Ghost" }));
+        ExtractErrorMessage(await created.Content.ReadFromJsonAsync<JsonRpcResponse>())
+            .Should().Contain("no household access").And.Contain("Connected apps");
+        var left = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "leave_household", new { householdId = home }));
+        ExtractErrorMessage(await left.Content.ReadFromJsonAsync<JsonRpcResponse>()).Should().Contain("no household access");
+        (await world.DbAsync(db => db.Households.CountAsync())).Should().Be(1);
+
+        // A grant over selected households could not see a new one either.
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer", (await _apiFixture.CreateMcpAccessAsync(userId, householdMode: "selected", households: [home])).Token);
+        var selected = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "create_household", new { name = "Ghost" }));
+        ExtractErrorMessage(await selected.Content.ReadFromJsonAsync<JsonRpcResponse>()).Should().Contain("all households");
+
+        // The web app is not a connected app.
+        (await client.PostAsJsonAsync("/api/Households", new { name = "Second home" })).IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    #endregion
+
     #region Helper Methods
 
-    private async Task<string> CreateMcpTokenAsync(Guid userId)
+    /// <summary>Calls a tool and parses its text as JSON, failing on an error result; <paramref name="raw"/> returns the text itself.</summary>
+    private async Task<JsonElement> CallToolAsync(string name, object? args, bool raw = false)
     {
-        var email = "test-mcp-user@example.com";
-
-        var client = _apiFixture.CreateAuthenticatedClient(userId, email);
-
-        var createResponse = await client.PostAsJsonAsync("/api/McpTokens", new { Name = "Test Token" });
-
-        if (createResponse.StatusCode != HttpStatusCode.Created)
-        {
-            var error = await createResponse.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to create MCP token. Status: {createResponse.StatusCode}, Error: {error}");
-        }
-
-        var createResult = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResult>();
-        createResult.Should().NotBeNull();
-        return createResult!.PlaintextToken;
+        var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", name, args));
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        jsonResponse!.Error.Should().BeNull(jsonResponse.Error?.Message);
+        var result = JsonSerializer.Deserialize<JsonElement>(jsonResponse.Result!.ToString()!);
+        var text = ExtractToolResultText(jsonResponse) ?? string.Empty;
+        (result.TryGetProperty("isError", out var isError) && isError.GetBoolean()).Should().BeFalse($"{name} failed: {text}");
+        return raw ? JsonSerializer.SerializeToElement(text) : JsonSerializer.Deserialize<JsonElement>(text);
     }
+
+    /// <summary>Calls a widget's tool and returns its structuredContent, failing on an error result.</summary>
+    private async Task<JsonElement> StructuredAsync(string name, object? args)
+    {
+        var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", name, args));
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<JsonElement>(jsonResponse!.Result!.ToString()!);
+        (result.TryGetProperty("isError", out var isError) && isError.GetBoolean()).Should().BeFalse(ExtractToolResultText(jsonResponse));
+        return result.GetProperty("structuredContent");
+    }
+
+    private async Task<string> CreateMcpTokenAsync(Guid userId) =>
+        (await _apiFixture.CreateMcpAccessAsync(userId)).Token;
 
     private async Task<Guid> CreateShoppingListAsync(Guid userId, string name)
     {

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from 'next/link';
-import type { SuggestedRecipe } from '@/data/suggestion';
+import Link from "next/link";
+import type { SuggestedRecipe } from "@/data/suggestion";
 
 interface SuggestedRecipesProps {
   user?: {
@@ -13,93 +13,94 @@ interface SuggestedRecipesProps {
   serverError?: string;
 }
 
-export default function SuggestedRecipes({ user, suggestions, serverError }: SuggestedRecipesProps) {
+export default function SuggestedRecipes({
+  user,
+  suggestions,
+  serverError,
+}: SuggestedRecipesProps) {
+  if (serverError) {
+    return (
+      <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+        <p className="text-red-600 dark:text-red-400">{serverError}</p>
+      </div>
+    );
+  }
 
-	if (serverError) {
-		return (
-		<div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-			<p className="text-red-600 dark:text-red-400">{serverError}</p>
-		</div>
-		);
-	}
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+            Suggestions
+          </h1>
+          <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
+            Based on your remaining macros
+          </p>
+        </div>
+        {user && (
+          <Link href="/suggestions/regenerate" className="btn-secondary">
+            Regenerate
+          </Link>
+        )}
+      </div>
 
-	return (
-		<div className="space-y-6">
-			{/* Page Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Suggestions</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Based on your remaining macros</p>
-				</div>
-				{user && (
-					<Link href="/suggestions/regenerate" className="btn-secondary">
-						<i className="ri-refresh-line" />
-						Regenerate
-					</Link>
-				)}
-			</div>
-
-			{!suggestions || suggestions.length === 0 ? (
-				<div className="card p-8 text-center">
-					<div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center mx-auto mb-4">
-						<i className="ri-lightbulb-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
-					</div>
-					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No suggestions yet</h3>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
-						Log more meals to get personalized suggestions.
-					</p>
-					<Link href="/meals" className="btn-primary">
-						<i className="ri-add-line" />
-						Log a Meal
-					</Link>
-				</div>
-			) : (
-				<div className="space-y-4">
-					{suggestions.map((recipe) => (
-						<article key={recipe.title} className="card overflow-hidden p-6">
-							<div className="mb-4">
-								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-									{recipe.title}
-								</h3>
-								<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm">
-									{recipe.description}
-								</p>
-								{recipe.reason && (
-									<p className="mt-2 text-sm text-verdigris-700 dark:text-verdigris-300">
-										{recipe.reason}
-									</p>
-								)}
-							</div>
-							<div className="flex flex-wrap gap-2">
-								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
-									<i className="ri-fire-line" />
-									{recipe.calories} kcal
-								</span>
-								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
-									<i className="ri-heart-pulse-line" />
-									{recipe.protein}g protein
-								</span>
-								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
-									<i className="ri-bread-line" />
-									{recipe.carbs}g carbs
-								</span>
-								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
-									<i className="ri-drop-line" />
-									{recipe.fat}g fat
-								</span>
-							</div>
-							{/* A proposal, not a recipe. There is no id to link to, and
+      {!suggestions || suggestions.length === 0 ? (
+        <div className="card p-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
+            No suggestions yet
+          </h3>
+          <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
+            Log more meals to get personalized suggestions.
+          </p>
+          <Link href="/meals" className="btn-primary">
+            Log a Meal
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {suggestions.map((recipe) => (
+            <article key={recipe.title} className="card p-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
+                  {recipe.title}
+                </h3>
+                <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm">
+                  {recipe.description}
+                </p>
+                {recipe.reason && (
+                  <p className="mt-2 text-sm text-verdigris-700 dark:text-verdigris-300">
+                    {recipe.reason}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
+                  {recipe.calories} kcal
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
+                  {recipe.protein}g protein
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
+                  {recipe.carbs}g carbs
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
+                  {recipe.fat}g fat
+                </span>
+              </div>
+              {/* A proposal, not a recipe. There is no id to link to, and
 							    inventing one would render a link that 404s. */}
-							<Link
-								href={`/recipes?search=${encodeURIComponent(recipe.title)}`}
-								className="btn-ghost btn-sm mt-4 inline-flex"
-							>
-								Find a recipe for this
-							</Link>
-						</article>
-					))}
-				</div>
-			)}
-		</div>
-	);
+              <Link
+                href={`/recipes?search=${encodeURIComponent(recipe.title)}`}
+                className="btn-ghost btn-sm mt-4"
+              >
+                Find a recipe for this
+              </Link>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

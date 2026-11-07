@@ -9,6 +9,13 @@ public enum AiCallOutcome
     ProviderError = 1,
     Timeout = 2,
     InvalidResponse = 3,
+
+    /// <summary>
+    /// An allowance refused the call before any provider was asked. Written with
+    /// no tokens and no cost so limit hits can be counted; never counted as a
+    /// request against any allowance.
+    /// </summary>
+    Refused = 5,
 }
 
 /// <summary>

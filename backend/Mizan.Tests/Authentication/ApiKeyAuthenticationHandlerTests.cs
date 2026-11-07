@@ -38,7 +38,8 @@ public class ApiKeyAuthenticationHandlerTests
             _options.Object,
             _loggerFactory.Object,
             _encoder.Object,
-            _userStatusService.Object);
+            _userStatusService.Object,
+            Mock.Of<IMizanDbContext>());
     }
 
     [Fact]
@@ -96,7 +97,7 @@ public class ApiKeyAuthenticationHandlerTests
     }
 
     [Fact]
-    public async Task HandleAuthenticateAsync_RejectsAdminImpersonationWithRegularKey()
+    public async Task HandleAuthenticateAsync_ActsForAnAdminAsAnOrdinaryUser_WithTheRegularKey()
     {
         var userId = Guid.NewGuid();
         var context = new DefaultHttpContext();
@@ -108,8 +109,21 @@ public class ApiKeyAuthenticationHandlerTests
 
         var result = await _handler.AuthenticateAsync();
 
-        Assert.False(result.Succeeded);
+        Assert.True(result.Succeeded);
+        Assert.Equal(userId.ToString(), result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        Assert.False(result.Principal?.IsInRole("admin"));
+        Assert.True(result.Principal?.IsInRole("user"));
     }
+
+    [Theory]
+    [InlineData("admin", true, "admin")]
+    [InlineData("admin", false, "user")]
+    [InlineData("Admin", false, "user")]
+    [InlineData("trainer", false, "trainer")]
+    [InlineData("trainer", true, "trainer")]
+    [InlineData("user", false, "user")]
+    public void ServiceRole_CarriesAdminOnlyWithTheAdminKey(string accountRole, bool adminKey, string expected) =>
+        Assert.Equal(expected, ApiKeyAuthenticationHandler.ServiceRole(accountRole, adminKey));
 
     [Fact]
     public async Task HandleAuthenticateAsync_AllowsAdminImpersonationWithAdminKey()

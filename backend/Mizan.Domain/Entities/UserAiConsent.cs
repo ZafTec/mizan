@@ -39,7 +39,13 @@ public class UserAiConsent
     /// <summary>The default for a user who has never been asked: nothing at all.</summary>
     public static UserAiConsent None(Guid userId) => new() { UserId = userId };
 
-    public bool Allows(DataAxis axis) => Enabled && axis switch
+    /// <summary>
+    /// The axis whose switches govern this one. Planning has none of its own and borrows
+    /// nutrition's, so a refusal for a plan names nutrition: that is the switch the person turns on.
+    /// </summary>
+    public static DataAxis SwitchFor(DataAxis axis) => axis == DataAxis.Planning ? DataAxis.Nutrition : axis;
+
+    public bool Allows(DataAxis axis) => Enabled && SwitchFor(axis) switch
     {
         DataAxis.Nutrition => ShareNutrition,
         DataAxis.Training => ShareTraining,
@@ -53,7 +59,7 @@ public class UserAiConsent
     /// shown, and recording a meal someone dictated needs no sight of their
     /// history. The two grants stand on their own.
     /// </summary>
-    public bool AllowsWrite(DataAxis axis) => AllowWrites && axis switch
+    public bool AllowsWrite(DataAxis axis) => AllowWrites && SwitchFor(axis) switch
     {
         DataAxis.Nutrition => WriteNutrition,
         DataAxis.Training => WriteTraining,

@@ -130,20 +130,19 @@ public sealed class GetWorkoutStatsQueryHandler : IRequestHandler<GetWorkoutStat
                 .Select(workout =>
             {
                 var top = workout.Max(x => x.s.WeightKg ?? 0);
-                var rep = workout.OrderByDescending(x => x.s.WeightKg).First().s.Reps ?? 0;
                 var isPersonalRecord = top > 0 && (!priorBest.HasValue || top > priorBest.Value);
                 if (isPersonalRecord)
                 {
                     priorBest = top;
                     personalRecordCount++;
                 }
-                return new ExercisePoint(workout.Key.WorkoutDate, top, top * (1 + rep / 30m), isPersonalRecord);
+                return new ExercisePoint(workout.Key.WorkoutDate, top, Mizan.Domain.OneRepMax.Best(workout.Select(x => (x.s.WeightKg, x.s.Reps))), isPersonalRecord);
             }).ToList();
             return new ExerciseStatsDto(group.Key.ExerciseId, group.Key.Name, points);
         }).ToList();
         var muscle = allSets.Where(x => !string.IsNullOrWhiteSpace(x.e.Exercise.MuscleGroup)).GroupBy(x => x.e.Exercise.MuscleGroup!).Select(g => new MuscleGroupSetsDto(g.Key, g.Count())).ToList();
         var maxSession = workouts.Select(w => w.Exercises.SelectMany(e => e.Sets).Sum(s => (s.WeightKg ?? 0) * (s.Reps ?? 0))).DefaultIfEmpty(0).Max();
-        return new WorkoutStatsDto(workouts.Count / weeks, allSets.Count / weeks, workouts.Count == 0 ? 0 : (decimal)workouts.Average(w => w.DurationMinutes ?? 0), volume, personalRecordCount, heaviest, maxSession, perExercise, muscle);
+        return new WorkoutStatsDto(Math.Round(workouts.Count / weeks, 2), Math.Round(allSets.Count / weeks, 2), workouts.Count == 0 ? 0 : Math.Round((decimal)workouts.Average(w => w.DurationMinutes ?? 0), 1), volume, personalRecordCount, heaviest, maxSession, perExercise, muscle);
     }
 }
 
@@ -153,23 +152,22 @@ public sealed class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWor
     private readonly ITrainerAuthorizationService _authorization;
     private readonly IDataAccessPolicy _policy;
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUser;
 
     public GetClientWorkoutsQueryHandler(
-        ITrainerAuthorizationService authorization, IDataAccessPolicy policy, IMediator mediator)
+        ITrainerAuthorizationService authorization, IDataAccessPolicy policy, IMediator mediator, ICurrentUserService currentUser)
     {
         _authorization = authorization;
         _policy = policy;
         _mediator = mediator;
+        _currentUser = currentUser;
     }
 
     public async Task<Common.PagedResult<WorkoutSummaryDto>> Handle(GetClientWorkoutsQuery request, CancellationToken ct)
     {
         var relationship = await _authorization.GetRelationshipForCurrentTrainerAndClientAsync(request.ClientId, true, ct);
-        if (!await _policy.CanReadAsync(
-                relationship.TrainerId, request.ClientId, DataAxis.Training, AccessPurpose.Display, ct))
-        {
-            throw new ForbiddenAccessException("Workout access is disabled");
-        }
+        await ClientReadAccess.EnsureAsync(_policy, _currentUser, relationship.TrainerId, request.ClientId,
+            DataAxis.Training, "Workout access is disabled", ct);
         return await _mediator.Send(new GetWorkoutsQuery { UserId = request.ClientId, Page = request.Page, PageSize = request.PageSize }, ct);
     }
 }

@@ -1,7 +1,10 @@
-﻿"use client";
+"use client";
 
-import { Plus, Repeat2, ArrowRight } from "lucide-react";
+import { RemindMeButton } from "@/components/reminders/RemindMeButton";
 import type { WorkoutSummaryDto, WorkoutTemplateDto } from "@/types/workout";
+
+const START_ROW =
+  "flex min-h-24 w-full items-center gap-5 px-4 py-[22px] text-left hover:bg-muted [&>svg]:shrink-0 [&>svg]:text-muted-foreground";
 
 export default function StartWorkoutPanel({
   templates,
@@ -19,29 +22,22 @@ export default function StartWorkoutPanel({
   return (
     <div className="space-y-8">
       <div className="border-y divide-y">
-        <button className="workout-start-row" onClick={onEmpty}>
-          <Plus size={22} />
+        <button className={START_ROW} onClick={onEmpty}>
           <span className="flex-1">
             <span className="block font-semibold">Empty workout</span>
-            <span className="block text-sm log-muted mt-1">
+            <span className="block text-sm text-muted-foreground mt-1">
               Add exercises and record sets as you train.
             </span>
           </span>
-          <ArrowRight size={17} />
         </button>
         {lastWorkout && (
-          <button
-            className="workout-start-row"
-            onClick={() => onRepeat(lastWorkout)}
-          >
-            <Repeat2 size={22} />
+          <button className={START_ROW} onClick={() => onRepeat(lastWorkout)}>
             <span className="flex-1">
               <span className="block font-semibold">Repeat last workout</span>
-              <span className="block text-sm log-muted mt-1">
+              <span className="block text-sm text-muted-foreground mt-1">
                 {lastWorkout.name || "Previous workout"}
               </span>
             </span>
-            <ArrowRight size={17} />
           </button>
         )}
       </div>
@@ -50,25 +46,33 @@ export default function StartWorkoutPanel({
         {templates.length ? (
           <div className="border-t divide-y">
             {templates.map((template) => (
-              <button
+              <div
                 key={template.id}
-                className="workout-start-row"
-                onClick={() => onTemplate(template.id)}
+                className="flex items-center gap-2 pr-4 hover:bg-muted"
               >
-                <span className="flex-1">
-                  <span className="block font-medium">{template.name}</span>
-                  {template.programName && (
-                    <span className="text-sm log-muted mt-1">
-                      {template.programName}
-                    </span>
-                  )}
-                </span>
-                <ArrowRight size={17} />
-              </button>
+                <button
+                  className={`${START_ROW} hover:bg-transparent`}
+                  onClick={() => onTemplate(template.id)}
+                >
+                  <span className="flex-1">
+                    <span className="block font-medium">{template.name}</span>
+                    {template.programName && (
+                      <span className="text-sm text-muted-foreground mt-1">
+                        {template.programName}
+                      </span>
+                    )}
+                  </span>
+                </button>
+                <RemindMeButton
+                  heading={`Remind me to train: ${template.name}`}
+                  base={{ kind: "workout", workoutTemplateId: template.id }}
+                  className="shrink-0"
+                />
+              </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm log-muted">
+          <p className="text-sm text-muted-foreground">
             No saved templates yet. Start an empty workout to build your
             session.
           </p>

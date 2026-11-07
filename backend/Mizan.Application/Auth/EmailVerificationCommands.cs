@@ -8,7 +8,10 @@ using Mizan.Domain.Identity;
 
 namespace Mizan.Application.Auth;
 
-public record VerifyEmailCommand(string Token) : IRequest<Unit>;
+public record VerifyEmailCommand(string Token) : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Verified = true };
+}
 
 public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Unit>
 {
@@ -49,16 +52,16 @@ public class ResendVerificationCommandValidator : AbstractValidator<ResendVerifi
 public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificationCommand, Unit>
 {
     private readonly IMizanDbContext _context;
-    private readonly IOutbox _outbox;
+    private readonly IEmailQueue _emails;
     private readonly IAppUrls _urls;
 
     public ResendVerificationCommandHandler(
         IMizanDbContext context,
-        IOutbox outbox,
+        IEmailQueue emails,
         IAppUrls urls)
     {
         _context = context;
-        _outbox = outbox;
+        _emails = emails;
         _urls = urls;
     }
 
@@ -79,7 +82,7 @@ public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificati
             cancellationToken);
 
         await AuthEmailDelivery.QueueAsync(
-            _outbox,
+            _emails,
             AuthEmails.Verification(user.Email, user.Name, _urls.VerifyEmail(token)),
             user.Id,
             "verify",

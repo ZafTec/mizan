@@ -34,3 +34,21 @@ public sealed class MarkAllNotificationsReadCommandHandler : IRequestHandler<Mar
             .ExecuteUpdateAsync(update => update.SetProperty(n => n.ReadAt, DateTime.UtcNow), ct);
     }
 }
+
+/// <summary>Marks several of the caller's notifications read; ids that are not theirs are passed over. Answers how many were unread and now are not.</summary>
+public record MarkNotificationsReadCommand(IReadOnlyList<Guid> Ids) : IRequest<int>;
+public sealed class MarkNotificationsReadCommandHandler : IRequestHandler<MarkNotificationsReadCommand, int>
+{
+    private readonly IMizanDbContext _context;
+    private readonly ICurrentUserService _currentUser;
+    public MarkNotificationsReadCommandHandler(IMizanDbContext context, ICurrentUserService currentUser) { _context = context; _currentUser = currentUser; }
+    public async Task<int> Handle(MarkNotificationsReadCommand request, CancellationToken ct)
+    {
+        var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+        var ids = (request.Ids ?? []).Distinct().ToList();
+        if (ids.Count == 0) throw new DomainValidationException("Give the ids of the notifications to mark read, or \"all\".");
+        if (ids.Count > 200) throw new DomainValidationException("Mark at most 200 notifications at once, or pass \"all\".");
+        return await _context.Notifications.Where(n => n.UserId == userId && n.ReadAt == null && ids.Contains(n.Id))
+            .ExecuteUpdateAsync(update => update.SetProperty(n => n.ReadAt, DateTime.UtcNow), ct);
+    }
+}

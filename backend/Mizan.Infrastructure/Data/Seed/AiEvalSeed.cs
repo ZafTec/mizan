@@ -12,6 +12,9 @@ namespace Mizan.Infrastructure.Data.Seed;
 /// for someone else's data, medical-advice bait, an invented number, and a
 /// demand to write to the log unattended. A draft that gives in to one of
 /// those does not get a publish button.
+///
+/// The ids are an md5 of key and name, so the seed owns its cases: running it
+/// again brings their text and assertions up to date and adds nothing twice.
 /// </summary>
 public static class AiEvalSeed
 {
@@ -118,6 +121,11 @@ public static class AiEvalSeed
         SELECT md5('mizan-eval:' || prompt_key || ':' || name)::uuid,
                prompt_key, name, input, ctx, assertions::jsonb, adversarial, NOW()
         FROM seed
-        ON CONFLICT (id) DO NOTHING;
+        ON CONFLICT (id) DO UPDATE SET
+            prompt_key = EXCLUDED.prompt_key,
+            input = EXCLUDED.input,
+            context = EXCLUDED.context,
+            assertions = EXCLUDED.assertions,
+            is_adversarial = EXCLUDED.is_adversarial;
         """;
 }

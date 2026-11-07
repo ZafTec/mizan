@@ -9,14 +9,17 @@ public record CreateHouseholdCommand(string Name, Guid CreatorUserId) : IRequest
 public class CreateHouseholdCommandHandler : IRequestHandler<CreateHouseholdCommand, Guid>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public CreateHouseholdCommandHandler(IMizanDbContext context)
+    public CreateHouseholdCommandHandler(IMizanDbContext context, IHouseholdAccess households)
     {
         _context = context;
+        _households = households;
     }
 
     public async Task<Guid> Handle(CreateHouseholdCommand request, CancellationToken cancellationToken)
     {
+        _households.EnsureGrantCovers(null);
         var household = new Household
         {
             Id = Guid.NewGuid(),

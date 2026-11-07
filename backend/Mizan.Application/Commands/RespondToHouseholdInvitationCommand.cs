@@ -38,11 +38,13 @@ public class RespondToHouseholdInvitationCommandValidator : AbstractValidator<Re
 public class RespondToHouseholdInvitationCommandHandler : IRequestHandler<RespondToHouseholdInvitationCommand, RespondToHouseholdInvitationResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly INotificationWriter? _notifications;
 
-    public RespondToHouseholdInvitationCommandHandler(IMizanDbContext context, INotificationWriter? notifications = null)
+    public RespondToHouseholdInvitationCommandHandler(IMizanDbContext context, IHouseholdAccess households, INotificationWriter? notifications = null)
     {
         _context = context;
+        _households = households;
         _notifications = notifications;
     }
 
@@ -54,6 +56,8 @@ public class RespondToHouseholdInvitationCommandHandler : IRequestHandler<Respon
         {
             return new RespondToHouseholdInvitationResult { Success = false, Message = "Invitation not found." };
         }
+
+        _households.EnsureGrantCovers(invitation.HouseholdId);
 
         if (invitation.Status != "pending")
         {

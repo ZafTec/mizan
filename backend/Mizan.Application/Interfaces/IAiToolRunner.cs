@@ -1,6 +1,14 @@
 using Mizan.Application.Ai.Tools;
+using Mizan.Contracts.Ai;
 
 namespace Mizan.Application.Interfaces;
+
+/// <summary>
+/// What one tool call did, and the checked cards it produced. <c>ConsentRequired</c> is set when
+/// the call was refused because the person has not allowed that axis.
+/// </summary>
+public record AiToolRun(
+    AiToolInvocation Invocation, IReadOnlyList<AiCardDto> Cards, AiConsentRequirement? ConsentRequired = null);
 
 /// <summary>
 /// Runs one allowlisted tool call as the calling user.
@@ -12,6 +20,14 @@ namespace Mizan.Application.Interfaces;
 /// </summary>
 public interface IAiToolRunner
 {
-    Task<AiToolInvocation> RunAsync(
+    /// <summary>The chat assistant's tools for this user: the task tools' assistant view (<see cref="AiToolCatalogue.Assistant"/>).</summary>
+    IReadOnlyList<AiToolSpec> AssistantTools(Guid userId);
+
+    /// <summary>One chat assistant call: a task tool, held to the person's consent on the mode's axis, with its cards after each passed <see cref="Ai.AiCardValidator"/>.</summary>
+    Task<AiToolRun> RunAssistantAsync(
+        AiToolCall call, AiToolContext context, CancellationToken cancellationToken = default);
+
+    /// <summary>One onboarding call, from <see cref="AiToolCatalogue.Onboarding"/>.</summary>
+    Task<AiToolInvocation> RunOnboardingAsync(
         AiToolCall call, AiToolContext context, CancellationToken cancellationToken = default);
 }

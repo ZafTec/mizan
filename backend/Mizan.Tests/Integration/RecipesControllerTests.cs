@@ -38,7 +38,11 @@ public class RecipesControllerTests(ApiTestFixture fixture)
 
         var updated = await client.PutAsJsonAsync($"/api/Recipes/{id}", new
         {
-            id, title = "Updated Bowl", servings = 3, isPublic = true, instructions = "Cook, then serve",
+            id,
+            title = "Updated Bowl",
+            servings = 3,
+            isPublic = true,
+            instructions = "Cook, then serve",
             ingredients = new[] { new { foodId = food.Id, ingredientText = "Chicken Breast", amount = 300, unit = "g" } }
         });
         updated.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -69,7 +73,10 @@ public class RecipesControllerTests(ApiTestFixture fixture)
 
         (await client.PutAsJsonAsync($"/api/Recipes/{id}", new
         {
-            id, title = "Imported Bowl", servings = 2, isPublic = false,
+            id,
+            title = "Imported Bowl",
+            servings = 2,
+            isPublic = false,
             ingredients = new object[]
             {
                 new { foodId = food.Id, ingredientText = "400g chicken", amount = 400, unit = "g" },
@@ -90,7 +97,10 @@ public class RecipesControllerTests(ApiTestFixture fixture)
 
         (await client.PutAsJsonAsync($"/api/Recipes/{id}", new
         {
-            id, title = "Imported Bowl", servings = 2, isPublic = false,
+            id,
+            title = "Imported Bowl",
+            servings = 2,
+            isPublic = false,
             ingredients = new object[]
             {
                 new { foodId = food.Id, ingredientText = "400g chicken", amount = 400, unit = "g" },
@@ -137,7 +147,9 @@ public class RecipesControllerTests(ApiTestFixture fixture)
         (await client.GetFromJsonAsync<PagedResult<RecipeDto>>("/api/Recipes?favoritesOnly=true"))!.Items.Should().BeEmpty();
         var updated = await client.PutAsJsonAsync($"/api/Recipes/{recipe.Id}", new
         {
-            id = recipe.Id, title = "Hack", servings = 1,
+            id = recipe.Id,
+            title = "Hack",
+            servings = 1,
             ingredients = new[] { new { foodId = food.Id, ingredientText = "Rice", amount = 100, unit = "g" } }
         });
         updated.StatusCode.Should().Be(HttpStatusCode.BadRequest);

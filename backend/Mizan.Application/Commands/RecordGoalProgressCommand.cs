@@ -1,22 +1,36 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Queries;
+using Mizan.Contracts.Mcp;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Streaks;
 
 namespace Mizan.Application.Commands;
 
+/// <summary>
+/// A day's check-in against the active goal (<see cref="Mizan.Contracts.Users.RecordGoalProgressRequest"/>).
+/// An actual the caller leaves out comes from that day's diary, and a weight left out from that day's body
+/// measurement, so no surface adds anything up and a check-in never records zero for a day that has food.
+/// </summary>
 public record RecordGoalProgressCommand : IRequest<RecordGoalProgressResult>
 {
-    public int ActualCalories { get; init; }
-    public decimal ActualProteinGrams { get; init; }
-    public decimal ActualCarbsGrams { get; init; }
-    public decimal ActualFatGrams { get; init; }
+    public decimal? ActualCalories { get; init; }
+    public decimal? ActualProteinGrams { get; init; }
+    public decimal? ActualCarbsGrams { get; init; }
+    public decimal? ActualFatGrams { get; init; }
+    /// <summary>Kilograms.</summary>
     public decimal? ActualWeight { get; init; }
+    /// <summary>Defaults to today in the person's time zone.</summary>
     public DateOnly? Date { get; init; }
     public string? Notes { get; init; }
 }
 
-public record RecordGoalProgressResult(bool Success, string? Message = null, Guid? Id = null);
+public record RecordGoalProgressResult(bool Success, string? Message = null, Guid? Id = null)
+{
+    /// <summary>What was stored, so the caller can say it back.</summary>
+    public GoalProgressEntryDto? Entry { get; init; }
+}
 
 public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressCommand, RecordGoalProgressResult>
 {
@@ -41,7 +55,16 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
 
         var userId = userIdNullable.Value;
 
-        // Get user's active goal
+        // A weight is body data. A connected app allowed only nutrition may record the day's food, not a weight.
+        if (request.ActualWeight.HasValue && _currentUserService.Grant is { } grant && !grant.Allows(McpScopes.BodyWrite))
+        {
+            return new RecordGoalProgressResult(false,
+                "Recording a weight needs permission to change body measurements. Allow it under Connected apps, or leave the weight out.");
+        }
+
+        if (request.ActualWeight is <= 0 or > 700)
+            return new RecordGoalProgressResult(false, "Weight must be between 0 and 700 kg.");
+
         var activeGoal = await _context.UserGoals
             .Where(g => g.UserId == userId && g.IsActive)
             .FirstOrDefaultAsync(cancellationToken);
@@ -51,47 +74,68 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
             return new RecordGoalProgressResult(false, "No active goal found. Please create a goal first.");
         }
 
-        var date = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var zone = await _context.Users.Where(u => u.Id == userId).Select(u => u.TimeZoneId).FirstOrDefaultAsync(cancellationToken);
+        var date = request.Date ?? StreakClock.Today(zone, DateTimeOffset.UtcNow);
 
-        // Check if progress already exists for this date
-        var existingProgress = await _context.GoalProgress
+        var diary = await _context.FoodDiaryEntries
+            .Where(e => e.UserId == userId && e.EntryDate == date)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Calories = g.Sum(e => e.Calories ?? 0),
+                Protein = g.Sum(e => e.ProteinGrams ?? 0),
+                Carbs = g.Sum(e => e.CarbsGrams ?? 0),
+                Fat = g.Sum(e => e.FatGrams ?? 0),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var weight = request.ActualWeight ?? await _context.BodyMeasurements
+            .Where(m => m.UserId == userId && m.MeasurementDate == date && m.WeightKg != null)
+            .OrderByDescending(m => m.CreatedAt)
+            .Select(m => m.WeightKg)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var progress = await _context.GoalProgress
             .FirstOrDefaultAsync(p => p.UserId == userId && p.Date == date, cancellationToken);
+        var updating = progress is not null;
 
-        if (existingProgress != null)
+        if (progress is null)
         {
-            // Update existing progress
-            existingProgress.ActualCalories = request.ActualCalories;
-            existingProgress.ActualProteinGrams = request.ActualProteinGrams;
-            existingProgress.ActualCarbsGrams = request.ActualCarbsGrams;
-            existingProgress.ActualFatGrams = request.ActualFatGrams;
-            existingProgress.ActualWeight = request.ActualWeight;
-            existingProgress.Notes = request.Notes;
-
-            await _context.SaveChangesAsync(cancellationToken);
-            if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken, ["goal_progress_logged"]);
-            return new RecordGoalProgressResult(true, "Progress updated successfully", existingProgress.Id);
+            progress = new GoalProgress
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Date = date,
+                CreatedAt = DateTime.UtcNow,
+            };
+            _context.GoalProgress.Add(progress);
         }
 
-        // Create new progress record
-        var progress = new GoalProgress
-        {
-            Id = Guid.NewGuid(),
-            UserGoalId = activeGoal.Id,
-            UserId = userId,
-            ActualCalories = request.ActualCalories,
-            ActualProteinGrams = request.ActualProteinGrams,
-            ActualCarbsGrams = request.ActualCarbsGrams,
-            ActualFatGrams = request.ActualFatGrams,
-            ActualWeight = request.ActualWeight,
-            Date = date,
-            Notes = request.Notes,
-            CreatedAt = DateTime.UtcNow
-        };
+        progress.UserGoalId = activeGoal.Id;
+        progress.ActualCalories = request.ActualCalories ?? diary?.Calories ?? 0;
+        progress.ActualProteinGrams = request.ActualProteinGrams ?? diary?.Protein ?? 0;
+        progress.ActualCarbsGrams = request.ActualCarbsGrams ?? diary?.Carbs ?? 0;
+        progress.ActualFatGrams = request.ActualFatGrams ?? diary?.Fat ?? 0;
+        // A check-in without a weight keeps the one already recorded for the day.
+        progress.ActualWeight = weight ?? progress.ActualWeight;
+        progress.Notes = request.Notes ?? progress.Notes;
 
-        _context.GoalProgress.Add(progress);
         await _context.SaveChangesAsync(cancellationToken);
         if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken, ["goal_progress_logged"]);
 
-        return new RecordGoalProgressResult(true, "Progress recorded successfully", progress.Id);
+        return new RecordGoalProgressResult(true, updating ? "Progress updated successfully" : "Progress recorded successfully", progress.Id)
+        {
+            Entry = new GoalProgressEntryDto
+            {
+                Id = progress.Id,
+                Date = progress.Date,
+                ActualCalories = progress.ActualCalories,
+                ActualProteinGrams = progress.ActualProteinGrams,
+                ActualCarbsGrams = progress.ActualCarbsGrams,
+                ActualFatGrams = progress.ActualFatGrams,
+                ActualWeight = progress.ActualWeight,
+                Notes = progress.Notes,
+            },
+        };
     }
 }

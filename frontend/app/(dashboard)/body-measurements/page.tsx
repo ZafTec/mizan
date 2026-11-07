@@ -1,204 +1,285 @@
 import { getBodyMeasurements } from "@/data/bodyMeasurement";
 import { getCurrentGoal, getGoalHistory } from "@/data/goal";
 import { getUserServer } from "@/helper/session";
-import AddMeasurementForm from "./AddMeasurementForm";
+import { LogEntryButton } from "@/components/logging/LogEntryButton";
 import DeleteMeasurementButton from "./DeleteMeasurementButton";
+import { RemindMeButton } from "@/components/reminders/RemindMeButton";
 import MeasurementChart from "./MeasurementChart";
-import { DataTable, readPage, readSort, type Column } from "@/components/ui/data-table";
+import {
+  DataTable,
+  readPage,
+  readSort,
+  type Column,
+} from "@/components/ui/data-table";
 
 export const dynamic = "force-dynamic";
 
-type Measurement = Awaited<ReturnType<typeof getBodyMeasurements>>["bodyMeasurements"][number];
+type Measurement = Awaited<
+  ReturnType<typeof getBodyMeasurements>
+>["bodyMeasurements"][number];
 
-/** Every measurement is optional, and an em dash reads better than a zero. */
-const unit = (value: number | null | undefined, suffix: string) =>
-	value ? `${value} ${suffix}` : "—";
+/** One decimal, never the raw database value; an em dash where nothing was taken. */
+const num = (value: number | null | undefined, digits = 1) =>
+  value === null || value === undefined
+    ? null
+    : Number(value).toFixed(digits).replace(/\.0$/, "");
+const unit = (value: number | null | undefined, suffix: string) => {
+  const text = num(value);
+  return text === null ? "—" : `${text} ${suffix}`;
+};
 
 const MEASUREMENT_COLUMNS: Column<Measurement>[] = [
-	{
-		id: "date",
-		header: "Date",
-		sortKey: "Date",
-		cell: (m) => (
-			<span className="whitespace-nowrap tabular-nums">
-				{new Date(m.date).toLocaleDateString()}
-			</span>
-		),
-	},
-	{ id: "weight", header: "Weight", sortKey: "WeightKg", cell: (m) => unit(m.weightKg, "kg") },
-	{
-		id: "fat",
-		header: "Body fat",
-		cell: (m) => (m.bodyFatPercentage ? `${m.bodyFatPercentage}%` : "—"),
-	},
-	{ id: "muscle", header: "Muscle", secondary: true, cell: (m) => unit(m.muscleMassKg, "kg") },
-	{ id: "waist", header: "Waist", secondary: true, cell: (m) => unit(m.waistCm, "cm") },
-	{ id: "hips", header: "Hips", secondary: true, cell: (m) => unit(m.hipsCm, "cm") },
-	{ id: "chest", header: "Chest", secondary: true, cell: (m) => unit(m.chestCm, "cm") },
-	{ id: "larm", header: "L arm", secondary: true, cell: (m) => unit(m.leftArmCm, "cm") },
-	{ id: "rarm", header: "R arm", secondary: true, cell: (m) => unit(m.rightArmCm, "cm") },
-	{ id: "lthigh", header: "L thigh", secondary: true, cell: (m) => unit(m.leftThighCm, "cm") },
-	{ id: "rthigh", header: "R thigh", secondary: true, cell: (m) => unit(m.rightThighCm, "cm") },
-	{
-		id: "notes",
-		header: "Notes",
-		secondary: true,
-		cell: (m) => <span className="line-clamp-1 max-w-[16rem]">{m.notes || "—"}</span>,
-	},
-	{
-		id: "actions",
-		header: "",
-		align: "right",
-		width: "1%",
-		cell: (m) => <DeleteMeasurementButton id={m.id} />,
-	},
+  {
+    id: "date",
+    header: "Date",
+    sortKey: "Date",
+    cell: (m) => (
+      <span className="whitespace-nowrap tabular-nums">
+        {new Date(m.date).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}
+      </span>
+    ),
+  },
+  {
+    id: "weight",
+    header: "Weight",
+    sortKey: "WeightKg",
+    align: "right",
+    cell: (m) => unit(m.weightKg, "kg"),
+  },
+  {
+    id: "fat",
+    header: "Body fat",
+    align: "right",
+    cell: (m) =>
+      num(m.bodyFatPercentage) === null ? "—" : `${num(m.bodyFatPercentage)}%`,
+  },
+  {
+    id: "muscle",
+    header: "Muscle",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.muscleMassKg, "kg"),
+  },
+  {
+    id: "waist",
+    header: "Waist",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.waistCm, "cm"),
+  },
+  {
+    id: "hips",
+    header: "Hips",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.hipsCm, "cm"),
+  },
+  {
+    id: "chest",
+    header: "Chest",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.chestCm, "cm"),
+  },
+  {
+    id: "larm",
+    header: "L arm",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.leftArmCm, "cm"),
+  },
+  {
+    id: "rarm",
+    header: "R arm",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.rightArmCm, "cm"),
+  },
+  {
+    id: "lthigh",
+    header: "L thigh",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.leftThighCm, "cm"),
+  },
+  {
+    id: "rthigh",
+    header: "R thigh",
+    align: "right",
+    secondary: true,
+    cell: (m) => unit(m.rightThighCm, "cm"),
+  },
+  {
+    id: "notes",
+    header: "Notes",
+    secondary: true,
+    cell: (m) => (
+      <span className="line-clamp-1 max-w-[16rem]">{m.notes || "—"}</span>
+    ),
+  },
+  {
+    id: "actions",
+    header: "",
+    align: "right",
+    width: "1%",
+    cell: (m) => <DeleteMeasurementButton id={m.id} />,
+  },
 ];
 
-function getDelta(
-	latest: number | null | undefined,
-	previous: number | null | undefined,
-): { value: string; positive: boolean } | null {
-	if (!latest || !previous) return null;
-	const diff = latest - previous;
-	return { value: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}`, positive: diff > 0 };
+/** "−0.2 since last" as words, so the direction is readable without a colour. */
+function since(
+  latest: number | null | undefined,
+  previous: number | null | undefined,
+  suffix: string,
+) {
+  if (
+    latest === null ||
+    latest === undefined ||
+    previous === null ||
+    previous === undefined
+  )
+    return null;
+  const diff = Number(latest) - Number(previous);
+  if (Math.abs(diff) < 0.05) return "No change since last";
+  return `${diff > 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} ${suffix} since last`;
 }
 
+type Fact = {
+  label: string;
+  value: string | null;
+  unit: string;
+  note: string | null;
+};
+
 export default async function BodyMeasurementsPage({
-	searchParams,
+  searchParams,
 }: {
-	searchParams: Promise<Record<string, string | undefined>>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
-	await getUserServer();
-	const params = await searchParams;
-	const page = readPage(params);
-	const sort = readSort(params);
-	const sortBy = sort.sortBy ?? "Date";
-	const sortOrder = sort.sortBy ? sort.sortOrder : "desc";
-	const [tableResult, chartResult, goal, goalHist] = await Promise.all([
-		getBodyMeasurements(page, 20, sortBy, sortOrder),
-		getBodyMeasurements(1, 200, "Date", "desc"),
-		getCurrentGoal(),
-		getGoalHistory(),
-	]);
-	const { bodyMeasurements: measurements, totalCount, totalPages } = tableResult;
-	const allMeasurements = chartResult.bodyMeasurements;
+  await getUserServer();
+  const params = await searchParams;
+  const page = readPage(params);
+  const sort = readSort(params);
+  const sortBy = sort.sortBy ?? "Date";
+  const sortOrder = sort.sortBy ? sort.sortOrder : "desc";
+  const [tableResult, chartResult, , goalHist] = await Promise.all([
+    getBodyMeasurements(page, 20, sortBy, sortOrder),
+    getBodyMeasurements(1, 200, "Date", "desc"),
+    getCurrentGoal(),
+    getGoalHistory(),
+  ]);
+  const {
+    bodyMeasurements: measurements,
+    totalCount,
+    totalPages,
+  } = tableResult;
+  const all = chartResult.bodyMeasurements;
 
-	const latest = allMeasurements.length > 0 ? allMeasurements[0] : null;
-	const previous = allMeasurements.length > 1 ? allMeasurements[1] : null;
+  // The latest value of each field, and the one before it, even when they came from different days.
+  const latestOf = (pick: (m: Measurement) => number | null | undefined) => {
+    const taken = all.filter((m) => pick(m) !== null && pick(m) !== undefined);
+    return [
+      taken[0] ? pick(taken[0]) : null,
+      taken[1] ? pick(taken[1]) : null,
+    ] as const;
+  };
+  const [weight, weightBefore] = latestOf((m) => m.weightKg);
+  const [fat, fatBefore] = latestOf((m) => m.bodyFatPercentage);
+  const [waist, waistBefore] = latestOf((m) => m.waistCm);
+  const facts: Fact[] = [
+    {
+      label: "Weight",
+      value: num(weight),
+      unit: "kg",
+      note: since(weight, weightBefore, "kg"),
+    },
+    {
+      label: "Body fat",
+      value: num(fat),
+      unit: "%",
+      note: since(fat, fatBefore, "%"),
+    },
+    {
+      label: "Waist",
+      value: num(waist),
+      unit: "cm",
+      note: since(waist, waistBefore, "cm"),
+    },
+  ];
 
-	const weightDelta = getDelta(latest?.weightKg, previous?.weightKg);
-	const bodyFatDelta = getDelta(latest?.bodyFatPercentage, previous?.bodyFatPercentage);
-	const muscleDelta = getDelta(latest?.muscleMassKg, previous?.muscleMassKg);
+  return (
+    <div className="log-page space-y-8" data-testid="body-measurements-page">
+      <header className="log-page-header block!">
+        <h1>Body</h1>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground">
+            Weight and measurements over time.
+          </p>
+          <RemindMeButton
+            heading="Remind me to measure"
+            base={{ kind: "measurement" }}
+          />
+        </div>
+      </header>
 
-	return (
-		<div className="space-y-6 lg:space-y-8" data-testid="body-measurements-page">
-			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-				<div className="space-y-2">
-					<p className="eyebrow">Composition</p>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-						Body metrics
-					</h1>
-				</div>
-			</header>
+      {all.length > 0 && (
+        <section aria-label="Latest measurements" className="facts-strip">
+          {facts.map((fact) => (
+            <div key={fact.label}>
+              <p className="text-sm text-muted-foreground">{fact.label}</p>
+              <p className="tabular-nums nutrition-value">
+                {fact.value ?? "—"}
+                {fact.value !== null && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}
+                    {fact.unit}
+                  </span>
+                )}
+              </p>
+              {fact.note && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {fact.note}
+                </p>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="card-hover p-5">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center dark:bg-brand-500">
-							<i className="ri-scales-3-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-								Weight
-							</h3>
-							<div className="flex items-center gap-2">
-								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									{latest?.weightKg ? `${latest.weightKg} kg` : "No data"}
-								</p>
-								{weightDelta && (
-									<span
-										className={`text-xs font-medium px-1.5 py-0.5 rounded ${weightDelta.positive ? "bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400" : "bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400"}`}
-									>
-										{weightDelta.value}
-									</span>
-								)}
-							</div>
-						</div>
-					</div>
-				</div>
+      <LogEntryButton
+        kind="measurement"
+        className="btn-primary min-h-11 w-full sm:w-auto"
+      >
+        Add measurement
+      </LogEntryButton>
 
-				<div className="card-hover p-5">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center ">
-							<i className="ri-heart-pulse-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-								Body Fat
-							</h3>
-							<div className="flex items-center gap-2">
-								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									{latest?.bodyFatPercentage ? `${latest.bodyFatPercentage}%` : "No data"}
-								</p>
-								{bodyFatDelta && (
-									<span
-										className={`text-xs font-medium px-1.5 py-0.5 rounded ${bodyFatDelta.positive ? "bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400" : "bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400"}`}
-									>
-										{bodyFatDelta.value}%
-									</span>
-								)}
-							</div>
-						</div>
-					</div>
-				</div>
+      {all.length > 0 && (
+        <MeasurementChart measurements={all} goalHistory={goalHist} />
+      )}
 
-				<div className="card-hover p-5">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-charcoal-blue-900 flex items-center justify-center dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900">
-							<i className="ri-hand-heart-line text-xl text-current" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-								Muscle Mass
-							</h3>
-							<div className="flex items-center gap-2">
-								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									{latest?.muscleMassKg ? `${latest.muscleMassKg} kg` : "No data"}
-								</p>
-								{muscleDelta && (
-									<span
-										className={`text-xs font-medium px-1.5 py-0.5 rounded ${muscleDelta.positive ? "bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400" : "bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400"}`}
-									>
-										{muscleDelta.value}
-									</span>
-								)}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<AddMeasurementForm />
-
-			<MeasurementChart measurements={allMeasurements} goalHistory={goalHist} />
-
-			<section className="card space-y-4 p-6">
-				<h2 className="section-title">Measurement history</h2>
-
-				<DataTable
-					columns={MEASUREMENT_COLUMNS}
-					rows={measurements}
-					rowKey={(m) => m.id}
-					pathname="/body-measurements"
-					searchParams={params}
-					sort={sort}
-					page={{ page, pageSize: 20, totalCount, totalPages }}
-					empty={{
-						title: "No measurements yet",
-						description: "Record one above and the chart will start filling in.",
-					}}
-				/>
-			</section>
-		</div>
-	);
+      <section aria-labelledby="history-title" className="space-y-4">
+        <header className="log-section-header">
+          <h2 id="history-title">History</h2>
+        </header>
+        <DataTable
+          columns={MEASUREMENT_COLUMNS}
+          rows={measurements}
+          rowKey={(m) => m.id}
+          pathname="/body-measurements"
+          searchParams={params}
+          sort={sort}
+          page={{ page, pageSize: 20, totalCount, totalPages }}
+          empty={{
+            title: "Nothing measured yet",
+            description:
+              "Record a weight or a measurement and the chart starts from there.",
+          }}
+        />
+      </section>
+    </div>
+  );
 }

@@ -22,16 +22,16 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     public static readonly TimeSpan ResetLifetime = TimeSpan.FromHours(1);
 
     private readonly IMizanDbContext _context;
-    private readonly IOutbox _outbox;
+    private readonly IEmailQueue _emails;
     private readonly IAppUrls _urls;
 
     public ForgotPasswordCommandHandler(
         IMizanDbContext context,
-        IOutbox outbox,
+        IEmailQueue emails,
         IAppUrls urls)
     {
         _context = context;
-        _outbox = outbox;
+        _emails = emails;
         _urls = urls;
     }
 
@@ -47,7 +47,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             _context, user.Id, UserTokenPurpose.PasswordReset, ResetLifetime, cancellationToken);
 
         await AuthEmailDelivery.QueueAsync(
-            _outbox,
+            _emails,
             AuthEmails.PasswordReset(user.Email, user.Name, _urls.ResetPassword(token)),
             user.Id,
             "reset",
@@ -59,7 +59,10 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     }
 }
 
-public record ResetPasswordCommand(string Token, string Password) : IRequest<Unit>;
+public record ResetPasswordCommand(string Token, string Password) : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Reset = true };
+}
 
 public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
 {
@@ -118,7 +121,10 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
 /// one is cut.
 /// </summary>
 public record ChangePasswordCommand(string? CurrentPassword, string NewPassword, string? CurrentSessionToken = null)
-    : IRequest<Unit>;
+    : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Changed = true };
+}
 
 public class ChangePasswordCommandValidator : AbstractValidator<ChangePasswordCommand>
 {

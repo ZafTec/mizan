@@ -3,15 +3,15 @@ import { redirect } from "next/navigation";
 import AppShell from "@/components/Layout/AppShell";
 
 export default async function DashboardLayout({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	const user = await getUserOptionalServer();
+  const user = await getUserOptionalServer();
 
-	if (!user) {
-		redirect("/login");
-	}
+  if (!user) {
+    redirect("/login");
+  }
 
-	return <AppShell user={user}>{children}</AppShell>;
+  return <AppShell user={user}>{children}</AppShell>;
 }

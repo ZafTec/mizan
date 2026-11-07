@@ -1,7 +1,10 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mizan.Application.Commands;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Media;
 using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;
@@ -16,10 +19,16 @@ namespace Mizan.Api.Controllers;
 public class UploadsController : ControllerBase
 {
     private const long MaxRequestBytes = 6 * 1024 * 1024;
+    private const long MaxModelRequestBytes = 32 * 1024 * 1024;
 
     private readonly IStorageService _storage;
+    private readonly IMediator _mediator;
 
-    public UploadsController(IStorageService storage) => _storage = storage;
+    public UploadsController(IStorageService storage, IMediator mediator)
+    {
+        _storage = storage;
+        _mediator = mediator;
+    }
 
     [HttpPost("image")]
     [RequestSizeLimit(MaxRequestBytes)]
@@ -28,6 +37,38 @@ public class UploadsController : ControllerBase
         [FromQuery] StorageFolder folder = StorageFolder.Recipes,
         CancellationToken cancellationToken = default)
     {
+        byte[]? bytes = null;
+        if (file is { Length: > 0 })
+        {
+            using var buffer = new MemoryStream();
+            await file.CopyToAsync(buffer, cancellationToken);
+            bytes = buffer.ToArray();
+        }
+
+        var stored = await _mediator.Send(new UploadImageCommand(folder, file?.FileName, bytes ?? []), cancellationToken);
+        return Ok(new UploadedImageDto(stored.Key, stored.Url));
+    }
+
+    /// <summary>
+    /// An image at a public https address, downloaded by the API (at most 4 MB, no redirects) and stored like an
+    /// uploaded one. An MCP client passes the address of a photo it holds instead of writing out its bytes.
+    /// </summary>
+    [HttpPost("image-url")]
+    public async Task<ActionResult<UploadedImageDto>> UploadImageUrl(
+        [FromBody] ImageUrlRequest request,
+        [FromQuery] StorageFolder folder = StorageFolder.Recipes,
+        CancellationToken cancellationToken = default)
+    {
+        var stored = await _mediator.Send(new UploadImageCommand(folder, ImageUrl: request.ImageUrl), cancellationToken);
+        return Ok(new UploadedImageDto(stored.Key, stored.Url));
+    }
+
+    /// <summary>A rigged 3D figure for the app, authored in Blender and exported as .glb. Administrator only.</summary>
+    [HttpPost("model")]
+    [Authorize(Policy = "RequireAdmin")]
+    [RequestSizeLimit(MaxModelRequestBytes)]
+    public async Task<ActionResult<UploadedImageDto>> UploadModel(IFormFile file, CancellationToken cancellationToken = default)
+    {
         if (file is null || file.Length == 0)
         {
             throw new DomainValidationException("No file was uploaded.");
@@ -35,15 +76,15 @@ public class UploadsController : ControllerBase
 
         await using var content = file.OpenReadStream();
 
-        var header = new byte[ImageFormat.HeaderBytes];
+        var header = new byte[ModelFormat.HeaderBytes];
         var read = await content.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, cancellationToken);
-        var contentType = ImageFormat.Detect(header.AsSpan(0, read))
-            ?? throw new DomainValidationException("That file is not a JPEG, PNG, WebP or GIF image.");
+        var contentType = ModelFormat.Detect(header.AsSpan(0, read))
+            ?? throw new DomainValidationException("That file is not a glTF 2 binary (.glb) model.");
 
         content.Position = 0;
 
         var stored = await _storage.UploadAsync(
-            new StorageUpload(folder, file.FileName, contentType, content, file.Length),
+            new StorageUpload(StorageFolder.Models, file.FileName, contentType, content, file.Length),
             cancellationToken);
 
         return Ok(new UploadedImageDto(stored.Key, stored.Url));

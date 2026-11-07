@@ -18,7 +18,8 @@ public record UpdateTrainerGrantsCommand(
     bool? CanViewWorkouts = null,
     bool? CanViewMeasurements = null,
     bool? CanMessage = null,
-    bool End = false
+    bool End = false,
+    bool? CanPlanMeals = null
 ) : IRequest<bool>;
 
 public class UpdateTrainerGrantsCommandHandler : IRequestHandler<UpdateTrainerGrantsCommand, bool>
@@ -52,6 +53,7 @@ public class UpdateTrainerGrantsCommandHandler : IRequestHandler<UpdateTrainerGr
             relationship.CanViewWorkouts = false;
             relationship.CanViewMeasurements = false;
             relationship.CanMessage = false;
+            relationship.CanPlanMeals = false;
 
             if (_notifications is not null)
             {
@@ -71,6 +73,7 @@ public class UpdateTrainerGrantsCommandHandler : IRequestHandler<UpdateTrainerGr
         if (request.CanViewWorkouts.HasValue) relationship.CanViewWorkouts = request.CanViewWorkouts.Value;
         if (request.CanViewMeasurements.HasValue) relationship.CanViewMeasurements = request.CanViewMeasurements.Value;
         if (request.CanMessage.HasValue) relationship.CanMessage = request.CanMessage.Value;
+        if (request.CanPlanMeals.HasValue) relationship.CanPlanMeals = request.CanPlanMeals.Value;
 
         await _context.SaveChangesAsync(cancellationToken);
         return true;

@@ -2,7 +2,6 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Billing;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
@@ -23,23 +22,27 @@ public class ProcessPaddleWebhookCommandHandler
 {
     private readonly IMizanDbContext _context;
     private readonly IEntitlementService _entitlements;
-    private readonly PaddleOptions _options;
+    private readonly IRuntimeOptions<PaddleOptions> _runtimeOptions;
     private readonly ILogger<ProcessPaddleWebhookCommandHandler> _logger;
+
+    // Read once per event, so a changed lifetime price applies to the next webhook.
+    private PaddleOptions _options = new();
 
     public ProcessPaddleWebhookCommandHandler(
         IMizanDbContext context,
         IEntitlementService entitlements,
-        IOptions<PaddleOptions> options,
+        IRuntimeOptions<PaddleOptions> options,
         ILogger<ProcessPaddleWebhookCommandHandler> logger)
     {
         _context = context;
         _entitlements = entitlements;
-        _options = options.Value;
+        _runtimeOptions = options;
         _logger = logger;
     }
 
     public async Task<ProcessPaddleWebhookResult> Handle(ProcessPaddleWebhookCommand request, CancellationToken cancellationToken)
     {
+        _options = await _runtimeOptions.GetAsync(cancellationToken);
         using var doc = JsonDocument.Parse(request.RawJson);
         var root = doc.RootElement;
 

@@ -72,12 +72,12 @@ export default function MoreDirectory({ groups }: { groups: NavGroup[] }) {
         )}
       </div>
       {query.trim() && (
-        <p aria-live="polite" className="text-sm log-muted mb-6">
+        <p aria-live="polite" className="text-sm text-muted-foreground mb-6">
           {resultCount} {resultCount === 1 ? "result" : "results"}
         </p>
       )}
       {resultCount ? (
-        <div className="feature-directory">
+        <div className="grid grid-cols-2 items-start gap-x-14 gap-y-9 max-sm:grid-cols-1 max-sm:gap-8 [&_h2]:border-b [&_h2]:border-foreground [&_h2]:pb-3.5 [&_h2]:text-[18px] [&_h2]:font-semibold">
           {filtered.map((group) => (
             <section key={group.label}>
               <h2>{group.label}</h2>
@@ -86,12 +86,12 @@ export default function MoreDirectory({ groups }: { groups: NavGroup[] }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="directory-row"
+                    className="flex min-h-[60px] items-center justify-between gap-4 border-b border-border px-1 py-3.5 text-[14px] transition-[background-color] duration-160 ease-[ease-out] hover:bg-muted [&>svg]:shrink-0 [&>svg]:text-muted-foreground"
                   >
                     <span className="min-w-0">
                       <span className="block font-medium">{item.label}</span>
                       {item.description && (
-                        <span className="block text-xs log-muted mt-1">
+                        <span className="block text-xs text-muted-foreground mt-1">
                           {item.description}
                         </span>
                       )}
@@ -106,7 +106,7 @@ export default function MoreDirectory({ groups }: { groups: NavGroup[] }) {
       ) : (
         <div className="log-empty">
           <h2 className="text-xl">No matching features</h2>
-          <p className="log-muted text-sm mt-3">
+          <p className="text-muted-foreground text-sm mt-3">
             Try a shorter word, or clear the search to browse everything.
           </p>
           <button

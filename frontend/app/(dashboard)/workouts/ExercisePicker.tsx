@@ -6,6 +6,7 @@ import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import type { WorkoutDraftAction } from "@/lib/workouts/draft";
 import type { ExerciseDto } from "@/types/workout";
+import { Select } from "@/components/ui/select";
 
 export default function ExercisePicker({
   dispatch,
@@ -76,7 +77,7 @@ export default function ExercisePicker({
           {results.map((exercise) => (
             <button
               key={exercise.id}
-              className="press-feedback flex items-center justify-between rounded-2xl border border-charcoal-blue-200 p-3 text-left dark:border-white/10"
+              className="transition-transform duration-120 ease-out active:scale-[0.985] flex items-center justify-between rounded-2xl border border-charcoal-blue-200 p-3 text-left dark:border-white/10"
               onClick={() => add(exercise)}
             >
               <span>
@@ -163,16 +164,14 @@ function CreateExercise({
         onChange={(event) => setName(event.target.value)}
         placeholder="Exercise name"
       />
-      <select
-        className="input"
+      <Select
+        aria-label="Category"
         value={category}
-        onChange={(event) => setCategory(event.target.value)}
-      >
-        <option>Strength</option>
-        <option>Cardio</option>
-        <option>Flexibility</option>
-        <option>Balance</option>
-      </select>
+        onChange={setCategory}
+        options={["Strength", "Cardio", "Flexibility", "Balance"].map(
+          (name) => ({ value: name, label: name }),
+        )}
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         <input
           className="input"

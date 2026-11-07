@@ -1,0 +1,7 @@
+# Read by BuildKit for prices/Dockerfile only. The context is the repository
+# root; only the two projects the image compiles may enter it.
+*
+!backend/Mizan.Contracts
+!prices/Mizan.Prices
+**/bin
+**/obj

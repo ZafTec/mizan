@@ -69,8 +69,9 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 Action = requestName,
                 EntityType = requestName.Replace("Command", ""),
                 EntityId = entityId,
-                Details = JsonSerializer.Serialize(request),
+                Details = JsonSerializer.Serialize(DetailsOf(request)),
                 IpAddress = ipAddress,
+                ImpersonatorId = _currentUserService.ImpersonatorId,
                 Timestamp = DateTime.UtcNow
             };
 
@@ -86,4 +87,28 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 
         return response;
     }
+
+    /// <summary>
+    /// What goes into the audit row. A command that declares its own details is taken at its word.
+    /// Any other command with a secret-looking string property is stored with that property
+    /// redacted, and the miss is logged once per type so it gets a proper IRedactedAudit.
+    /// </summary>
+    private object DetailsOf(TRequest request)
+    {
+        if (request is IRedactedAudit redacted) return redacted.AuditDetails;
+        if (AuditRedaction.SensitiveProperties(typeof(TRequest)).Count == 0) return request;
+
+        if (Interlocked.Exchange(ref _warnedAboutUnredactedSecret, 1) == 0)
+        {
+            _logger.LogWarning(
+                "{RequestName} carries {Properties} but does not implement IRedactedAudit; the audit log stores them redacted. Give the command explicit audit details.",
+                typeof(TRequest).Name,
+                string.Join(", ", AuditRedaction.SensitiveProperties(typeof(TRequest)).Select(p => p.Name)));
+        }
+
+        return AuditRedaction.Redact(request);
+    }
+
+    // One per closed generic type, which is one per command type.
+    private static int _warnedAboutUnredactedSecret;
 }
