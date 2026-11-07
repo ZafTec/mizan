@@ -38,9 +38,15 @@ public static class ToolFilter
         }
 
         if (McpScopes.Allows(held, mode.Area)) return true;
+
+        // A grant made before the areas reaches the mode through an older scope it holds itself,
+        // never through one an area implies: nutrition:write implies ai:use for the legacy tools,
+        // and must not open a planning mode that replaced an ai:use tool.
         foreach (var legacy in mode.Replaces)
         {
-            if (McpToolScopes.TryGet(legacy, out var scope) && McpScopes.Allows(held, scope)) return true;
+            if (!McpToolScopes.TryGet(legacy, out var scope) || McpScopes.Areas.Contains(scope)) continue;
+            if (held.Contains(scope)) return true;
+            if (scope.EndsWith(":read", StringComparison.Ordinal) && held.Contains(scope[..^":read".Length] + ":write")) return true;
         }
 
         return false;
