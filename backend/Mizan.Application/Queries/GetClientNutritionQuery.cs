@@ -67,13 +67,13 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
             DataAxis.Nutrition, "No permission to view client nutrition data", cancellationToken);
 
         // Get food diary entries for the specified date (or today if not specified)
-        var targetDate = request.Date ?? DateTime.UtcNow.Date;
-        var nextDate = targetDate.AddDays(1);
+        var day = DateOnly.FromDateTime(request.Date ?? DateTime.UtcNow);
+        var targetDate = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
         var foodEntries = await _context.FoodDiaryEntries
             .Include(fl => fl.Food)
             .Include(fl => fl.Recipe)
-            .Where(fl => fl.UserId == request.ClientId && fl.LoggedAt >= targetDate && fl.LoggedAt < nextDate)
+            .Where(fl => fl.UserId == request.ClientId && fl.EntryDate == day)
             .OrderBy(fl => fl.LoggedAt)
             .ToListAsync(cancellationToken);
 
