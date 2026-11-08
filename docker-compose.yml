@@ -40,8 +40,8 @@ services:
     networks:
       - mizan-network
 
-  # S3-compatible object storage for local development. Production points at
-  # the MinIO already running on the VPS, so this service exists only so that
+  # S3-compatible object storage for local development. Production uses its
+  # own S3-compatible store, so this service exists only so that
   # uploads can be exercised locally rather than silently falling back to the
   # unconfigured storage service.
   minio:

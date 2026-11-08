@@ -1,7 +1,8 @@
 # Production deployment on the existing proxy and PostgreSQL networks.
-# Keep .env and this file at the app root (/opt/mizan). Private PostgreSQL
-# settings live in backups/cutover/pg.env. Public frontend URLs are GitHub
-# build-time variables.
+# Keep .env beside this file. MIZAN_PG_ENV_FILE names the private PostgreSQL
+# settings for the backup step. MIZAN_PROXY_NETWORK and MIZAN_DB_NETWORK name
+# the existing reverse-proxy and PostgreSQL networks. Public frontend URLs are
+# GitHub build-time variables.
 #
 # Every `docker compose up` runs, in order:
 #   1. mizan-db-backup   a verified pg_dump into backups/pre-deploy/
@@ -35,7 +36,7 @@ services:
     container_name: mizan-db-backup
     restart: "no"
     env_file:
-      - ./backups/cutover/pg.env
+      - ${MIZAN_PG_ENV_FILE:-./pg.env}
     environment:
       KEEP_BACKUPS: ${MIZAN_KEEP_BACKUPS:-14}
     entrypoint: ["/bin/sh", "-ec"]
@@ -65,7 +66,7 @@ services:
         bind:
           create_host_path: false
     networks:
-      - postgresql-db-n8n
+      - database
 
   mizan-db-migrate:
     image: zaftec/mizan-backend:latest
@@ -79,7 +80,7 @@ services:
       mizan-db-backup:
         condition: service_completed_successfully
     networks:
-      - postgresql-db-n8n
+      - database
 
   mizan-backend:
     image: zaftec/mizan-backend:latest
@@ -92,8 +93,8 @@ services:
       mizan-db-migrate:
         condition: service_completed_successfully
     networks:
-      - proxy-net
-      - postgresql-db-n8n
+      - proxy
+      - database
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8080/health"]
       interval: 30s
@@ -122,7 +123,7 @@ services:
       mizan-backend:
         condition: service_healthy
     networks:
-      - proxy-net
+      - proxy
     healthcheck:
       test:
         - CMD
@@ -162,8 +163,8 @@ services:
       mizan-backend:
         condition: service_healthy
     networks:
-      - proxy-net
-      - postgresql-db-n8n
+      - proxy
+      - database
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8080/health"]
       interval: 30s
@@ -191,14 +192,14 @@ services:
       TelegramBot__ApiUrl: http://mizan-backend:8080
       TelegramBot__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       TelegramBot__PublicUrl: ${App__PublicUrl:-${PUBLIC_APP_URL:-http://localhost:3000}}
-      # The subnet of proxy-net, where nginx and the frontend forward the
+      # The subnet of the proxy network, where nginx and the frontend forward the
       # browser's address. Empty records the proxy's address instead.
       TelegramBot__TrustedProxies: ${TELEGRAM_TRUSTED_PROXIES:-}
     depends_on:
       mizan-backend:
         condition: service_healthy
     networks:
-      - proxy-net
+      - proxy
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:5002/health"]
       interval: 30s
@@ -214,7 +215,7 @@ services:
           memory: 64M
 
   # Prices worker, optional: COMPOSE_PROFILES=prices. It reaches the API over
-  # proxy-net and Redis wherever ConnectionStrings__Redis in .env points, so it
+  # the proxy network and Redis wherever ConnectionStrings__Redis in .env points, so it
   # joins both networks like the MCP server. Image: prices/Dockerfile, built
   # from the repository root.
   mizan-prices:
@@ -232,8 +233,8 @@ services:
       mizan-backend:
         condition: service_healthy
     networks:
-      - proxy-net
-      - postgresql-db-n8n
+      - proxy
+      - database
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:5003/health"]
       interval: 30s
@@ -249,7 +250,9 @@ services:
           memory: 64M
 
 networks:
-  proxy-net:
+  proxy:
     external: true
-  postgresql-db-n8n:
+    name: ${MIZAN_PROXY_NETWORK:-proxy}
+  database:
     external: true
+    name: ${MIZAN_DB_NETWORK:-postgres}
