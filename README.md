@@ -122,7 +122,7 @@ After API contract changes, run the API and `bun run codegen` in `frontend` to r
 
 ## Maintain the database
 
-Keep the EF migration history on `master` and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
+Keep the EF migration history on `main` and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
 
 ```sh
 dotnet ef migrations has-pending-model-changes --project Mizan.Infrastructure --startup-project Mizan.Api
@@ -141,7 +141,7 @@ Never edit a migration file by hand.
 
 Release Please opens the first release pull request for **v3.0.0**, then proposes later versions from Conventional Commits: `fix:` increments patch, `feat:` increments minor, and `!` or a `BREAKING CHANGE:` footer increments major. Keep these prefixes in commit messages or squash-merge titles. Release PRs maintain the changelog, `version.txt`, the release manifest, and the frontend package version together.
 
-Merge a release PR to publish it. After all four images build, the workflow creates a draft release, promotes their exact digests to Docker tags `vX.Y.Z` and `X.Y.Z`, and publishes the release with deployment instructions. Existing commit and `latest` image tags continue on each eligible `master` push. If publication fails, choose **Re-run failed jobs** on that workflow run to retain the successful builds' original digests. Pending drafts resume and completed releases stay unchanged.
+Merge a release PR to publish it. After all four images build, the workflow creates a draft release, promotes their exact digests to Docker tags `vX.Y.Z` and `X.Y.Z`, and publishes the release with deployment instructions. Existing commit and `latest` image tags continue on each eligible `main` push. If publication fails, choose **Re-run failed jobs** on that workflow run to retain the successful builds' original digests. Pending drafts resume and completed releases stay unchanged.
 
 A manual run of the deployment workflow builds only the Telegram image from the current default branch, tags it with that commit and `latest`, and skips Release Please.
 

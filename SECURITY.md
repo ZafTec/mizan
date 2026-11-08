@@ -5,14 +5,14 @@ the people who use it, safe.
 
 ## Supported versions
 
-Mizan is delivered as a rolling release. Only the current `master` branch and
+Mizan is delivered as a rolling release. Only the current `main` branch and
 the latest Docker images tagged `latest` are
 supported and will receive security fixes. Self-hosted deployments running
 older images should update before reporting issues.
 
 | Version | Supported |
 | --- | --- |
-| `master` (HEAD) | Yes |
+| `main` (HEAD) | Yes |
 | `euaell/mizan-*:latest` images | Yes |
 | Older tags / forks | No |
 

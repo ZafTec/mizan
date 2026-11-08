@@ -3,7 +3,7 @@ name: Deploy to Docker Hub
 on:
   workflow_dispatch:
   push:
-    branches: [master]
+    branches: [main]
     paths-ignore:
       - '**.md'
       - '.github/**'
@@ -301,7 +301,7 @@ jobs:
         uses: googleapis/release-please-action@8b8fd2cc23b2e18957157a9d923d75aa0c6f6ad5 # v4.4.1
         with:
           token: ${{ steps.app_token.outputs.token }}
-          target-branch: master
+          target-branch: main
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
