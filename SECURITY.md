@@ -105,7 +105,7 @@ Lifetime subscription to Mizan as a thank-you.
 
 - All production containers run as non-root users.
 - Secrets are injected via environment variables sourced from a locked-down
-  `.env` on the VPS; none are checked into the repo.
+  `.env` in the deployment; none are checked into the repo.
 - Browser sessions are opaque 256-bit tokens in an httpOnly cookie. Only their
   SHA-256 is stored, in `user_sessions`, cached in Redis via `HybridCache`.
   Revoking a session takes effect on the next request.
