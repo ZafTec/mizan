@@ -14,7 +14,7 @@ Read [README](README.md) for setup and verification, and [architecture](docs/ARC
 
 ## Changes that cross boundaries
 
-- Preserve `InitialCreate` and the additive EF migration chain on `master`. Add migrations for later model changes; never reset the baseline as a routine fix. An unmerged branch carries one migration: remove it with the EF tools and generate it again after a model change. Never edit a migration file by hand. Run `has-pending-model-changes` after entity or DbContext edits, as documented in README.
+- Preserve `InitialCreate` and the additive EF migration chain on `main`. Add migrations for later model changes; never reset the baseline as a routine fix. An unmerged branch carries one migration: remove it with the EF tools and generate it again after a model change. Never edit a migration file by hand. Run `has-pending-model-changes` after entity or DbContext edits, as documented in README.
 - After API/DTO changes, run the API and `bun run codegen` in `frontend`. It generates `types/api.generated.ts`, the only source of API types in the frontend: pages and `lib/api/*` modules import from it and declare no response types of their own. Maintain Zod form validation separately. The API clients already normalize response keys to camelCase.
 - Browser authentication uses the backend's opaque session cookie. Server API calls forward it; internal service credentials must never enter browser code.
 - Cache keys retain viewer and household scope. Writes invalidate affected tags; cached reads must not bypass current consent or grants.

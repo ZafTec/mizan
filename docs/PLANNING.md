@@ -8,9 +8,9 @@ A person gets a plan they can follow. The shopping list and the cost come from t
 
 ## Branch and delivery rules
 
-- Work on branches from `c/sleepy-fermi-771dlv`, one branch per step. Open each pull request against `c/sleepy-fermi-771dlv`, never against `master`.
+- Work on a short-lived branch from `main`, one branch per step, and open each pull request against `main`.
 - Each step is one vertical slice in one pull request. The slice holds the command, API, MCP tool, Telegram command, web page, documentation, and tests.
-- The branch carries one EF migration. Make model changes, delete that migration with the EF tools, and generate it again. Do not edit a migration file by hand. The `master` chain stays as it is.
+- The branch carries one EF migration. Make model changes, delete that migration with the EF tools, and generate it again. Do not edit a migration file by hand. The `main` chain stays as it is.
 - Run the checks in [README](../README.md#verify) before a push.
 
 ## Domain model
