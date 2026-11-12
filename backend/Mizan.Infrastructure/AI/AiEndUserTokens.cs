@@ -110,7 +110,8 @@ public sealed class AiEndUserOptionsValidator : IValidateOptions<AiEndUserOption
 
 /// <summary>
 /// Signs the end-user token (ES256, compact JWS) and publishes the public keys. <c>sub</c> is the
-/// Mizan user id, an opaque GUID; no email or name is ever put in it. The key comes from the
+/// Mizan user id, an opaque GUID, so the gateway's record of a person never changes; the person's
+/// name, email and plan go in <c>attributes</c> for the gateway console to show. The key comes from the
 /// runtime settings and is loaded again whenever they change; a token is cached per user until a
 /// minute before it expires. Neither the token nor the key is logged.
 /// </summary>
@@ -127,18 +128,21 @@ public sealed class AiEndUserTokens : IAiCallIdentity, IEndUserSigningKeys, IDis
     private readonly IServiceScopeFactory? _scopes;
     private readonly TimeProvider _time;
     private readonly ILogger<AiEndUserTokens> _logger;
+    private readonly IAiEndUserProfiles? _profiles;
     private Signer? _signer;
 
     public AiEndUserTokens(
         IRuntimeOptions<AiEndUserOptions> options,
         TimeProvider time,
         ILogger<AiEndUserTokens> logger,
-        IServiceScopeFactory? scopes = null)
+        IServiceScopeFactory? scopes = null,
+        IAiEndUserProfiles? profiles = null)
     {
         _options = options;
         _time = time;
         _logger = logger;
         _scopes = scopes;
+        _profiles = profiles;
     }
 
     /// <summary>True while the settings hold a complete, valid signing configuration.</summary>
@@ -154,14 +158,37 @@ public sealed class AiEndUserTokens : IAiCallIdentity, IEndUserSigningKeys, IDis
         if (endUserId is not { } userId || userId == Guid.Empty) return [];
         var signer = await SignerAsync(cancellationToken);
         if (signer.Key is null) return [];
-        return [new(signer.Options.Header.Trim(), signer.TokenFor(userId, _time.GetUtcNow()))];
+        return [new(signer.Options.Header.Trim(), await TokenAsync(signer, userId, cancellationToken))];
     }
 
     public async ValueTask<string> TokenForAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var signer = await SignerAsync(cancellationToken);
         if (signer.Key is null) throw new InvalidOperationException("The end-user token is not configured.");
-        return signer.TokenFor(userId, _time.GetUtcNow());
+        return await TokenAsync(signer, userId, cancellationToken);
+    }
+
+    private async ValueTask<string> TokenAsync(Signer signer, Guid userId, CancellationToken cancellationToken)
+    {
+        var now = _time.GetUtcNow();
+        if (signer.TryCached(userId, now, out var cached)) return cached;
+        return signer.Sign(userId, await AttributesAsync(userId, cancellationToken), now);
+    }
+
+    /// <summary>The person's display attributes. A failed read signs the token without them rather than failing the call.</summary>
+    private async Task<IReadOnlyDictionary<string, string>?> AttributesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (_profiles is null) return null;
+        try
+        {
+            var attributes = await _profiles.AttributesForAsync(userId, cancellationToken);
+            return attributes.Count == 0 ? null : attributes;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "The end-user token was signed without attributes: the person could not be read");
+            return null;
+        }
     }
 
     public async Task<EndUserKeyRotationResult> RotateAsync(Guid? rotatedByUserId, CancellationToken cancellationToken = default)
@@ -269,14 +296,19 @@ public sealed class AiEndUserTokens : IAiCallIdentity, IEndUserSigningKeys, IDis
             return new Signer(options, key, new AiJsonWebKeySet(keys));
         }
 
-        public string TokenFor(Guid userId, DateTimeOffset now)
+        public bool TryCached(Guid userId, DateTimeOffset now, out string token)
         {
-            if (_cache.TryGetValue(userId, out var cached) && cached.ExpiresAt - RenewBefore > now) return cached.Token;
+            var hit = _cache.TryGetValue(userId, out var cached) && cached.ExpiresAt - RenewBefore > now;
+            token = hit ? cached.Token : string.Empty;
+            return hit;
+        }
 
+        public string Sign(Guid userId, IReadOnlyDictionary<string, string>? attributes, DateTimeOffset now)
+        {
             var issuedAt = now.ToUnixTimeSeconds();
             var expiresAt = issuedAt + Options.LifetimeSeconds;
             var header = new JwsHeader("ES256", "JWT", Options.KeyId.Trim());
-            var claims = new EndUserClaims(Options.Issuer.Trim(), Options.Audience.Trim(), userId.ToString("D"), issuedAt, expiresAt);
+            var claims = new EndUserClaims(Options.Issuer.Trim(), Options.Audience.Trim(), userId.ToString("D"), issuedAt, expiresAt, attributes);
 
             var signingInput = Base64Url(JsonSerializer.SerializeToUtf8Bytes(header, Json)) + "."
                 + Base64Url(JsonSerializer.SerializeToUtf8Bytes(claims, Json));
@@ -313,5 +345,6 @@ public sealed class AiEndUserTokens : IAiCallIdentity, IEndUserSigningKeys, IDis
         [property: JsonPropertyName("aud")] string Aud,
         [property: JsonPropertyName("sub")] string Sub,
         [property: JsonPropertyName("iat")] long Iat,
-        [property: JsonPropertyName("exp")] long Exp);
+        [property: JsonPropertyName("exp")] long Exp,
+        [property: JsonPropertyName("attributes")] IReadOnlyDictionary<string, string>? Attributes);
 }

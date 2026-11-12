@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Exceptions;
+using Mizan.Application.Interfaces;
 using Mizan.Contracts.Ai;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
@@ -15,7 +16,8 @@ namespace Mizan.Tests.Integration;
 /// <summary>
 /// Mizan behind a gateway (docs/AI.md#behind-a-gateway): its refusals reach the person as plain
 /// answers with their own codes, a refused turn keeps nothing, and an administrator rotates the key
-/// that signs the end-user token while the gateway keeps fetching both halves of the rotation.
+/// that signs the end-user token while the gateway keeps fetching both halves of the rotation, and
+/// the token tells the gateway who each call is for.
 /// </summary>
 [Collection("ApiIntegration")]
 public class AiGatewayStoryTests
@@ -109,6 +111,32 @@ public class AiGatewayStoryTests
 
         var listing = await admin.GetFromJsonAsync<JsonElement>("/api/admin/settings");
         listing.GetRawText().Should().NotContain("PRIVATE KEY", "the signing key is a secret and never comes back");
+    }
+
+    [Fact]
+    public async Task TheGatewaySeesWhoEachCallIsFor_ByIdName_EmailAndPlan()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var adminId = Guid.NewGuid();
+        var adminEmail = $"gateway-admin-{adminId:N}@example.com";
+        await _fixture.SeedUserAsync(adminId, adminEmail, role: "admin");
+        using var admin = _fixture.CreateAuthenticatedClient(adminId, adminEmail, "admin");
+        foreach (var (key, value) in new[] { ("EndUser.Header", "X-End-User"), ("EndUser.Issuer", "https://mizan.test"), ("EndUser.Audience", "app-test") })
+            (await admin.PutAsJsonAsync($"/api/admin/settings/{key}", new { value })).StatusCode.Should().Be(HttpStatusCode.OK);
+        await RotateAsync(admin);
+        var (_, userId) = await UserAsync();
+
+        var identity = _fixture.Services.GetRequiredService<IAiCallIdentity>();
+        var header = (await identity.HeadersForAsync(userId)).Should().ContainSingle().Which;
+
+        header.Key.Should().Be("X-End-User");
+        var payload = header.Value.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var claims = JsonDocument.Parse(Convert.FromBase64String(payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '='))).RootElement;
+        claims.GetProperty("sub").GetString().Should().Be(userId.ToString("D"));
+        var attributes = claims.GetProperty("attributes");
+        attributes.GetProperty("name").GetString().Should().Be("Test User");
+        attributes.GetProperty("email").GetString().Should().Be($"gateway-{userId:N}@example.com");
+        attributes.GetProperty("plan").GetString().Should().Be("free");
     }
 
     private static async Task<JsonElement> RotateAsync(HttpClient admin)

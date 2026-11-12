@@ -145,6 +145,7 @@ public static class DependencyInjection
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         // The end-user token for a gateway comes from the runtime settings: a half-set or
         // invalid configuration signs nothing rather than stopping the API (docs/AI.md#behind-a-gateway).
+        services.AddSingleton<IAiEndUserProfiles, AiEndUserProfiles>();
         services.AddSingleton<AiEndUserTokens>();
         services.AddSingleton<IAiCallIdentity>(provider => provider.GetRequiredService<AiEndUserTokens>());
         services.AddSingleton<IEndUserSigningKeys>(provider => provider.GetRequiredService<AiEndUserTokens>());
