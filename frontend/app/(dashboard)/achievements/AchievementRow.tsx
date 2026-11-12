@@ -101,12 +101,7 @@ export function EarnedAchievementRow({
           earned
         />
       </button>
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title={name}
-        size="md"
-      >
+      <Modal open={open} onClose={() => setOpen(false)} title={name} size="md">
         <div className="flex flex-col items-center gap-5 pb-2 text-center">
           {achievement.iconUrl && (
             <Image

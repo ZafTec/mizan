@@ -31,7 +31,6 @@ export interface AdminSession {
   expiresAt: string;
 }
 
-
 export interface AdminUserDetail {
   user: AdminUser;
   activeSessionCount: number;

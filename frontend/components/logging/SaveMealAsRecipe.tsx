@@ -111,8 +111,8 @@ export function SaveMealAsRecipe({
 
   const description = (
     <>
-      Give this {formatMealType(mealType).toLowerCase()} a name. Its{" "}
-      {itemCount} items and quantities are already filled in.
+      Give this {formatMealType(mealType).toLowerCase()} a name. Its {itemCount}{" "}
+      items and quantities are already filled in.
     </>
   );
   const fields = (

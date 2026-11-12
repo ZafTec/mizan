@@ -98,8 +98,16 @@ export const ADMIN_GROUPS: { label: string; items: AdminSection[] }[] = [
   {
     label: "Inbox",
     items: [
-      { href: "/admin/contact", label: "Contact", attention: "newContactMessages" },
-      { href: "/admin/moderation", label: "Moderation", attention: "openContentReports" },
+      {
+        href: "/admin/contact",
+        label: "Contact",
+        attention: "newContactMessages",
+      },
+      {
+        href: "/admin/moderation",
+        label: "Moderation",
+        attention: "openContentReports",
+      },
       { href: "/admin/mail", label: "Mail", attention: "failedEmails" },
     ],
   },

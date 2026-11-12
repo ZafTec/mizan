@@ -90,8 +90,8 @@ export function PricingSection({ plans = [] }: { plans?: BillingPlan[] }) {
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">
           A tracker that paywalls the thing it exists to do is a tracker you
-          stop opening. Pro pays for what actually costs money: the AI, and
-          more of it.
+          stop opening. Pro pays for what actually costs money: the AI, and more
+          of it.
         </p>
       </div>
 

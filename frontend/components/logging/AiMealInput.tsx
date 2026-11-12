@@ -162,9 +162,8 @@ export default function AiMealInput({
             You have used today&apos;s free estimates
           </h3>
           <p className="text-charcoal-blue-700 dark:text-charcoal-blue-300">
-            Free includes three a day. Pro turns many more sentences and
-            photos into meals for you to check. Searching foods and recipes
-            stays free.
+            Free includes three a day. Pro turns many more sentences and photos
+            into meals for you to check. Searching foods and recipes stays free.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/billing?checkout=pro" className="btn-primary min-h-11">
