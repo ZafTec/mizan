@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/ZafTec/mizan/compare/v3.3.0...v3.4.0) (2026-11-12)
+
+
+### Features
+
+* **admin:** a usable admin console, gateway settings in admin, faster queries ([#154](https://github.com/ZafTec/mizan/issues/154)) ([2dcf39c](https://github.com/ZafTec/mizan/commit/2dcf39cddbee7e62a75610e4118c17063b8e82dd))
+
 ## [3.3.0](https://github.com/ZafTec/mizan/compare/v3.2.2...v3.3.0) (2026-11-08)
 
 
