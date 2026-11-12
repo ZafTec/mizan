@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/ZafTec/mizan/compare/v3.4.0...v3.4.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **ai:** tell the gateway who each call is for ([#158](https://github.com/ZafTec/mizan/issues/158)) ([f86b87e](https://github.com/ZafTec/mizan/commit/f86b87e6c394538cbb33fd561f83e6a529ea29a5))
+
 ## [3.4.0](https://github.com/ZafTec/mizan/compare/v3.3.0...v3.4.0) (2026-11-12)
 
 
