@@ -253,3 +253,34 @@ test("on a 360px phone the panel is a sheet that holds focus, and nothing overfl
   await expect(sheet).toBeHidden();
   await expect(launcher(page)).toBeFocused();
 });
+
+// #116: the composer shows focus once, on its border, not with a second ring around the box.
+test("the message box shows one focus indicator, its border, in light and dark", async ({
+  context,
+  page,
+}) => {
+  await signIn(context, true);
+  await page.goto("/today");
+  await launcher(page).click();
+  const panel = page.getByRole("complementary", { name: "Mizan assistant" });
+  const box = panel.getByLabel("Message the assistant");
+  const border = () =>
+    box.evaluate((el) => getComputedStyle(el.parentElement!).borderColor);
+
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.evaluate(
+      (dark) => document.documentElement.classList.toggle("dark", dark),
+      colorScheme === "dark",
+    );
+    await box.blur();
+    const resting = await border();
+
+    await box.click();
+
+    await expect(box).toBeFocused();
+    expect(await box.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe(
+      "none",
+    );
+    await expect.poll(border).not.toBe(resting);
+  }
+});
