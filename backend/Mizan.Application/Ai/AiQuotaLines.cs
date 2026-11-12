@@ -19,7 +19,7 @@ namespace Mizan.Application.Ai;
 /// </summary>
 public enum AiQuotaLine
 {
-    /// <summary>The caller's tier allowance: chat, food analysis, suggestions.</summary>
+    /// <summary>The caller's tier allowance: chat and suggestions.</summary>
     Personal = 0,
 
     /// <summary>An admin proving a prompt draft.</summary>
@@ -41,6 +41,13 @@ public enum AiQuotaLine
     /// not both. Free gets one plan a day (docs/AI.md#metering).
     /// </summary>
     Planning = 4,
+
+    /// <summary>
+    /// Photo and text food estimates. Its own line so a Free account can log a few meals by photo
+    /// or description without spending its chat, and chat cannot use up the estimates. Free gets
+    /// three a day (docs/AI.md#metering).
+    /// </summary>
+    Estimates = 5,
 }
 
 public static class AiQuotaLines
@@ -51,6 +58,7 @@ public static class AiQuotaLines
         AiFeatures.Onboarding => AiQuotaLine.Onboarding,
         AiFeatures.TrainerClient => AiQuotaLine.TrainerClient,
         AiFeatures.Planning => AiQuotaLine.Planning,
+        AiFeatures.FoodAnalysis => AiQuotaLine.Estimates,
         _ => AiQuotaLine.Personal,
     };
 

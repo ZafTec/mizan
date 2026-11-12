@@ -21,8 +21,9 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
 
     public async Task<UserDto?> Handle(GetUserQuery request, CancellationToken cancellationToken)
     {
-        var user = await _context.Users
-            .Include(u => u.Goals)
+        // Only the active goal is shown, so the goal history is not loaded (nor multiplied by the streaks).
+        var user = await _context.Users.AsNoTracking()
+            .Include(u => u.Goals.Where(g => g.IsActive))
             .Include(u => u.Streaks)
             .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
 

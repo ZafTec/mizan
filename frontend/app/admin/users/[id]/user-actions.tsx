@@ -9,7 +9,7 @@ import {
 } from "@/lib/api/admin-users";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 import { appToast } from "@/lib/toast";
 import { Select } from "@/components/ui/select";
 
@@ -151,79 +151,81 @@ export function UserActions({ user }: { user: User }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2">
+        {user.role !== "admin" && !user.banned && (
+          <button
+            type="button"
+            onClick={handleViewAs}
+            disabled={isLoading}
+            className="btn-primary"
+          >
+            View as this person
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setShowRoleDialog(true)}
+          disabled={isLoading}
+          className="btn-secondary"
+        >
+          Change role
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowPasswordDialog(true)}
+          disabled={isLoading}
+          className="btn-secondary"
+        >
+          Set password
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowRevokeSessionsConfirm(true)}
+          disabled={isLoading}
+          className="btn-secondary"
+        >
+          Revoke all sessions
+        </button>
+
+        {!user.banned ? (
+          <button
+            type="button"
+            onClick={() => setShowBanDialog(true)}
+            disabled={isLoading}
+            className="btn-secondary-destructive"
+          >
+            Suspend account
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleUnbanUser}
+            disabled={isLoading}
+            className="btn-secondary"
+          >
+            Lift suspension
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          disabled={isLoading}
+          className="btn-ghost-destructive"
+        >
+          Delete user
+        </button>
+      </div>
+
       {error && (
-        <div className="rounded-xs border border-burnt-peach-300 bg-burnt-peach-50 px-3 py-2.5 text-sm text-burnt-peach-800 dark:border-burnt-peach-500/30 dark:bg-burnt-peach-500/10 dark:text-burnt-peach-300">
+        <p role="alert" className="text-[14px] text-destructive">
           {error}
-        </div>
+        </p>
       )}
-
-      {!user.banned ? (
-        <button
-          type="button"
-          onClick={() => setShowBanDialog(true)}
-          disabled={isLoading}
-          className="btn-danger w-full"
-        >
-          Suspend account
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleUnbanUser}
-          disabled={isLoading}
-          className="btn-primary w-full"
-        >
-          Lift suspension
-        </button>
-      )}
-
-      {user.role !== "admin" && !user.banned && (
-        <button
-          type="button"
-          onClick={handleViewAs}
-          disabled={isLoading}
-          className="btn-secondary w-full"
-        >
-          View the site as this user
-        </button>
-      )}
-
-      <button
-        type="button"
-        onClick={() => setShowRoleDialog(true)}
-        disabled={isLoading}
-        className="btn-secondary w-full"
-      >
-        Change role
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setShowPasswordDialog(true)}
-        disabled={isLoading}
-        className="btn-secondary w-full"
-      >
-        Set password
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setShowRevokeSessionsConfirm(true)}
-        disabled={isLoading}
-        className="btn-secondary-destructive w-full"
-      >
-        Revoke all sessions
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setShowDeleteConfirm(true)}
-        disabled={isLoading}
-        className="btn-danger w-full"
-      >
-        Delete user
-      </button>
 
       <BanDialog
         open={showBanDialog}
@@ -308,7 +310,7 @@ function BanDialog({
   }
 
   return (
-    <ModalShell
+    <Modal
       open={open}
       onClose={close}
       title="Suspend account"
@@ -351,7 +353,7 @@ function BanDialog({
             placeholder="Why is this account being suspended?"
           />
           {touched && (
-            <p className="mt-1.5 text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
+            <p className="mt-1.5 text-xs text-destructive">
               A reason is required.
             </p>
           )}
@@ -376,7 +378,7 @@ function BanDialog({
           </p>
         </div>
       </div>
-    </ModalShell>
+    </Modal>
   );
 }
 
@@ -398,7 +400,7 @@ function RoleDialog({
   );
 
   return (
-    <ModalShell
+    <Modal
       open={open}
       onClose={onCancel}
       title="Change role"
@@ -440,7 +442,7 @@ function RoleDialog({
           />
         </div>
       </div>
-    </ModalShell>
+    </Modal>
   );
 }
 
@@ -467,7 +469,7 @@ function PasswordDialog({
   }
 
   return (
-    <ModalShell
+    <Modal
       open={open}
       onClose={close}
       title="Set password"
@@ -494,8 +496,11 @@ function PasswordDialog({
     >
       <div className="space-y-4">
         <div>
-          <label className="label">New password</label>
+          <label className="label" htmlFor="new-password">
+            New password
+          </label>
           <input
+            id="new-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -504,8 +509,11 @@ function PasswordDialog({
           />
         </div>
         <div>
-          <label className="label">Confirm password</label>
+          <label className="label" htmlFor="confirm-password">
+            Confirm password
+          </label>
           <input
+            id="confirm-password"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -514,11 +522,9 @@ function PasswordDialog({
           />
         </div>
         {mismatch && (
-          <p className="text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
-            Passwords do not match.
-          </p>
+          <p className="text-xs text-destructive">Passwords do not match.</p>
         )}
       </div>
-    </ModalShell>
+    </Modal>
   );
 }

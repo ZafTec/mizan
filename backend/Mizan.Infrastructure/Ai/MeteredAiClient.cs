@@ -6,21 +6,24 @@ using Mizan.Domain.Entities;
 namespace Mizan.Infrastructure.Ai;
 
 /// <summary>
-/// Reserve, call, settle. Settling happens in a finally, so a failed or cancelled call is still
-/// recorded with what it cost, and a reservation is never left pending by a provider error
-/// (docs/AI.md#metering).
+/// Reserve, call, settle. Settling happens in a finally, so a failed, refused or cancelled call is
+/// still recorded with what it cost, and a reservation is never left pending by a provider error or
+/// a gateway's limit, rate or content refusal (docs/AI.md#metering).
 /// </summary>
 public sealed class MeteredAiClient : IAiMeteredClient
 {
     private readonly IAiProvider _provider;
     private readonly IAiQuotaService _quota;
     private readonly IAiProviderIncidents _incidents;
+    private readonly ICurrentUserService _currentUser;
 
-    public MeteredAiClient(IAiProvider provider, IAiQuotaService quota, IAiProviderIncidents incidents)
+    public MeteredAiClient(
+        IAiProvider provider, IAiQuotaService quota, IAiProviderIncidents incidents, ICurrentUserService currentUser)
     {
         _provider = provider;
         _quota = quota;
         _incidents = incidents;
+        _currentUser = currentUser;
     }
 
     public async Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) =>
@@ -45,7 +48,9 @@ public sealed class MeteredAiClient : IAiMeteredClient
 
         try
         {
-            var response = await _provider.CompleteAsync(request, cancellationToken);
+            // The person making this request, so a gateway can limit or block them by name; work with
+            // no signed-in person (background jobs) carries no identity (docs/AI.md#behind-a-gateway).
+            var response = await _provider.CompleteAsync(request with { EndUserId = _currentUser.UserId }, cancellationToken);
             usage = response.Usage;
             model = response.Model;
             outcome = AiCallOutcome.Succeeded;

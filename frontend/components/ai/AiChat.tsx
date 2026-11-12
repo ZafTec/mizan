@@ -39,20 +39,22 @@ import AiPermissionGate, {
 } from "@/components/ai/AiPermissionGate";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
-  deleteAiChatThread,
-  getAiChatThread,
   getAiConsent,
-  listAiChatThreads,
-  sendAiChatImage,
-  sendAiChatMessage,
   updateAiConsent,
   type AiCard,
   type AiChatMessage,
   type AiChatThread,
   type AiConsent,
   type AiConsentRequirement,
-  type AiToolInvocation,
 } from "@/lib/api/ai";
+import {
+  chatErrorFrom,
+  mizanChatTransport,
+  type ChatConfirmationField,
+  type ChatError,
+  type ChatEvent,
+  type ChatTransport,
+} from "@/lib/ai/chat-transport";
 import { getErrorMessage } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -130,6 +132,50 @@ function writeNotNow(value: boolean) {
   }
 }
 
+/** What a tool call in a reply did, in the transport's plain words. */
+interface ToolActivity {
+  callId: string;
+  succeeded: boolean;
+  label: string;
+}
+
+/** A question the assistant put to the person before acting, and what became of it. */
+interface Confirmation {
+  callId: string;
+  question: string;
+  fields: ChatConfirmationField[];
+  expiresAt: string | null;
+  state: "open" | "sending" | "approved" | "declined" | "closed";
+}
+
+/**
+ * What came with a reply besides its words. Kept only for this visit: these are echoes of a turn,
+ * not part of the stored transcript.
+ */
+interface ReplyExtras {
+  actions: ToolActivity[];
+  cards: AiCard[];
+  refusals: AiConsentRequirement[];
+  confirmations: Confirmation[];
+}
+
+const NO_EXTRAS: ReplyExtras = {
+  actions: [],
+  cards: [],
+  refusals: [],
+  confirmations: [],
+};
+
+const BLOCKED_LINE = "I can't help with that.";
+
+/**
+ * The line shown where the turn failed. A refusal gives no hint to retry; otherwise the API's own
+ * words, which already say when a limit resets or how long to wait.
+ */
+function chatErrorLine(error: ChatError) {
+  return error.kind === "blocked" ? BLOCKED_LINE : error.message;
+}
+
 /** Whether the consent the person holds now already allows what a refusal asked for. */
 function allows(consent: AiConsent | null, requirement: AiConsentRequirement) {
   if (!consent) return false;
@@ -166,6 +212,10 @@ export default function AiChat({
   onClose,
   phone = false,
   focusToken = 0,
+  draftFor,
+  onDraftChange,
+  transport = mizanChatTransport,
+  clientTools,
 }: {
   threadId: string | null;
   onThreadChange: (id: string | null) => void;
@@ -173,23 +223,33 @@ export default function AiChat({
   phone?: boolean;
   /** Changes each time the panel opens, asking for focus once there is something to focus. */
   focusToken?: number;
+  /** The unsent words kept for a conversation (null: a new one), so a closed tab gives them back. */
+  draftFor?: (threadId: string | null) => string;
+  onDraftChange?: (threadId: string | null, text: string) => void;
+  /** Where turns and conversations come from. Tests script it; the default is Mizan's own API. */
+  transport?: ChatTransport;
+  /** Tools the run may ask this page to perform, by name. None today. */
+  clientTools?: Record<
+    string,
+    (args: Record<string, unknown>) => Promise<unknown>
+  >;
 }) {
   const router = useRouter();
   const [view, setView] = useState<"chat" | "history">("chat");
   const [threads, setThreads] = useState<AiChatThread[]>([]);
   const [messages, setMessages] = useState<AiChatMessage[]>([]);
-  // What each reply did, keyed by message id. Only for this visit: tool invocations are echoes of a turn, not part
-  // of the transcript.
-  const [performed, setPerformed] = useState<
-    Record<string, AiToolInvocation[]>
-  >({});
-  // The typed cards each reply carried (a plan, a day, a cost table, a list), keyed the same way and for the
-  // same reason: they come with the turn, not with the stored transcript.
-  const [cards, setCards] = useState<Record<string, AiCard[]>>({});
-  // The switches a reply's tool calls were refused for, keyed the same way.
-  const [refusals, setRefusals] = useState<
-    Record<string, AiConsentRequirement[]>
-  >({});
+  // What each reply did, the cards it carried, the switches it was refused for and the questions it
+  // asked, keyed by message id. A reply still arriving is keyed by its live id until it is stored.
+  const [extras, setExtras] = useState<Record<string, ReplyExtras>>({});
+  // The reply being written: its words so far and the tools running for it.
+  const [live, setLive] = useState<{
+    id: string;
+    threadId: string | null;
+    text: string;
+    running: { callId: string; label: string }[];
+  } | null>(null);
+  const inFlight = useRef<AbortController | null>(null);
+  useEffect(() => () => inFlight.current?.abort(), []);
   const [consent, setConsent] = useState<AiConsent | null>(null);
   const [consentChecked, setConsentChecked] = useState(false);
   const [notNow, setNotNow] = useState(false);
@@ -199,6 +259,14 @@ export default function AiChat({
     url: string;
   } | null>(null);
   const [input, setInput] = useState("");
+  // What is typed is kept for the conversation it was typed in, so closing the tab mid-sentence loses nothing.
+  const type = useCallback(
+    (text: string, thread: string | null) => {
+      setInput(text);
+      onDraftChange?.(thread, text);
+    },
+    [onDraftChange],
+  );
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{
@@ -216,7 +284,8 @@ export default function AiChat({
   const loaded = useRef<string | null>(null);
 
   useEffect(() => {
-    listAiChatThreads()
+    transport
+      .list()
       .then(setThreads)
       .catch(() => setThreads([]));
     getAiConsent()
@@ -224,7 +293,12 @@ export default function AiChat({
       .catch(() => setConsent(null))
       .finally(() => setConsentChecked(true));
     setNotNow(readNotNow());
-  }, []);
+  }, [transport]);
+
+  // Each conversation has its own unsent words; switching conversations brings back that one's.
+  useEffect(() => {
+    setInput(draftFor?.(threadId) ?? "");
+  }, [threadId, draftFor]);
 
   // A thread named from outside (a reload, a `/ai?thread=` link) opens here. It counts as loaded
   // only once its messages arrive, so an interrupted load is tried again.
@@ -236,7 +310,8 @@ export default function AiChat({
       return;
     }
     let current = true;
-    getAiChatThread(threadId)
+    transport
+      .load(threadId)
       .then((thread) => {
         if (!current) return;
         loaded.current = thread.id;
@@ -250,7 +325,7 @@ export default function AiChat({
     return () => {
       current = false;
     };
-  }, [threadId, onThreadChange]);
+  }, [threadId, onThreadChange, transport]);
 
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -334,7 +409,7 @@ export default function AiChat({
     setError(null);
     startTransition(async () => {
       try {
-        const thread = await getAiChatThread(id);
+        const thread = await transport.load(id);
         loaded.current = thread.id;
         onThreadChange(thread.id);
         setMessages(thread.messages);
@@ -357,8 +432,9 @@ export default function AiChat({
   async function confirmDelete() {
     const thread = deleting;
     if (!thread) return;
-    await deleteAiChatThread(thread.id);
+    await transport.remove(thread.id);
     setThreads((current) => current.filter((t) => t.id !== thread.id));
+    onDraftChange?.(thread.id, "");
     if (threadId === thread.id) {
       loaded.current = null;
       onThreadChange(null);
@@ -397,6 +473,158 @@ export default function AiChat({
     }
   }
 
+  function addTo(id: string, change: (current: ReplyExtras) => ReplyExtras) {
+    setExtras((all) => ({ ...all, [id]: change(all[id] ?? NO_EXTRAS) }));
+  }
+
+  function setConfirmation(
+    id: string,
+    callId: string,
+    state: Confirmation["state"],
+  ) {
+    addTo(id, (current) => ({
+      ...current,
+      confirmations: current.confirmations.map((c) =>
+        c.callId === callId ? { ...c, state } : c,
+      ),
+    }));
+  }
+
+  /** One event of the turn in flight, applied to the reply being written. */
+  function apply(event: ChatEvent, liveId: string, thread: string | null) {
+    switch (event.type) {
+      case "turn_started":
+        setLive((current) =>
+          current?.id === liveId
+            ? { ...current, threadId: event.threadId ?? thread }
+            : current,
+        );
+        break;
+      case "text":
+        setLive((current) =>
+          current?.id === liveId
+            ? { ...current, text: current.text + event.delta }
+            : current,
+        );
+        break;
+      case "tool_started":
+        setLive((current) =>
+          current?.id === liveId
+            ? {
+                ...current,
+                running: [
+                  ...current.running,
+                  { callId: event.callId, label: event.label },
+                ],
+              }
+            : current,
+        );
+        break;
+      case "tool_finished":
+        setLive((current) =>
+          current?.id === liveId
+            ? {
+                ...current,
+                running: current.running.filter(
+                  (r) => r.callId !== event.callId,
+                ),
+              }
+            : current,
+        );
+        addTo(liveId, (current) => ({
+          ...current,
+          actions: [
+            ...current.actions,
+            {
+              callId: event.callId,
+              succeeded: event.succeeded,
+              label: event.label,
+            },
+          ],
+        }));
+        break;
+      case "cards":
+        addTo(liveId, (current) => ({
+          ...current,
+          cards: [...current.cards, ...event.cards],
+        }));
+        break;
+      case "consent_required":
+        addTo(liveId, (current) => ({
+          ...current,
+          refusals: [...current.refusals, ...event.requirements],
+        }));
+        break;
+      case "confirmation_requested":
+        addTo(liveId, (current) => ({
+          ...current,
+          confirmations: [
+            ...current.confirmations,
+            {
+              callId: event.callId,
+              question: event.question,
+              fields: event.fields,
+              expiresAt: event.expiresAt,
+              state: "open",
+            },
+          ],
+        }));
+        break;
+      case "client_tool_call":
+        void runClientTool(event, thread);
+        break;
+    }
+  }
+
+  /** A tool the run asked this page to perform. The run waits for its result. */
+  async function runClientTool(
+    event: Extract<ChatEvent, { type: "client_tool_call" }>,
+    thread: string | null,
+  ) {
+    const tool = clientTools?.[event.name];
+    let result: unknown;
+    try {
+      result = tool
+        ? await tool(event.arguments)
+        : { error: `This page cannot run ${event.name}.` };
+    } catch (cause) {
+      result = { error: getErrorMessage(cause, "The tool failed.") };
+    }
+    try {
+      await transport.submitToolResult(thread ?? "", event.callId, result);
+    } catch (cause) {
+      setError(chatErrorLine(chatErrorFrom(cause)));
+    }
+  }
+
+  async function answer(
+    messageId: string,
+    confirmation: Confirmation,
+    approve: boolean,
+  ) {
+    if (
+      confirmation.expiresAt &&
+      Date.parse(confirmation.expiresAt) <= Date.now()
+    ) {
+      setConfirmation(messageId, confirmation.callId, "closed");
+      return;
+    }
+    const thread = live?.id === messageId ? live.threadId : threadId;
+    setConfirmation(messageId, confirmation.callId, "sending");
+    setError(null);
+    try {
+      await transport.confirm(thread ?? "", confirmation.callId, approve);
+      setConfirmation(
+        messageId,
+        confirmation.callId,
+        approve ? "approved" : "declined",
+      );
+    } catch (cause) {
+      setConfirmation(messageId, confirmation.callId, "open");
+      setError(chatErrorLine(chatErrorFrom(cause)));
+    }
+  }
+
   async function send(prompt: string) {
     const text = prompt.trim();
     const photo = attachment;
@@ -404,6 +632,8 @@ export default function AiChat({
     if ((!text && !photo) || pending) return;
 
     const optimisticId = `pending-${crypto.randomUUID()}`;
+    const liveId = `live-${crypto.randomUUID()}`;
+    const thread = threadId;
     stickToBottom.current = true;
     setMessages((current) => [
       ...current,
@@ -417,63 +647,116 @@ export default function AiChat({
         imageUrl: photo?.url ?? null,
       },
     ]);
-    setInput("");
+    setLive({ id: liveId, threadId: thread, text: "", running: [] });
+    type("", thread);
     setAttachment(null);
     setError(null);
 
     startTransition(async () => {
+      const control = new AbortController();
+      inFlight.current = control;
+      let failure: ChatError | null = null;
+      let finished = false;
+      let wrote = false;
       try {
-        const turn = photo
-          ? await sendAiChatImage(threadId, text, photo.file)
-          : await sendAiChatMessage(threadId, text);
-        loaded.current = turn.threadId;
-        onThreadChange(turn.threadId);
-        // The stored message takes the optimistic one's place, so the photo now comes from its stored address
-        // and the local preview can go.
-        setMessages((current) => [
-          ...current.map((m) => (m.id === optimisticId ? turn.message : m)),
-          turn.reply,
-        ]);
-        if (photo) release(photo.url);
-        if (turn.cards?.length)
-          setCards((current) => ({ ...current, [turn.reply.id]: turn.cards }));
-        if (turn.consentRequired?.length)
-          setRefusals((current) => ({
-            ...current,
-            [turn.reply.id]: turn.consentRequired,
-          }));
-        if (turn.performed?.some((action) => action.succeeded))
-          // Something was written, so anything on screen behind this is stale.
-          router.refresh();
-        if (turn.performed?.length)
-          setPerformed((current) => ({
-            ...current,
-            [turn.reply.id]: turn.performed,
-          }));
-        setThreads((current) => [
-          {
-            id: turn.threadId,
-            title: turn.title,
-            updatedAt: turn.reply.createdAt,
-          },
-          ...current.filter((t) => t.id !== turn.threadId),
-        ]);
+        for await (const event of transport.send(
+          thread,
+          { text, image: photo?.file },
+          { signal: control.signal, idempotencyKey: crypto.randomUUID() },
+        )) {
+          if (control.signal.aborted) break;
+          if (event.type === "error") {
+            failure = event;
+            break;
+          }
+          if (event.type === "tool_finished" && event.succeeded) wrote = true;
+          if (event.type !== "turn_finished") {
+            apply(event, liveId, thread);
+            continue;
+          }
+          finished = true;
+          finish(event, optimisticId, liveId);
+          if (photo) release(photo.url);
+          break;
+        }
       } catch (cause) {
-        // 429 already says which ceiling tripped and when it resets, and 503 says the assistant is
-        // unavailable. Both say more than this component could.
-        setError(getErrorMessage(cause, "Chat request failed."));
-        // The turn was never recorded, so the screen must not keep it, and the person gets their words back.
-        setMessages((current) => current.filter((m) => m.id !== optimisticId));
-        setInput(text);
-        // The preview was never released, so the same photo returns to the composer as it was.
-        if (photo) setAttachment(photo);
+        failure = chatErrorFrom(cause);
+      } finally {
+        if (inFlight.current === control) inFlight.current = null;
       }
+      if (control.signal.aborted) return;
+      // Something was written, so anything on screen behind this is stale.
+      if (wrote) router.refresh();
+      if (finished) return;
+
+      // A limit says which ceiling tripped and when it resets, and an outage says the assistant is
+      // unavailable. Both say more than this component could.
+      setError(
+        chatErrorLine(
+          failure ?? {
+            kind: "other",
+            code: "ended",
+            message: "Chat request failed.",
+          },
+        ),
+      );
+      // The turn was never recorded, so the screen must not keep it, and the person gets their words back.
+      setMessages((current) => current.filter((m) => m.id !== optimisticId));
+      setLive(null);
+      setExtras((all) => {
+        const rest = { ...all };
+        delete rest[liveId];
+        return rest;
+      });
+      type(text, thread);
+      // The preview was never released, so the same photo returns to the composer as it was.
+      if (photo) setAttachment(photo);
     });
+  }
+
+  /** The stored turn replaces what was shown while it was written. */
+  function finish(
+    event: Extract<ChatEvent, { type: "turn_finished" }>,
+    optimisticId: string,
+    liveId: string,
+  ) {
+    const { reply } = event;
+    loaded.current = event.threadId;
+    onThreadChange(event.threadId);
+    // The stored message takes the optimistic one's place, so the photo now comes from its stored address
+    // and the local preview can go.
+    setMessages((current) => [
+      ...current.map((m) => (m.id === optimisticId ? event.message : m)),
+      reply,
+    ]);
+    setLive(null);
+    // What arrived with the reply moves to its stored id; a question it left unanswered is closed.
+    setExtras((all) => {
+      const rest = { ...all };
+      const arrived = rest[liveId];
+      delete rest[liveId];
+      if (!arrived) return rest;
+      rest[reply.id] = {
+        ...arrived,
+        confirmations: arrived.confirmations.map((c) =>
+          c.state === "open" || c.state === "sending"
+            ? { ...c, state: "closed" }
+            : c,
+        ),
+      };
+      return rest;
+    });
+    setThreads((current) => [
+      { id: event.threadId, title: event.title, updatedAt: reply.createdAt },
+      ...current.filter((t) => t.id !== event.threadId),
+    ]);
   }
 
   /** The question a reply answered, so a refused one can be asked again once allowed. */
   function questionBefore(replyId: string) {
-    const index = messages.findIndex((m) => m.id === replyId);
+    const found = messages.findIndex((m) => m.id === replyId);
+    // A reply still being written is not in the transcript yet; it answers the last question.
+    const index = found === -1 ? messages.length : found;
     for (let i = index - 1; i >= 0; i--)
       if (messages[i].fromUser) return messages[i].content;
     return "";
@@ -495,6 +778,66 @@ export default function AiChat({
       void send(input);
     }
   }
+
+  function replyView(message: AiChatMessage, streaming = false) {
+    const extra = extras[message.id];
+    return (
+      <MessageView
+        key={message.id}
+        message={message}
+        streaming={streaming}
+        actions={extra?.actions}
+        cards={extra?.cards}
+        onOpenImage={(src) =>
+          setLightbox({
+            src,
+            label: message.fromUser
+              ? "Photo you sent"
+              : "Photo from the assistant",
+          })
+        }
+      >
+        {extra?.refusals.map((requirement) => {
+          const key = `${message.id}-${requirement.axis}-${requirement.access}`;
+          return (
+            <PermissionNeeded
+              key={key}
+              requirement={requirement}
+              allowed={allows(consent, requirement)}
+              busy={granting === key || pending}
+              onAllow={() => void allow(key, requirement)}
+              onSendAgain={() => void send(questionBefore(message.id))}
+            />
+          );
+        })}
+        {extra?.confirmations.map((confirmation) => (
+          <ConfirmationCard
+            key={confirmation.callId}
+            confirmation={confirmation}
+            onAnswer={(approve) =>
+              void answer(message.id, confirmation, approve)
+            }
+          />
+        ))}
+      </MessageView>
+    );
+  }
+
+  // The reply being written shows once it has something to show; until then the status line stands in.
+  const liveExtras = live ? extras[live.id] : undefined;
+  const liveReply: AiChatMessage | null =
+    live &&
+    (live.text ||
+      liveExtras?.actions.length ||
+      liveExtras?.cards.length ||
+      liveExtras?.refusals.length ||
+      liveExtras?.confirmations.length)
+      ? { id: live.id, fromUser: false, content: live.text, createdAt: "" }
+      : null;
+  const status = !pending
+    ? null
+    : (live?.running.at(-1)?.label ??
+      (live?.text ? null : "The assistant is writing…"));
 
   const missing = consentMissing(consent);
   const asking = missing && !notNow;
@@ -631,46 +974,16 @@ export default function AiChat({
                 disabled={pending}
               />
             ) : (
-              messages.map((message) => (
-                <MessageView
-                  key={message.id}
-                  message={message}
-                  actions={performed[message.id]}
-                  cards={cards[message.id]}
-                  onOpenImage={(src) =>
-                    setLightbox({
-                      src,
-                      label: message.fromUser
-                        ? "Photo you sent"
-                        : "Photo from the assistant",
-                    })
-                  }
-                >
-                  {refusals[message.id]?.map((requirement) => {
-                    const key = `${message.id}-${requirement.axis}-${requirement.access}`;
-                    return (
-                      <PermissionNeeded
-                        key={key}
-                        requirement={requirement}
-                        allowed={allows(consent, requirement)}
-                        busy={granting === key || pending}
-                        onAllow={() => void allow(key, requirement)}
-                        onSendAgain={() =>
-                          void send(questionBefore(message.id))
-                        }
-                      />
-                    );
-                  })}
-                </MessageView>
-              ))
+              messages.map((message) => replyView(message))
             )}
+            {liveReply && replyView(liveReply, true)}
 
-            {pending && (
+            {status && (
               <div
                 role="status"
                 className="text-sm text-muted-foreground transition-opacity duration-200 ease-out starting:opacity-0"
               >
-                The assistant is writing…
+                {status}
               </div>
             )}
 
@@ -739,7 +1052,7 @@ export default function AiChat({
                 ref={textarea}
                 value={input}
                 rows={1}
-                onChange={(event) => setInput(event.target.value)}
+                onChange={(event) => type(event.target.value, threadId)}
                 onKeyDown={onKeyDown}
                 disabled={pending}
                 placeholder={
@@ -947,6 +1260,68 @@ function PermissionNeeded({
 }
 
 /**
+ * The assistant asks before it acts. The run waits for this answer; once given, or once the reply
+ * has finished without it, the card only says what happened.
+ */
+function ConfirmationCard({
+  confirmation,
+  onAnswer,
+}: {
+  confirmation: Confirmation;
+  onAnswer: (approve: boolean) => void;
+}) {
+  const { question, fields, state } = confirmation;
+  const answerable = state === "open" || state === "sending";
+  return (
+    <div
+      role="group"
+      aria-label="Confirm before it acts"
+      className="w-full max-w-[92%] space-y-2 rounded-md border border-border bg-muted/40 px-3.5 py-3 text-sm transition-opacity duration-200 ease-out starting:opacity-0"
+    >
+      <p className="font-medium">{question}</p>
+      {fields.length > 0 && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          {fields.map((field) => (
+            <div key={field.label} className="contents">
+              <dt className="text-muted-foreground">{field.label}</dt>
+              <dd className="min-w-0 break-words">{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {answerable ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onAnswer(true)}
+            disabled={state === "sending"}
+            className="btn-primary min-h-10"
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            onClick={() => onAnswer(false)}
+            disabled={state === "sending"}
+            className="btn-secondary min-h-10"
+          >
+            Decline
+          </button>
+        </div>
+      ) : (
+        <p className="text-muted-foreground">
+          {state === "approved"
+            ? "Approved."
+            : state === "declined"
+              ? "Declined."
+              : "No longer waiting for an answer."}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
  * Only addresses a browser can show as a picture reach an image: the preview blob, an inline image, a hosted
  * photo, or a path on this site. Rendered through next/image without optimization, since these are the
  * person's own photos and previews rather than site assets. By default the parent sets the box and `fill`
@@ -1048,13 +1423,16 @@ function EmptyState({
 
 function MessageView({
   message,
+  streaming = false,
   actions,
   cards,
   onOpenImage,
   children,
 }: {
   message: AiChatMessage;
-  actions?: AiToolInvocation[];
+  /** Still arriving: no copy button yet, and no empty bubble before the first words. */
+  streaming?: boolean;
+  actions?: ToolActivity[];
   cards?: AiCard[];
   onOpenImage: (src: string) => void;
   children?: ReactNode;
@@ -1092,34 +1470,36 @@ function MessageView({
           </>
         )}
       </p>
-      <div
-        className={cn(
-          "max-w-[92%] space-y-2 rounded-md px-3.5 py-2.5 text-sm leading-relaxed",
-          mine
-            ? "whitespace-pre-wrap bg-primary text-primary-foreground"
-            : "border border-border bg-background",
-        )}
-      >
-        {message.imageUrl && (
-          <button
-            type="button"
-            onClick={() => onOpenImage(message.imageUrl!)}
-            aria-label="Open photo"
-            className="block overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
-          >
-            <PictureImage
-              src={message.imageUrl}
-              alt="Photo in the conversation"
-              inline
-              className="max-h-60 w-auto max-w-full cursor-zoom-in object-contain"
-            />
-          </button>
-        )}
-        {/* Only the assistant writes markdown. A user's asterisks are asterisks. */}
-        {message.content &&
-          (mine ? message.content : <AiMarkdown content={message.content} />)}
-      </div>
-      {!mine && message.content && (
+      {(!streaming || message.content) && (
+        <div
+          className={cn(
+            "max-w-[92%] space-y-2 rounded-md px-3.5 py-2.5 text-sm leading-relaxed",
+            mine
+              ? "whitespace-pre-wrap bg-primary text-primary-foreground"
+              : "border border-border bg-background",
+          )}
+        >
+          {message.imageUrl && (
+            <button
+              type="button"
+              onClick={() => onOpenImage(message.imageUrl!)}
+              aria-label="Open photo"
+              className="block overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+            >
+              <PictureImage
+                src={message.imageUrl}
+                alt="Photo in the conversation"
+                inline
+                className="max-h-60 w-auto max-w-full cursor-zoom-in object-contain"
+              />
+            </button>
+          )}
+          {/* Only the assistant writes markdown. A user's asterisks are asterisks. */}
+          {message.content &&
+            (mine ? message.content : <AiMarkdown content={message.content} />)}
+        </div>
+      )}
+      {!mine && !streaming && message.content && (
         <button
           type="button"
           onClick={copy}
@@ -1133,12 +1513,12 @@ function MessageView({
           {copied ? "Copied" : "Copy"}
         </button>
       )}
-      {cards && <AiCardList cards={cards} />}
+      {cards && cards.length > 0 && <AiCardList cards={cards} />}
       {actions && actions.length > 0 && (
         <ul className="space-y-1">
-          {actions.map((action, index) => (
+          {actions.map((action) => (
             <li
-              key={`${action.tool}-${index}`}
+              key={action.callId}
               className={cn(
                 "flex items-start gap-2 text-xs",
                 action.succeeded
@@ -1161,7 +1541,7 @@ function MessageView({
                   className="mt-0.5 shrink-0"
                 />
               )}
-              <span>{action.succeeded ? action.summary : action.error}</span>
+              <span>{action.label}</span>
             </li>
           ))}
         </ul>

@@ -42,7 +42,24 @@ public record AdminOverviewDto(
     int ActiveTrainers,
     int BannedUsers,
     int ActiveSessions,
-    List<AdminUserDto> RecentUsers);
+    List<AdminUserDto> RecentUsers,
+    int JoinedThisWeek,
+    int SeenLastDay,
+    AdminAttentionDto Attention);
+
+/// <summary>
+/// What waits for an administrator, each with its oldest item so the page can say how long it has waited:
+/// jobs that gave up, email that failed in the last day, unhandled contact messages, open price reports
+/// and open content reports.
+/// </summary>
+public record AdminAttentionDto(
+    int DeadJobs,
+    DateTime? OldestDeadJobAt,
+    int FailedEmails,
+    int NewContactMessages,
+    DateTime? OldestContactMessageAt,
+    int OpenPriceReports,
+    int OpenContentReports);
 
 public record GetAdminOverviewQuery : IRequest<AdminOverviewDto>;
 
@@ -55,6 +72,19 @@ public class GetAdminOverviewQueryHandler : IRequestHandler<GetAdminOverviewQuer
     public async Task<AdminOverviewDto> Handle(GetAdminOverviewQuery request, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
+        var weekAgo = now.AddDays(-7);
+        var dayAgo = now.AddDays(-1);
+
+        var attention = new AdminAttentionDto(
+            await _context.OutboxJobs.CountAsync(j => j.Status == OutboxJobStatus.DeadLettered, cancellationToken),
+            await _context.OutboxJobs.Where(j => j.Status == OutboxJobStatus.DeadLettered)
+                .MinAsync(j => (DateTime?)(j.CompletedAt ?? j.CreatedAt), cancellationToken),
+            await _context.EmailMessages.CountAsync(m => m.Status == EmailMessageStatus.Failed && m.CreatedAt >= dayAgo, cancellationToken),
+            await _context.ContactSubmissions.CountAsync(c => c.Status == ContactSubmissionStatus.New, cancellationToken),
+            await _context.ContactSubmissions.Where(c => c.Status == ContactSubmissionStatus.New)
+                .MinAsync(c => (DateTime?)c.CreatedAt, cancellationToken),
+            await _context.PriceReports.CountAsync(r => r.Status == Mizan.Domain.Pricing.PriceReportStatus.Open, cancellationToken),
+            await _context.ContentReports.CountAsync(r => r.Status == "Open", cancellationToken));
 
         return new AdminOverviewDto(
             await _context.Users.CountAsync(cancellationToken),
@@ -65,7 +95,14 @@ public class GetAdminOverviewQueryHandler : IRequestHandler<GetAdminOverviewQuer
                 .OrderByDescending(u => u.CreatedAt)
                 .Take(5)
                 .Select(AdminUserProjection.Expression)
-                .ToListAsync(cancellationToken));
+                .ToListAsync(cancellationToken),
+            await _context.Users.CountAsync(u => u.CreatedAt >= weekAgo, cancellationToken),
+            await _context.UserSessions
+                .Where(s => s.ImpersonatorId == null && s.LastSeenAt >= dayAgo)
+                .Select(s => s.UserId)
+                .Distinct()
+                .CountAsync(cancellationToken),
+            attention);
     }
 }
 

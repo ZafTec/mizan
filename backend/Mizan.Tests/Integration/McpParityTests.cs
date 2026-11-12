@@ -106,6 +106,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             "admin_list_jobs", "admin_get_job_stats", "admin_retry_job", "admin_delete_job",
             // Runtime settings
             "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp",
+            "admin_rotate_end_user_key",
         });
     }
 

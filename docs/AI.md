@@ -6,7 +6,7 @@ Mizan's assistant, food-photo analysis, onboarding, trainer questions, and promp
 
 `POST /api/Nutrition/ai/analyze-text` turns a sentence ("two eggs, toast with butter") into the same structured proposal as `analyze-image`: foods with portion grams and macros, a confidence, and a note naming any portions the model assumed. Both are Pro features, share the `food_analysis` prompt and the `FoodAnalysis` quota line, and write nothing. A description is limited to 600 characters, and a reply that does not match the declared schema is a failed call. A ```json fence or a sentence around the one JSON object is dropped before it is read (`StructuredReply`); nothing else is scraped from prose.
 
-A food the model names is matched by `FoodNameMatch` (case, plurals and common other spellings such as `wat` for `wot` ignored, no loose contained-word matches) in this order (`FoodAnalysisCatalogue`): the person's own recipes, which come back with `recipeId`, the recipe's title, `servings` (from the portion when the recipe's yield is known, else one), the recipe's nutrition for them and `source: "recipe"`; then their own foods and the shared catalogue, with `foodId`, the catalogue name, the catalogue's nutrition for the portion and `source: "catalogue"`; anything else is the model's estimate, `source: "estimate"`. The total is added up again when anything matched. Each recognized food also carries `per100g`, derived from its portion. The logging sheet leads with this. A recipe match lands in the meal as that recipe at the proposed servings and is logged with `recipeId` (web `POST /api/Nutrition/log`, Telegram `POST /api/Meals`), so the diary gets the recipe's own nutrition. The rest of the proposal lands as editable rows (name and grams), and only what the person confirms is saved, one `POST /api/Meals` per food with `amountGrams` and `per100g` under an `Idempotency-Key` minted when the row was proposed: the server computes the stored totals (rounded to two decimals, like a catalogue food), ignores any client totals sent alongside, and treats a retry as a replay. The MCP photo app sends the same figures through `log_meal_manual`. A photo sent for an analysis (web, Telegram, MCP) or with a chat turn is stored with its removal scheduled in the outbox 30 days later (`AnalysisPhotos`, job `analysis-photo-expiry` through `IStorageService`); the scheduled job also records whose photo it is. The person deletes it sooner with `DELETE /api/Nutrition/ai/photo?imageUrl=` (`DeleteAnalysisPhotoCommand`, 404 for someone else's or one already gone), MCP `delete_food_photo` (`ai:use`), **Delete it now** under the photo estimate in the logging sheet, or **Delete the photo** on the Telegram photo card. A chat turn keeps its image link, which stops working once the photo is removed. Free accounts see an inline upgrade note at the moment they try, and food search and recipes stay free.
+A food the model names is matched by `FoodNameMatch` (case, plurals and common other spellings such as `wat` for `wot` ignored, no loose contained-word matches) in this order (`FoodAnalysisCatalogue`): the person's own recipes, which come back with `recipeId`, the recipe's title, `servings` (from the portion when the recipe's yield is known, else one), the recipe's nutrition for them and `source: "recipe"`; then their own foods and the shared catalogue, with `foodId`, the catalogue name, the catalogue's nutrition for the portion and `source: "catalogue"`; anything else is the model's estimate, `source: "estimate"`. The total is added up again when anything matched. Each recognized food also carries `per100g`, derived from its portion. The logging sheet leads with this. A recipe match lands in the meal as that recipe at the proposed servings and is logged with `recipeId` (web `POST /api/Nutrition/log`, Telegram `POST /api/Meals`), so the diary gets the recipe's own nutrition. The rest of the proposal lands as editable rows (name and grams), and only what the person confirms is saved, one `POST /api/Meals` per food with `amountGrams` and `per100g` under an `Idempotency-Key` minted when the row was proposed: the server computes the stored totals (rounded to two decimals, like a catalogue food), ignores any client totals sent alongside, and treats a retry as a replay. The MCP photo app sends the same figures through `log_meal_manual`. A photo sent for an analysis (web, Telegram, MCP) or with a chat turn is stored with its removal scheduled in the outbox 30 days later (`AnalysisPhotos`, job `analysis-photo-expiry` through `IStorageService`); the scheduled job also records whose photo it is. The person deletes it sooner with `DELETE /api/Nutrition/ai/photo?imageUrl=` (`DeleteAnalysisPhotoCommand`, 404 for someone else's or one already gone), MCP `delete_food_photo` (`ai:use`), **Delete it now** under the photo estimate in the logging sheet, or **Delete the photo** on the Telegram photo card. A chat turn keeps its image link, which stops working once the photo is removed. Estimates spend their own allowance line, three a day on Free; when it runs out the person sees the refusal and the upgrade path, and food search and recipes stay free. Telegram, including its photo logging, stays Pro.
 
 ## Drafting a meal plan
 
@@ -18,7 +18,7 @@ On the web, **Draft with the assistant** on `/meal-plan/new` sends the start dat
 
 ## Configuration
 
-The provider speaks the OpenAI-compatible chat-completions protocol. An administrator sets `Ai.BaseUrl`, `Ai.ApiKey` and `Ai.Model` under **Admin → Settings → AI provider** and checks the endpoint with **Test provider** ([runtime settings](ADMIN.md#runtime-settings)); a change applies to the next call without a restart. They are not read from the environment. An empty endpoint disables AI while basic logging remains available, and the page says so.
+The provider speaks the OpenAI-compatible chat-completions protocol. An administrator sets `Ai.BaseUrl`, `Ai.ApiKey` and `Ai.Model` under **Admin → Settings → AI provider** and checks the endpoint with **Test provider** ([runtime settings](ADMIN.md#runtime-settings)); a change applies to the next call without a restart. They are not read from the environment. An empty endpoint disables AI while basic logging remains available, and the page says so. The key is sent as `Authorization: Bearer`, and also as `api-key` only to an Azure host (`*.azure.com`).
 
 `Ai.SupportsTemperature=false` omits temperature for providers that reject it. Optional `Ai.ReasoningEffort` sets the provider's reasoning effort; Azure GPT-5.6 chat-completion tool calls require `none`. Leave it empty for providers that do not accept this field.
 
@@ -28,10 +28,53 @@ The provider speaks the OpenAI-compatible chat-completions protocol. An administ
 
 A non-success status from the provider is logged at warning level with the status and the provider's error `type`, `code`, `param` and `message`; the message is cut to 300 characters, and the configured key and anything shaped like a key or a bearer token are replaced. The request (the prompt) is never logged, a body that is not an error object keeps no message, and the caller never receives the body. The client throws `AiProviderRejectedException`, answered as `503 ai_unavailable`:
 
-- 400, 401, 403, 404 and 422 are configuration errors that retrying does not fix. The person reads "The assistant is misconfigured. An administrator has been told.", and every administrator gets one `ai_misconfigured` notification per provider message an hour, linking to **Admin → Settings → AI**, with the status and the provider's message.
-- 429 and 5xx keep "Try again shortly"; timeouts and unreachable endpoints keep their own messages.
+- 400, 401, 403, 404 and 422 are configuration errors that retrying does not fix, unless the body names one of the refusals below. The person reads "The assistant is misconfigured. An administrator has been told.", and every administrator gets one `ai_misconfigured` notification per provider message an hour, linking to **Admin → Settings → AI**, with the status and the provider's message.
+- 5xx keeps "Try again shortly"; timeouts and unreachable endpoints keep their own messages.
+
+Some refusals are the person's to wait out or accept, not an administrator's to fix. Each has its own code, and every surface shows the message: the web chat and planner, Telegram (the API's `error`), and the MCP task tools (`errorCode`). The quota is settled for each, like any failed call.
+
+| Provider answer | Code and status | The person reads |
+| --- | --- | --- |
+| 402 | `ai_limit_reached`, 503, `resetsAt` and `Retry-After` when known | "The assistant has reached its limit for now." and, when the answer carries `resets_at`, `reset_at`, `retry_after` or a `Retry-After` header, when it should be back |
+| 429 | `ai_rate_limited`, 429, `retryAfterSeconds` and `Retry-After` when known | "The assistant is busy right now. Try again in …" |
+| 400, 403 or 422 with `guardrail_blocked`, `content_filter` or `content_policy_violation`; or an answer with a `refusal` or `finish_reason: content_filter` | `ai_blocked`, 422 | "I can't help with that." |
+| 403 with `end_user_blocked` | `ai_account_blocked`, 403 | "The assistant isn't available for your account." |
+
+A 429 is retried once inside the call when `Retry-After` (seconds or an HTTP date) or the `RateLimit` header asks for two seconds or less; a longer wait is returned to the person. With several `RateLimit` windows, the longest reset is the wait. A refused chat turn keeps nothing: neither message is stored, and a first message opens no thread. A meal plan draft that hits a limit on its second or later call keeps the days already drafted, as it does for an exhausted allowance.
+
+Usage comes from the answer's `usage`. When it is missing, or one side of it is, the ledger estimates that side at four characters a token (a photo counts 800), so an endpoint that reports no usage still counts against the token caps.
 
 Reasoning models on Azure refuse function tools on `/chat/completions` together with their default reasoning ("Function tools with reasoning_effort are not supported … set reasoning_effort to 'none'"). Set `AI_REASONING_EFFORT=none` (or `Ai.ReasoningEffort` in the admin area) for such a deployment. When it is unset, a tool request that the provider refuses for `reasoning_effort` is sent again once, inside the same metered call, with `reasoning_effort: none`, and later tool requests to that endpoint and model start with it until the process restarts; a warning names the setting to change. Requests without tools are unchanged. The Responses API (`/v1/responses`) is not supported. **Test provider** checks a tool call as well as a plain reply ([administration](ADMIN.md#runtime-settings)).
+
+### Photos
+
+An endpoint that does not take images can leave photos to another: `Ai.Vision.BaseUrl`, `Ai.Vision.ApiKey` (secret) and `Ai.Vision.Model` under **Admin → Settings → AI provider**. A request with a photo goes there; each empty field falls back to the main one. Photo requests carry no end-user token, since the photo endpoint is not the gateway.
+
+### Behind a gateway
+
+The endpoint may be a gateway that meters, filters and limits per person. Mizan then sends, on every call made for a person to the main endpoint, a signed end-user token in a header the gateway names. The token is an ES256 JWT with only `iss`, `aud`, `sub` (the Mizan user id, never an email or name), `iat` and `exp`; it is cached per person and renewed a minute before it expires. Calls made for no person (the admin **Test provider**) carry none. The token and the key are never logged, and an error message that would quote a token has it replaced.
+
+The settings live under **Admin → Settings → Tokens Mizan signs** ([runtime settings](ADMIN.md#runtime-settings)) and apply without a restart. The first five are needed together; none set leaves the feature off, and a partial or invalid set turns it off and logs which setting is wrong, never the key.
+
+| Setting | Meaning |
+| --- | --- |
+| `EndUser.Header` | The header the gateway reads, such as `X-End-User` |
+| `EndUser.Issuer` | `iss`, the value the gateway expects for Mizan |
+| `EndUser.Audience` | `aud`, the value the gateway expects for itself |
+| `EndUser.KeyId` | `kid` of the signing key |
+| `EndUser.PrivateKey` | The P-256 private key, PEM (PKCS#8 or SEC1), stored encrypted; a key pasted with its line breaks written as `\n` is accepted |
+| `EndUser.LifetimeSeconds` | Token lifetime, 60 to 3600; 600 by default |
+| `EndUser.PreviousPublicKey`, `EndUser.PreviousKeyId` | During a rotation, the old public key (PEM) and its `kid`, still published so tokens signed before the switch verify |
+
+**Rotate key** makes the key and its `kid`, so none has to be generated by hand: it moves the current key to the `Previous` settings and signs with the new one at once. Rotate again only after the longest token lifetime has passed, since the key before the previous one is dropped. A deployment that set the old `Ai__EndUser__*` variables copies them in with `--import-env-settings` ([moving settings](ADMIN.md#moving-settings-out-of-the-environment)).
+
+The gateway verifies with the public keys at `/.well-known/jwks.json` and `/api/.well-known/jwks.json` (anonymous, cached for 5 minutes, 404 when the feature is off). The `/api` address reaches the API already; the root one needs its own proxy route, like the OAuth documents ([MCP](MCP.md)):
+
+```nginx
+location = /.well-known/jwks.json {
+    proxy_pass http://$mizan_backend;
+}
+```
 
 ## Consent
 
@@ -49,6 +92,8 @@ A chat tool call the person's consent does not allow is refused by `AiToolRunner
 
 Weight writes require body-axis permission and belong to the measurement tool; goal tools cannot bypass that consent. Render model-supplied Markdown images as links so a reply cannot trigger automatic requests to external image hosts.
 
+A hosted assistant reaching the task tools through the MCP gateway is held to the same switches: `AssistantConsent` in Application is the one rule, and both `AiToolRunner` and `TaskToolRunner` (on the gateway path) call it ([MCP](MCP.md#served-to-a-hosted-assistant-through-the-gateway)). OAuth connected apps are not affected.
+
 ## Metering
 
 Every provider call reserves capacity through `IAiQuotaService`, then settles actual usage. The ledger counts failures and administrative evaluations appropriately. There are separate daily allowance lines:
@@ -59,11 +104,13 @@ Every provider call reserves capacity through `IAiQuotaService`, then settles ac
 | Pro personal | 200 | 500,000 |
 | Onboarding | 60 | 60,000 |
 | Trainer-client | 300 | 600,000 |
+| Free estimates | 3 | 30,000 |
+| Pro estimates | 100 | 400,000 |
 | Free planning | 1 | 30,000 |
 | Pro planning | 20 | 400,000 |
 | Evaluation | 400 | 400,000 |
 
-Defaults come from `AiOptions` and are configurable. An administrator can override them per user, household or billing plan ([administration](ADMIN.md#usage-limits)): each cap is taken from the user's override, then the household's, then the plan's, then the tier default, field by field, and `IAiQuotaService` enforces the result. Overrides may add a daily and a monthly cost cap, checked next to the request and token caps. A refusal answers `429 ai_quota_exceeded` with `cap` (`daily_requests`, `daily_tokens`, `daily_cost`, `monthly_cost`) and a message naming it, and is written to the ledger as a zero-cost `Refused` row that counts toward no allowance. Every line shares the global default ceilings of 5,000,000 tokens and 20,000,000 cost micros per UTC day. Trainer usage belongs to the trainer, so a coach cannot consume a client's allowance; that includes the task tool `ask_about_client`, which spends the trainer-client line. Chat is quota-limited on Free; it is not uniformly Pro-only. Image analysis has its own entitlement gate.
+Defaults come from `AiOptions` and are configurable. An administrator can override them per user, household or billing plan ([administration](ADMIN.md#usage-limits)): each cap is taken from the user's override, then the household's, then the plan's, then the tier default, field by field, and `IAiQuotaService` enforces the result. Overrides may add a daily and a monthly cost cap, checked next to the request and token caps. A refusal answers `429 ai_quota_exceeded` with `cap` (`daily_requests`, `daily_tokens`, `daily_cost`, `monthly_cost`) and a message naming it, and is written to the ledger as a zero-cost `Refused` row that counts toward no allowance. Every line shares the global default ceilings of 5,000,000 tokens and 20,000,000 cost micros per UTC day. Trainer usage belongs to the trainer, so a coach cannot consume a client's allowance; that includes the task tool `ask_about_client`, which spends the trainer-client line. Chat is quota-limited on Free; it is not uniformly Pro-only. Photo and text estimates are on the estimates line, so a Free account can log a few meals by photo or description without spending its chat, and `GET /api/Ai/usage` reports them under `estimates`.
 
 A planning request is one meal plan draft for one budget ceiling, so Free gets one plan a day; planning and personal chat do not spend each other's allowance. `GET /api/Ai/usage` reports personal usage, with the planning line under `planning`; the usage panel in profile settings shows it as **Meal plans drafted**. Administrators use `GET /api/Ai/usage/global`. Reservation, provider call, and settlement belong together; adding a direct unmetered provider call is a billing defect.
 

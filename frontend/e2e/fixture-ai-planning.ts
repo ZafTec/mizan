@@ -259,6 +259,14 @@ export async function handleAiPlanning(
         resetsAt,
         plan: "Free",
       },
+      estimates: {
+        requestsUsed: 1,
+        requestLimit: 3,
+        tokensUsed: 900,
+        tokenLimit: 30000,
+        resetsAt,
+        plan: "Free",
+      },
     } satisfies MyAiUsage);
 
   if (path === "/api/MealPlans/generate" && method === "POST") {

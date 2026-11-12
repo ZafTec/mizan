@@ -66,7 +66,7 @@ public class FeatureFlagTests
             l.UserId == neighbour && l.HouseholdId == nextDoor && l.Feature == AiFeatures.Planning);
 
         // The list says one household answers differently; the override is listed, and clearing it restores the default.
-        var flags = await admin.GetFromJsonAsync<List<FeatureFlagDto>>("/api/admin/feature-flags");
+        var flags = (await admin.GetFromJsonAsync<List<FeatureFlagDto>>("/api/admin/feature-flags"))!;
         flags!.Select(f => f.Key).Should().Equal(FeatureFlags.All.Select(f => f.Key));
         flags.Single(f => f.Key == FeatureFlags.PlanningGenerate).Should().Match<FeatureFlagDto>(f =>
             f.DefaultEnabled && f.OverrideCount == 1 && f.DisabledOverrides == 1);

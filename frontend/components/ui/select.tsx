@@ -4,6 +4,8 @@ import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Check, ChevronDown, Search } from "lucide-react";
 
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { useNarrowScreen } from "@/lib/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 export type SelectOption = {
@@ -130,6 +132,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     // Read from the field's label when it opens, to name the list and filter.
     const [listName, setListName] = React.useState<string | undefined>();
 
+    // A phone gets the list as a sheet from the bottom instead of a popover.
+    const narrow = useNarrowScreen();
     const searchable = searchableProp ?? options.length > 15;
     const visible = React.useMemo(
       () =>
@@ -166,7 +170,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       setOpen(false);
       setQuery("");
       typed.current.text = "";
-      if (returnFocus) triggerRef.current?.focus();
+      // A sheet holds focus until it has gone, then hands it back itself.
+      if (returnFocus && !narrow) triggerRef.current?.focus();
     };
 
     const pick = (option: SelectOption | undefined) => {
@@ -233,6 +238,44 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       return true;
     };
 
+    /**
+     * Keys while the list is open and the focused control drives it: the
+     * button over a popover, or the list itself in a phone's sheet. Keys it
+     * handles stop here, so a dialog around it does not also react.
+     */
+    const onListKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        hide(true);
+      } else if (event.key === "Tab") {
+        // In a sheet focus is held inside it, so it goes back to the button.
+        if (narrow) {
+          event.preventDefault();
+          hide(true);
+        } else {
+          hide(false);
+          onBlur?.();
+        }
+      } else if (event.key === "Enter" || event.key === " ") {
+        if (event.key === " " && isTypeKey(event)) {
+          event.preventDefault();
+          const found = findTyped(" ", active);
+          if (found >= 0) setActive(found);
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        pick(visible[active]);
+      } else if (move(event, PAGE)) {
+        event.stopPropagation();
+      } else if (isTypeKey(event)) {
+        event.preventDefault();
+        const found = findTyped(event.key, active);
+        if (found >= 0) setActive(found);
+      }
+    };
+
     const onTriggerKeyDown = (
       event: React.KeyboardEvent<HTMLButtonElement>,
     ) => {
@@ -266,30 +309,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         return;
       }
       // Open and not searchable: the button keeps focus and drives the list.
-      // Keys it handles stop here, so a dialog around it does not also react.
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        hide(true);
-      } else if (event.key === "Tab") {
-        hide(false);
-      } else if (event.key === "Enter" || event.key === " ") {
-        if (event.key === " " && isTypeKey(event)) {
-          event.preventDefault();
-          const found = findTyped(" ", active);
-          if (found >= 0) setActive(found);
-          return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        pick(visible[active]);
-      } else if (move(event, PAGE)) {
-        event.stopPropagation();
-      } else if (isTypeKey(event)) {
-        event.preventDefault();
-        const found = findTyped(event.key, active);
-        if (found >= 0) setActive(found);
-      }
+      onListKeyDown(event);
     };
 
     const onSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -341,200 +361,245 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         ? optionId(active)
         : undefined;
 
-    return (
-      <>
-        <PopoverPrimitive.Root
-          open={open}
-          onOpenChange={(next) => {
-            if (!next) hide(false);
-          }}
+    const trigger = (
+      <button
+        ref={setRefs}
+        type="button"
+        role="combobox"
+        id={id}
+        aria-haspopup={narrow ? "dialog" : "listbox"}
+        aria-expanded={open}
+        aria-controls={open ? listboxId : undefined}
+        aria-activedescendant={searchable || narrow ? undefined : activeId}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
+        disabled={disabled}
+        autoFocus={autoFocus}
+        data-placeholder={selected ? undefined : ""}
+        className={cn(
+          "flex min-h-11 w-full items-center gap-2 rounded-[3px] border border-charcoal-blue-300 bg-card pl-3 pr-2.5 text-left text-[15px] text-foreground",
+          "transition-colors duration-150 ease-out hover:border-charcoal-blue-400 focus:border-charcoal-blue-900 aria-expanded:border-foreground",
+          "dark:border-charcoal-blue-700 dark:hover:border-charcoal-blue-600 dark:focus:border-charcoal-blue-400 dark:aria-expanded:border-foreground",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          invalid &&
+            "border-destructive hover:border-destructive dark:border-destructive dark:hover:border-destructive",
+          className,
+        )}
+        onClick={() => (open ? hide(false) : show("selected"))}
+        onKeyDown={onTriggerKeyDown}
+        onBlur={() => {
+          if (!open) onBlur?.();
+        }}
+      >
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate",
+            !selected && "text-muted-foreground",
+          )}
         >
-          <PopoverPrimitive.Anchor asChild>
-            <button
-              ref={setRefs}
-              type="button"
+          {selected?.label ?? placeholder ?? " "}
+        </span>
+        {selected?.hint && (
+          <span className="shrink-0 text-[13px] text-muted-foreground">
+            {selected.hint}
+          </span>
+        )}
+        <ChevronDown
+          aria-hidden="true"
+          strokeWidth={1.8}
+          className={cn(
+            "size-[18px] shrink-0 text-muted-foreground transition-transform duration-150",
+            open && "rotate-180 text-foreground",
+          )}
+        />
+      </button>
+    );
+
+    // The search box, the options and the count: in a popover under the
+    // button, or in a sheet from the bottom of a phone.
+    const list = (
+      <>
+        {searchable && (
+          <div className="flex min-h-11 shrink-0 items-center gap-2 border-b border-border px-3 focus-within:border-b-foreground">
+            <Search
+              aria-hidden="true"
+              strokeWidth={1.8}
+              className="size-4 shrink-0 text-muted-foreground"
+            />
+            <input
+              ref={searchRef}
+              type="search"
               role="combobox"
-              id={id}
-              aria-haspopup="listbox"
-              aria-expanded={open}
-              aria-controls={open ? listboxId : undefined}
-              aria-activedescendant={searchable ? undefined : activeId}
-              aria-label={ariaLabel}
-              aria-labelledby={ariaLabelledBy}
-              aria-describedby={describedBy}
-              aria-invalid={invalid || undefined}
-              aria-required={required || undefined}
-              disabled={disabled}
-              autoFocus={autoFocus}
-              data-placeholder={selected ? undefined : ""}
-              className={cn(
-                "flex min-h-11 w-full items-center gap-2 rounded-[3px] border border-charcoal-blue-300 bg-card pl-3 pr-2.5 text-left text-[15px] text-foreground",
-                "transition-colors duration-150 ease-out hover:border-charcoal-blue-400 focus:border-charcoal-blue-900 aria-expanded:border-foreground",
-                "dark:border-charcoal-blue-700 dark:hover:border-charcoal-blue-600 dark:focus:border-charcoal-blue-400 dark:aria-expanded:border-foreground",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-                invalid &&
-                  "border-destructive hover:border-destructive dark:border-destructive dark:hover:border-destructive",
-                className,
-              )}
-              onClick={() => (open ? hide(false) : show("selected"))}
-              onKeyDown={onTriggerKeyDown}
-              onBlur={() => {
-                if (!open) onBlur?.();
-              }}
-            >
-              <span
-                className={cn(
-                  "min-w-0 flex-1 truncate",
-                  !selected && "text-muted-foreground",
-                )}
-              >
-                {selected?.label ?? placeholder ?? " "}
-              </span>
-              {selected?.hint && (
-                <span className="shrink-0 text-[13px] text-muted-foreground">
-                  {selected.hint}
-                </span>
-              )}
-              <ChevronDown
-                aria-hidden="true"
-                strokeWidth={1.8}
-                className={cn(
-                  "size-[18px] shrink-0 text-muted-foreground transition-transform duration-150",
-                  open && "rotate-180 text-foreground",
-                )}
-              />
-            </button>
-          </PopoverPrimitive.Anchor>
-          <PopoverPrimitive.Portal>
-            <PopoverPrimitive.Content
-              side="bottom"
-              align="start"
-              sideOffset={4}
-              collisionPadding={8}
-              onOpenAutoFocus={(event) => {
-                event.preventDefault();
-                const search = searchRef.current;
-                if (!search) return;
-                search.focus();
-                // A letter typed on the closed button starts the filter.
-                search.setSelectionRange(
-                  search.value.length,
-                  search.value.length,
+              aria-label={
+                searchLabel ??
+                (listName ? `Search ${listName.toLowerCase()}` : "Search")
+              }
+              aria-autocomplete="list"
+              aria-expanded="true"
+              aria-controls={listboxId}
+              aria-activedescendant={activeId}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Search"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                const next = options.filter((o) =>
+                  matches(o, event.target.value),
                 );
+                const at = next.findIndex((o) => o.value === current);
+                setActive(next.length === 0 ? -1 : Math.max(at, 0));
               }}
-              onCloseAutoFocus={(event) => event.preventDefault()}
-              // Escape is handled by the focused control, so it can return
-              // focus and keep a surrounding dialog open.
-              onEscapeKeyDown={(event) => event.preventDefault()}
-              onInteractOutside={(event) => {
-                if (triggerRef.current?.contains(event.target as Node))
-                  event.preventDefault();
-              }}
-              className="z-[150] flex origin-(--radix-popover-content-transform-origin) animate-pop-in data-[state=closed]:animate-pop-out max-h-[min(20rem,var(--radix-popover-content-available-height))] min-w-(--radix-popover-trigger-width) max-w-[calc(100vw-16px)] flex-col rounded-[3px] border border-border bg-card text-foreground outline-none"
-            >
-              {searchable && (
-                <div className="flex min-h-11 shrink-0 items-center gap-2 border-b border-border px-3 focus-within:border-b-foreground">
-                  <Search
-                    aria-hidden="true"
-                    strokeWidth={1.8}
-                    className="size-4 shrink-0 text-muted-foreground"
-                  />
-                  <input
-                    ref={searchRef}
-                    type="search"
-                    role="combobox"
-                    aria-label={
-                      searchLabel ??
-                      (listName ? `Search ${listName.toLowerCase()}` : "Search")
-                    }
-                    aria-autocomplete="list"
-                    aria-expanded="true"
-                    aria-controls={listboxId}
-                    aria-activedescendant={activeId}
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder="Search"
-                    value={query}
-                    onChange={(event) => {
-                      setQuery(event.target.value);
-                      const next = options.filter((o) =>
-                        matches(o, event.target.value),
-                      );
-                      const at = next.findIndex((o) => o.value === current);
-                      setActive(next.length === 0 ? -1 : Math.max(at, 0));
-                    }}
-                    onKeyDown={onSearchKeyDown}
-                    className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground sm:text-sm [&::-webkit-search-cancel-button]:hidden"
-                  />
-                </div>
-              )}
+              onKeyDown={onSearchKeyDown}
+              className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+            />
+          </div>
+        )}
+        <div
+          ref={listRef}
+          id={listboxId}
+          role="listbox"
+          aria-label={listName}
+          aria-labelledby={listName ? undefined : ariaLabelledBy}
+          // In a sheet the list holds focus and takes the keys itself.
+          tabIndex={narrow && !searchable ? 0 : undefined}
+          aria-activedescendant={narrow && !searchable ? activeId : undefined}
+          onKeyDown={narrow && !searchable ? onListKeyDown : undefined}
+          className={cn(
+            "relative min-h-0 flex-1 overflow-y-auto overscroll-contain py-1 outline-none",
+            narrow && "pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))]",
+          )}
+        >
+          {visible.map((option, index) => {
+            const isSelected = option.value === current;
+            return (
               <div
-                ref={listRef}
-                id={listboxId}
-                role="listbox"
-                aria-label={listName}
-                aria-labelledby={listName ? undefined : ariaLabelledBy}
-                className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain py-1"
+                key={option.value}
+                id={optionId(index)}
+                role="option"
+                aria-selected={isSelected}
+                className={cn(
+                  "flex min-h-10 cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-foreground",
+                  narrow && "min-h-11 px-5 text-[15px]",
+                  index === active &&
+                    "bg-hair shadow-[inset_2px_0_0_var(--foreground)]",
+                )}
+                // Keep focus on the button or the filter box.
+                onMouseDown={(event) => event.preventDefault()}
+                onPointerMove={() => {
+                  if (index !== active) setActive(index);
+                }}
+                onClick={() => pick(option)}
               >
-                {visible.map((option, index) => {
-                  const isSelected = option.value === current;
-                  return (
-                    <div
-                      key={option.value}
-                      id={optionId(index)}
-                      role="option"
-                      aria-selected={isSelected}
-                      className={cn(
-                        "flex min-h-10 cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-foreground",
-                        index === active &&
-                          "bg-hair shadow-[inset_2px_0_0_var(--foreground)]",
-                      )}
-                      // Keep focus on the button or the filter box.
-                      onMouseDown={(event) => event.preventDefault()}
-                      onPointerMove={() => {
-                        if (index !== active) setActive(index);
-                      }}
-                      onClick={() => pick(option)}
-                    >
-                      <span className="flex size-4 shrink-0 items-center justify-center">
-                        {isSelected && (
-                          <Check
-                            aria-hidden="true"
-                            strokeWidth={2.2}
-                            className="size-4 text-brand-700 dark:text-brand-400"
-                          />
-                        )}
-                      </span>
-                      <span className="min-w-0 flex-1 break-words">
-                        {searchable
-                          ? highlight(option.label, query)
-                          : option.label}
-                      </span>
-                      {option.hint && (
-                        <span className="shrink-0 text-[13px] text-muted-foreground">
-                          {option.hint}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-                {visible.length === 0 && (
-                  <p className="px-3 py-2.5 text-sm text-muted-foreground">
-                    No matches
-                  </p>
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  {isSelected && (
+                    <Check
+                      aria-hidden="true"
+                      strokeWidth={2.2}
+                      className="size-4 text-brand-700 dark:text-brand-400"
+                    />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1 break-words">
+                  {searchable ? highlight(option.label, query) : option.label}
+                </span>
+                {option.hint && (
+                  <span className="shrink-0 text-[13px] text-muted-foreground">
+                    {option.hint}
+                  </span>
                 )}
               </div>
-              {searchable && (
-                <div
-                  role="status"
-                  className="shrink-0 border-t border-border px-3 py-2 text-xs text-muted-foreground"
-                >
-                  {visible.length} of {options.length}
-                </div>
-              )}
-            </PopoverPrimitive.Content>
-          </PopoverPrimitive.Portal>
-        </PopoverPrimitive.Root>
+            );
+          })}
+          {visible.length === 0 && (
+            <p className="px-3 py-2.5 text-sm text-muted-foreground">
+              No matches
+            </p>
+          )}
+        </div>
+        {searchable && (
+          <div
+            role="status"
+            className="shrink-0 border-t border-border px-3 py-2 text-xs text-muted-foreground"
+          >
+            {visible.length} of {options.length}
+          </div>
+        )}
+      </>
+    );
+
+    /** Focus goes into the filter box, or the list in a sheet; the button keeps it otherwise. */
+    const focusList = (event: Event) => {
+      event.preventDefault();
+      const search = searchRef.current;
+      if (search) {
+        search.focus();
+        // A letter typed on the closed button starts the filter.
+        search.setSelectionRange(search.value.length, search.value.length);
+      } else if (narrow) listRef.current?.focus();
+    };
+
+    return (
+      <>
+        {narrow ? (
+          <>
+            {trigger}
+            <Drawer
+              open={open}
+              onOpenChange={(next) => {
+                if (!next) hide(true);
+              }}
+              autoFocus={false}
+            >
+              <DrawerContent
+                aria-describedby={undefined}
+                onOpenAutoFocus={focusList}
+                onCloseAutoFocus={(event) => {
+                  event.preventDefault();
+                  triggerRef.current?.focus();
+                }}
+                className="max-h-[85dvh]"
+              >
+                <DrawerTitle className="shrink-0 border-b border-border px-5 pt-1 pb-3">
+                  {listName ?? placeholder ?? "Choose one"}
+                </DrawerTitle>
+                {list}
+              </DrawerContent>
+            </Drawer>
+          </>
+        ) : (
+          <PopoverPrimitive.Root
+            open={open}
+            onOpenChange={(next) => {
+              if (!next) hide(false);
+            }}
+          >
+            <PopoverPrimitive.Anchor asChild>{trigger}</PopoverPrimitive.Anchor>
+            <PopoverPrimitive.Portal>
+              <PopoverPrimitive.Content
+                side="bottom"
+                align="start"
+                sideOffset={4}
+                collisionPadding={8}
+                onOpenAutoFocus={focusList}
+                onCloseAutoFocus={(event) => event.preventDefault()}
+                // Escape is handled by the focused control, so it can return
+                // focus and keep a surrounding dialog open.
+                onEscapeKeyDown={(event) => event.preventDefault()}
+                onInteractOutside={(event) => {
+                  if (triggerRef.current?.contains(event.target as Node))
+                    event.preventDefault();
+                }}
+                className="z-[150] flex origin-(--radix-popover-content-transform-origin) animate-pop-in data-[state=closed]:animate-pop-out max-h-[min(20rem,var(--radix-popover-content-available-height))] min-w-(--radix-popover-trigger-width) max-w-[calc(100vw-16px)] flex-col rounded-[3px] border border-border bg-card text-foreground outline-none"
+              >
+                {list}
+              </PopoverPrimitive.Content>
+            </PopoverPrimitive.Portal>
+          </PopoverPrimitive.Root>
+        )}
         {name && <input type="hidden" name={name} value={current} />}
         {error && (
           <p id={errorId} className="mt-1.5 text-sm text-destructive">

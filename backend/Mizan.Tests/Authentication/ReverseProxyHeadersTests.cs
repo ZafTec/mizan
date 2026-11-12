@@ -23,10 +23,10 @@ public class ReverseProxyHeadersTests
         {
             ["ReverseProxy:KnownProxy"] = "172.18.0.2",
         }).Build();
-        using var server = new TestServer(new WebHostBuilder()
-            .ConfigureServices(services => services.Configure<ForwardedHeadersOptions>(options =>
-                ReverseProxyHeaders.Configure(options, configuration)))
-            .Configure(app =>
+        using var host = TestHosts.Start(
+            services => services.Configure<ForwardedHeadersOptions>(options =>
+                ReverseProxyHeaders.Configure(options, configuration)),
+            app =>
             {
                 app.Use(async (context, next) =>
                 {
@@ -36,8 +36,8 @@ public class ReverseProxyHeadersTests
                 app.UseForwardedHeaders();
                 app.Run(context => context.Response.WriteAsync(
                     $"{context.Request.Scheme}|{context.Request.Host}|{context.Connection.RemoteIpAddress}"));
-            }));
-        using var client = server.CreateClient();
+            });
+        using var client = host.GetTestClient();
         client.BaseAddress = new Uri("http://api.example.test");
         client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
         client.DefaultRequestHeaders.Add("X-Forwarded-For", "203.0.113.10");

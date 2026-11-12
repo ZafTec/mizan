@@ -56,7 +56,7 @@ public class OAuthController : ControllerBase
             ["grant_types_supported"] = new[] { "authorization_code", "refresh_token" },
             ["code_challenge_methods_supported"] = new[] { "S256" },
             ["token_endpoint_auth_methods_supported"] = new[] { "none" },
-            ["scopes_supported"] = McpScopes.All.Where(s => !McpScopes.IsAdminScope(s)).ToArray(),
+            ["scopes_supported"] = McpScopes.All.ToArray(),
             ["client_id_metadata_document_supported"] = lifetimes.AllowMetadataClients,
             ["authorization_response_iss_parameter_supported"] = true,
             ["subject_types_supported"] = new[] { "public" },

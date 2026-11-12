@@ -40,7 +40,7 @@ public sealed class UsageLimitSubjects
 {
     /// <summary>The lines in the order the page lists them.</summary>
     public static readonly AiQuotaLine[] Lines =
-        [AiQuotaLine.Personal, AiQuotaLine.Planning, AiQuotaLine.Onboarding, AiQuotaLine.TrainerClient, AiQuotaLine.Eval];
+        [AiQuotaLine.Personal, AiQuotaLine.Estimates, AiQuotaLine.Planning, AiQuotaLine.Onboarding, AiQuotaLine.TrainerClient, AiQuotaLine.Eval];
 
     private readonly IMizanDbContext _context;
     private readonly UsageLimitService _limits;

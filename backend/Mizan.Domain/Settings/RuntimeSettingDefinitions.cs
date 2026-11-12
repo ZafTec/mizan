@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Mail;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace Mizan.Domain.Settings;
@@ -23,6 +24,18 @@ public enum RuntimeSettingFormat
 
     /// <summary>Letters, digits, underscore and hyphen only, such as a Telegram webhook secret.</summary>
     Token,
+
+    /// <summary>An HTTP header name other than Authorization: letters, digits and the RFC 9110 token symbols.</summary>
+    HeaderName,
+
+    /// <summary>An absolute https URL, for an address a token's keys are fetched from.</summary>
+    HttpsUrl,
+
+    /// <summary>A P-256 private key in PEM (SEC 1 or PKCS #8).</summary>
+    EcPrivateKey,
+
+    /// <summary>A P-256 public key in PEM.</summary>
+    EcPublicKey,
 }
 
 /// <summary>
@@ -52,6 +65,8 @@ public static class RuntimeSettingGroups
     public const string SignIn = "sign-in";
     public const string OAuth = "oauth";
     public const string Outbox = "outbox";
+    public const string EndUserTokens = "end-user-tokens";
+    public const string AssistantGateway = "assistant-gateway";
 
     public static readonly IReadOnlyList<RuntimeSettingGroup> All =
     [
@@ -70,6 +85,16 @@ public static class RuntimeSettingGroups
         new(SignIn, "Sign-in", []),
         new(OAuth, "Connected apps", []),
         new(Outbox, "Background jobs", []),
+        new(EndUserTokens, "Tokens Mizan signs",
+        [
+            new(["EndUser.Header", "EndUser.Issuer", "EndUser.Audience", "EndUser.KeyId", "EndUser.PrivateKey"],
+                "Mizan signs no end-user tokens. AI calls name no person, and the assistant gateway cannot serve anyone."),
+        ]),
+        new(AssistantGateway, "Assistant gateway",
+        [
+            new(["Gateway.ClientKey", "Gateway.MetaKey", "Gateway.JwksUrl", "Gateway.Issuer", "Gateway.Audience", "Gateway.TokenType"],
+                "The assistant gateway is not configured. A hosted assistant cannot reach the MCP server."),
+        ]),
     ];
 }
 
@@ -98,6 +123,9 @@ public sealed record RuntimeSettingDefinition(
     public bool AllowEmpty { get; init; }
 
     public int MaxLength { get; init; } = 2000;
+
+    /// <summary>The fewest characters a value may have, such as the length of a shared key.</summary>
+    public int MinLength { get; init; }
 
     /// <summary>The value when nothing is stored, as text. Null means none (a secret, or a feature that is off).</summary>
     public string? Default { get; init; }
@@ -154,6 +182,11 @@ public static class RuntimeSettingDefinitions
         if (text.Length > definition.MaxLength)
         {
             return RuntimeSettingValidation.Fail($"{definition.Label} is longer than {definition.MaxLength} characters.");
+        }
+
+        if (text.Trim().Length < definition.MinLength)
+        {
+            return RuntimeSettingValidation.Fail($"{definition.Label} must be at least {definition.MinLength} characters.");
         }
 
         return definition.Type switch
@@ -240,9 +273,62 @@ public static class RuntimeSettingDefinitions
                 }
 
                 break;
+
+            case RuntimeSettingFormat.HeaderName:
+                if (!IsHeaderName(text) || string.Equals(text, "Authorization", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RuntimeSettingValidation.Fail($"{definition.Label} must be a header name other than Authorization, such as X-End-User.");
+                }
+
+                break;
+
+            case RuntimeSettingFormat.HttpsUrl:
+                if (!Uri.TryCreate(text, UriKind.Absolute, out var https)
+                    || https.Scheme != Uri.UriSchemeHttps
+                    || !string.IsNullOrEmpty(https.UserInfo)
+                    || string.IsNullOrEmpty(https.Host))
+                {
+                    return RuntimeSettingValidation.Fail($"{definition.Label} must be an https URL.");
+                }
+
+                break;
+
+            case RuntimeSettingFormat.EcPrivateKey:
+            case RuntimeSettingFormat.EcPublicKey:
+                var requirePrivate = definition.Format == RuntimeSettingFormat.EcPrivateKey;
+                if (!IsP256Key(text, requirePrivate))
+                {
+                    return RuntimeSettingValidation.Fail(
+                        $"{definition.Label} must be a P-256 {(requirePrivate ? "private" : "public")} key in PEM.");
+                }
+
+                // Stored with real line breaks, however it was pasted.
+                return RuntimeSettingValidation.Ok(NormalizePem(text));
         }
 
         return RuntimeSettingValidation.Ok(text);
+    }
+
+    /// <summary>An env file or a one-line text box often carries a PEM with its line breaks written as \n.</summary>
+    public static string NormalizePem(string pem) => pem.Replace("\\n", "\n", StringComparison.Ordinal).Trim();
+
+    private static bool IsHeaderName(string text) =>
+        text.Length <= 128 && text.All(c => char.IsAsciiLetterOrDigit(c) || "!#$%&'*+-.^_`|~".Contains(c));
+
+    private static bool IsP256Key(string pem, bool requirePrivate)
+    {
+        using var key = ECDsa.Create();
+        try
+        {
+            key.ImportFromPem(NormalizePem(pem));
+            if (key.ExportParameters(includePrivateParameters: false).Curve.Oid.Value != ECCurve.NamedCurves.nistP256.Oid.Value) return false;
+            if (requirePrivate) key.ExportParameters(includePrivateParameters: true);
+            return true;
+        }
+        catch (Exception ex) when (ex is CryptographicException or ArgumentException)
+        {
+            return false;
+        }
     }
 
     private static bool IsServiceAccountJson(string text)
@@ -287,6 +373,9 @@ public static class RuntimeSettingDefinitions
             new("Ai.TimeoutSeconds", provider, "Timeout (seconds)", "How long one call may take.", RuntimeSettingType.Int) { Min = 5, Max = 600, Default = "60" },
             new("Ai.SupportsTemperature", provider, "Send temperature", "False for models that reject a temperature.", RuntimeSettingType.Bool) { Default = "true" },
             new("Ai.ReasoningEffort", provider, "Reasoning effort", "Empty for providers that do not accept the field.", RuntimeSettingType.Enum) { AllowedValues = ["none", "minimal", "low", "medium", "high"], AllowEmpty = true },
+            new("Ai.Vision.BaseUrl", provider, "Photo endpoint", "An OpenAI-compatible endpoint for requests with a photo, when the main one does not take images. Empty sends photos to the main endpoint.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.Url, AllowEmpty = true },
+            new("Ai.Vision.ApiKey", provider, "Photo API key", "The photo endpoint's key. Empty uses the main key. Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true),
+            new("Ai.Vision.Model", provider, "Photo model", "The model sent with photo requests. Empty uses the main model.", RuntimeSettingType.String) { MaxLength = 200, AllowEmpty = true },
             new("Ai.PromptCostPerMillionMicros", provider, "Prompt price", "Millionths of a currency unit per million prompt tokens. The cost ceiling relies on it.", RuntimeSettingType.Int) { Max = Unlimited, Default = "150000" },
             new("Ai.ConversationGapHours", provider, "Conversation gap (hours)", "A chat app such as Telegram continues the newest conversation unless it has been quiet this long; then it starts a new one.", RuntimeSettingType.Int) { Min = 1, Max = 168, Default = "3" },
             new("Ai.CompletionCostPerMillionMicros", provider, "Completion price", "Millionths of a currency unit per million completion tokens.", RuntimeSettingType.Int) { Max = Unlimited, Default = "600000" },
@@ -298,7 +387,8 @@ public static class RuntimeSettingDefinitions
         foreach (var (line, title, requests, tokens) in new[]
         {
             ("Free", "Free personal", 5, 20_000), ("Pro", "Pro personal", 200, 500_000), ("PlanningFree", "Free planning", 1, 30_000),
-            ("PlanningPro", "Pro planning", 20, 400_000), ("Onboarding", "Onboarding", 60, 60_000), ("Trainer", "Trainer-client", 300, 600_000),
+            ("PlanningPro", "Pro planning", 20, 400_000), ("EstimatesFree", "Free estimates", 3, 30_000),
+            ("EstimatesPro", "Pro estimates", 100, 400_000), ("Onboarding", "Onboarding", 60, 60_000), ("Trainer", "Trainer-client", 300, 600_000),
             ("Eval", "Evaluation", 400, 400_000),
         })
         {
@@ -357,6 +447,25 @@ public static class RuntimeSettingDefinitions
             new("Outbox.MaxAttempts", RuntimeSettingGroups.Outbox, "Attempts", "How many times a failing job runs before it is left as failed.", RuntimeSettingType.Int) { Min = 1, Max = 50, Default = "5" },
             new("Outbox.BackoffSeconds", RuntimeSettingGroups.Outbox, "Backoff seconds", "The wait after the first failure. It doubles with each attempt, up to 15 minutes.", RuntimeSettingType.Int) { Min = 1, Max = 900, Default = "30" },
             new("Outbox.StaleAfterMinutes", RuntimeSettingGroups.Outbox, "Stale after (minutes)", "A job claimed this long ago by a runner that stopped is run again.", RuntimeSettingType.Int) { Min = 1, Max = 1440, Default = "30" },
+            new("Outbox.KeepSucceededDays", RuntimeSettingGroups.Outbox, "Keep finished jobs (days)", "A job that succeeded is deleted this many days after it finished.", RuntimeSettingType.Int) { Min = 1, Max = 3650, Default = "30" },
+            new("Outbox.KeepDeadLetteredDays", RuntimeSettingGroups.Outbox, "Keep failed jobs (days)", "A job that gave up is deleted this many days after it failed. Until then it can be retried; an email whose job is gone cannot.", RuntimeSettingType.Int) { Min = 1, Max = 3650, Default = "90" },
+
+            new("EndUser.Header", RuntimeSettingGroups.EndUserTokens, "Header", "The request header the token goes in on every AI call. Empty turns the tokens off.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.HeaderName, AllowEmpty = true },
+            new("EndUser.Issuer", RuntimeSettingGroups.EndUserTokens, "Issuer", "The token's iss, exactly as registered with the gateway. The gateway path checks it too.", RuntimeSettingType.String) { AllowEmpty = true },
+            new("EndUser.Audience", RuntimeSettingGroups.EndUserTokens, "Audience", "The token's aud: the application id the gateway gave this deployment.", RuntimeSettingType.String) { AllowEmpty = true },
+            new("EndUser.KeyId", RuntimeSettingGroups.EndUserTokens, "Key id", "The kid of the signing key, published at /.well-known/jwks.json. Rotate key sets it.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.Token, AllowEmpty = true, MaxLength = 128 },
+            new("EndUser.PrivateKey", RuntimeSettingGroups.EndUserTokens, "Signing key", "A P-256 private key in PEM. Rotate key makes one. Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true) { Format = RuntimeSettingFormat.EcPrivateKey, MaxLength = 4000 },
+            new("EndUser.LifetimeSeconds", RuntimeSettingGroups.EndUserTokens, "Token lifetime (seconds)", "How long one token is accepted.", RuntimeSettingType.Int) { Min = 60, Max = 3600, Default = "600" },
+            new("EndUser.PreviousPublicKey", RuntimeSettingGroups.EndUserTokens, "Previous public key", "The key being rotated out, still published so the tokens it signed verify until they expire. Rotate key sets it.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.EcPublicKey, AllowEmpty = true, MaxLength = 4000 },
+            new("EndUser.PreviousKeyId", RuntimeSettingGroups.EndUserTokens, "Previous key id", "The kid of the previous public key.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.Token, AllowEmpty = true, MaxLength = 128 },
+
+            new("Gateway.ClientKey", RuntimeSettingGroups.AssistantGateway, "Client key", "The key the gateway presents to the MCP server, at least 32 characters. Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true) { MinLength = 32, MaxLength = 512 },
+            new("Gateway.ClientKeyHeader", RuntimeSettingGroups.AssistantGateway, "Client key header", "The header that carries the client key. Empty means Authorization: Bearer.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.HeaderName, AllowEmpty = true },
+            new("Gateway.MetaKey", RuntimeSettingGroups.AssistantGateway, "Identity field", "The _meta key of a tool call that holds the person's token.", RuntimeSettingType.String) { AllowEmpty = true, MaxLength = 200 },
+            new("Gateway.JwksUrl", RuntimeSettingGroups.AssistantGateway, "Gateway keys URL", "Where the gateway publishes the Ed25519 keys its tokens are signed with.", RuntimeSettingType.String) { Format = RuntimeSettingFormat.HttpsUrl, AllowEmpty = true },
+            new("Gateway.Issuer", RuntimeSettingGroups.AssistantGateway, "Issuer", "The iss of the gateway's tokens.", RuntimeSettingType.String) { AllowEmpty = true },
+            new("Gateway.Audience", RuntimeSettingGroups.AssistantGateway, "Audience", "The aud of the gateway's tokens: this MCP server, as the gateway knows it.", RuntimeSettingType.String) { AllowEmpty = true },
+            new("Gateway.TokenType", RuntimeSettingGroups.AssistantGateway, "Token type", "The typ header of the gateway's tokens.", RuntimeSettingType.String) { AllowEmpty = true, MaxLength = 200 },
         ]);
 
         return list;

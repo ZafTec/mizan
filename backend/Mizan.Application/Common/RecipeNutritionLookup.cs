@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Exceptions;
+using Mizan.Domain.Entities;
 using Mizan.Domain.Recipes;
 
 namespace Mizan.Application.Common;
@@ -65,18 +66,64 @@ public static class RecipeNutritionLookup
             .Select(r => new { r.Id, r.Servings, Ingredients = r.Ingredients.ToList() })
             .ToListAsync(cancellationToken);
 
-        var foodIds = recipes
-            .SelectMany(r => r.Ingredients)
-            .Where(i => i.FoodId.HasValue)
-            .Select(i => i.FoodId!.Value)
-            .Distinct()
-            .ToList();
+        return await StatusesOfAsync(context, recipes.Select(r => (r.Id, r.Servings, (IReadOnlyList<RecipeIngredient>)r.Ingredients)).ToList(), null, cancellationToken);
+    }
 
-        var foods = await context.Foods
-            .AsNoTracking()
-            .Where(f => foodIds.Contains(f.Id))
-            .ToDictionaryAsync(f => f.Id, cancellationToken);
+    /// <summary>
+    /// <see cref="StatusesAsync(IMizanDbContext, IReadOnlyCollection{Guid}, CancellationToken)"/> for recipes the
+    /// caller already loaded with their ingredients, so they are not read again. <paramref name="foods"/>, when
+    /// given, must hold every ingredient's food the caller read; without it the foods are read here.
+    /// </summary>
+    public static Task<IReadOnlyDictionary<Guid, RecipeNutritionStatus>> StatusesAsync(
+        IMizanDbContext context,
+        IEnumerable<Recipe> loaded,
+        IReadOnlyDictionary<Guid, Food>? foods,
+        CancellationToken cancellationToken) =>
+        StatusesOfAsync(context, loaded.Select(r => (r.Id, r.Servings, (IReadOnlyList<RecipeIngredient>)r.Ingredients.ToList())).ToList(), foods, cancellationToken);
 
+    /// <summary>Complete totals per serving of recipes the caller already loaded with their ingredients. Unresolved recipes are omitted.</summary>
+    public static async Task<IReadOnlyDictionary<Guid, RecipeNutritionTotals>> ForRecipesAsync(
+        IMizanDbContext context,
+        IEnumerable<Recipe> loaded,
+        IReadOnlyDictionary<Guid, Food>? foods,
+        CancellationToken cancellationToken)
+    {
+        var statuses = await StatusesAsync(context, loaded, foods, cancellationToken);
+        return statuses
+            .Where(s => s.Value.PerServing.HasValue)
+            .ToDictionary(s => s.Key, s => s.Value.PerServing!.Value);
+    }
+
+    private static async Task<IReadOnlyDictionary<Guid, RecipeNutritionStatus>> StatusesOfAsync(
+        IMizanDbContext context,
+        IReadOnlyList<(Guid Id, int Servings, IReadOnlyList<RecipeIngredient> Ingredients)> recipes,
+        IReadOnlyDictionary<Guid, Food>? knownFoods,
+        CancellationToken cancellationToken)
+    {
+        if (recipes.Count == 0)
+        {
+            return new Dictionary<Guid, RecipeNutritionStatus>();
+        }
+
+        var foods = knownFoods;
+        if (foods is null)
+        {
+            var foodIds = recipes
+                .SelectMany(r => r.Ingredients)
+                .Where(i => i.FoodId.HasValue)
+                .Select(i => i.FoodId!.Value)
+                .Distinct()
+                .ToList();
+
+            foods = foodIds.Count == 0
+                ? new Dictionary<Guid, Food>()
+                : await context.Foods
+                    .AsNoTracking()
+                    .Where(f => foodIds.Contains(f.Id))
+                    .ToDictionaryAsync(f => f.Id, cancellationToken);
+        }
+
+        var recipeIds = recipes.Select(r => r.Id).ToList();
         var snapshots = await context.RecipeNutritionSnapshots
             .AsNoTracking()
             .Where(s => recipeIds.Contains(s.RecipeId))

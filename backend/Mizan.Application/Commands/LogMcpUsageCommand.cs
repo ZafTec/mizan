@@ -18,6 +18,9 @@ public record LogMcpUsageCommand : IRequest
 
 public class LogMcpUsageCommandHandler : IRequestHandler<LogMcpUsageCommand>
 {
+    /// <summary>What a gateway call's usage row records in place of parameters: the path it came by.</summary>
+    public const string GatewayParameters = """{"path":"gateway"}""";
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
 
@@ -34,21 +37,27 @@ public class LogMcpUsageCommandHandler : IRequestHandler<LogMcpUsageCommand>
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
-        var grantExists = await _context.OAuthGrants
-            .AsNoTracking()
-            .AnyAsync(g => g.Id == request.GrantId && g.UserId == _currentUser.UserId.Value, cancellationToken);
-        if (!grantExists) throw new UnauthorizedAccessException("MCP connection not found");
+        // A hosted assistant's call has no connection. Its row carries no grant and says it came through the
+        // gateway, so it stays apart from the person's connected apps (docs/MCP.md).
+        var viaGateway = request.GrantId == Guid.Empty && _currentUser.ViaGateway;
+        if (!viaGateway)
+        {
+            var grantExists = await _context.OAuthGrants
+                .AsNoTracking()
+                .AnyAsync(g => g.Id == request.GrantId && g.UserId == _currentUser.UserId.Value, cancellationToken);
+            if (!grantExists) throw new UnauthorizedAccessException("MCP connection not found");
+        }
 
         var kind = request.Kind is "tool" or "resource" or "prompt" or "task" ? request.Kind : "tool";
 
         var log = new McpUsageLog
         {
             Id = Guid.NewGuid(),
-            GrantId = request.GrantId,
+            GrantId = viaGateway ? null : request.GrantId,
             Kind = kind,
             UserId = _currentUser.UserId.Value,
             ToolName = request.ToolName,
-            Parameters = request.Parameters,
+            Parameters = viaGateway ? GatewayParameters : request.Parameters,
             Success = request.Success,
             ErrorMessage = request.ErrorMessage,
             ExecutionTimeMs = request.ExecutionTimeMs,

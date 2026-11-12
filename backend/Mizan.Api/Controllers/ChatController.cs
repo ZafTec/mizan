@@ -22,10 +22,15 @@ public class ChatController : ControllerBase
         _currentUser = currentUser;
     }
 
+    /// <summary>
+    /// The latest <paramref name="take"/> messages (50 by default, at most 200), or those before the message
+    /// <paramref name="before"/>, oldest first. <c>hasOlder</c> says whether an earlier page remains.
+    /// </summary>
     [HttpGet("{relationshipId}")]
-    public async Task<ActionResult<ChatConversationDto>> GetConversation(Guid relationshipId)
+    public async Task<ActionResult<ChatConversationDto>> GetConversation(
+        Guid relationshipId, [FromQuery] Guid? before = null, [FromQuery] int take = GetChatConversationQuery.DefaultTake)
     {
-        var result = await _mediator.Send(new GetChatConversationQuery(relationshipId));
+        var result = await _mediator.Send(new GetChatConversationQuery(relationshipId, before, take));
         if (result == null)
         {
             return NotFound("Conversation not found");

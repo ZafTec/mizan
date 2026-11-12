@@ -92,7 +92,7 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
 
     private async ValueTask<RecipeDetailDto?> LoadAsync(GetRecipeByIdQuery request, CancellationToken cancellationToken)
     {
-        var recipe = await _context.Recipes
+        var recipe = await _context.Recipes.AsNoTracking()
             .Include(r => r.Ingredients)
                 .ThenInclude(i => i.Food)
             .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
@@ -107,7 +107,9 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
 
         // Summed from the ingredients, or a retained import value while the
         // ingredients cannot be summed and have not changed since.
-        var statuses = await RecipeNutritionLookup.StatusesAsync(_context, [recipe.Id], cancellationToken);
+        // The recipe and its ingredients' foods are already here; only the retained snapshot is read.
+        var foods = recipe.Ingredients.Where(i => i.Food is not null).Select(i => i.Food!).DistinctBy(f => f.Id).ToDictionary(f => f.Id);
+        var statuses = await RecipeNutritionLookup.StatusesAsync(_context, [recipe], foods, cancellationToken);
         var status = statuses[recipe.Id];
         var totals = status.PerServing.GetValueOrDefault();
 

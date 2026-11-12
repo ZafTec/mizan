@@ -63,7 +63,7 @@ export default function AuditToolbar({
             onChange={(e) => setTerm(e.target.value)}
             placeholder="Actor email or entity id…"
             aria-label="Search the audit log"
-            className="input w-full !rounded-2xl !py-2 !pl-9 text-sm"
+            className="input w-full !py-2 !pl-9 text-sm"
           />
         </form>
 
@@ -91,7 +91,7 @@ export default function AuditToolbar({
 
         <a
           href={`${resolvePublicApiOrigin()}/api/AuditLogs/export?${exportQuery}`}
-          className="btn-secondary btn-sm !rounded-2xl"
+          className="btn-secondary btn-sm"
           // Same-origin download is blocked by the API subdomain, so this
           // is a plain navigation the browser saves.
           download
@@ -108,7 +108,7 @@ export default function AuditToolbar({
             value={params.get("from") ?? ""}
             max={params.get("to") ?? undefined}
             onChange={(e) => set({ from: e.target.value || null })}
-            className="input !w-auto !rounded-2xl !py-1.5 text-sm"
+            className="input !w-auto !py-1.5 text-sm"
           />
         </label>
         <label className="flex items-center gap-2 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
@@ -118,7 +118,7 @@ export default function AuditToolbar({
             value={params.get("to") ?? ""}
             min={params.get("from") ?? undefined}
             onChange={(e) => set({ to: e.target.value || null })}
-            className="input !w-auto !rounded-2xl !py-1.5 text-sm"
+            className="input !w-auto !py-1.5 text-sm"
           />
         </label>
 

@@ -84,14 +84,9 @@ function NavigationLink({
 export interface AppShellProps {
   user: User;
   children: React.ReactNode;
-  variant?: "dashboard" | "admin";
 }
 
-export default function AppShell({
-  user,
-  children,
-  variant = "dashboard",
-}: AppShellProps) {
+export default function AppShell({ user, children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -156,7 +151,7 @@ export default function AppShell({
         )}
       >
         <a
-          className="fixed -top-20 left-4 z-[200] bg-foreground px-[18px] py-3 text-background focus:top-3"
+          className="fixed -top-20 left-4 z-[200] bg-foreground px-[18px] py-3 whitespace-nowrap text-background focus:top-3"
           href="#app-content"
         >
           Skip to content
@@ -263,7 +258,7 @@ export default function AppShell({
               <span>Mizan</span>
             </Link>
             <span className="text-[13px] text-muted-foreground max-lg:hidden">
-              {variant === "admin" ? "Administration" : "Your daily log"}
+              Your daily log
             </span>
             <div className="ml-auto flex items-center gap-2">
               <AssistantLauncher />

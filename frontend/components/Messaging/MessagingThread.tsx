@@ -1,21 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { clientApi } from "@/lib/api.client";
 import { cn } from "@/lib/utils";
+import type { components } from "@/types/api.generated";
 
-interface Message {
-  id: string;
-  senderId: string;
-  content: string;
-  sentAt: string;
-}
-
-interface Conversation {
-  id: string;
-  relationshipId: string;
-  messages: Message[];
-}
+type Message = components["schemas"]["ChatMessageDto"];
+type Conversation = components["schemas"]["ChatConversationDto"];
 
 interface MessagingThreadProps {
   relationshipId: string;
@@ -56,7 +54,12 @@ export default function MessagingThread({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Pages fetched with "Show earlier messages". The poll refreshes only the newest page.
+  const [older, setOlder] = useState<Message[]>([]);
+  const [olderHasMore, setOlderHasMore] = useState<boolean | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const heightBeforeOlder = useRef<number | null>(null);
 
   const loadConversation = useCallback(async () => {
     try {
@@ -76,19 +79,56 @@ export default function MessagingThread({
 
   useEffect(() => {
     setLoading(true);
+    setOlder([]);
+    setOlderHasMore(null);
     loadConversation();
     const t = setInterval(loadConversation, POLL_INTERVAL_MS);
     return () => clearInterval(t);
   }, [loadConversation]);
 
+  const latest = conversation?.messages ?? [];
+  const newestId = latest.at(-1)?.id;
   useEffect(() => {
-    if (threadRef.current && conversation?.messages.length) {
+    if (threadRef.current && newestId) {
       threadRef.current.scrollTo({
         top: threadRef.current.scrollHeight,
         behavior: "smooth",
       });
     }
-  }, [conversation?.messages.length]);
+  }, [newestId]);
+
+  // Earlier messages go above what the person is reading, so it stays in place.
+  useLayoutEffect(() => {
+    const thread = threadRef.current;
+    if (thread && heightBeforeOlder.current !== null) {
+      thread.scrollTop += thread.scrollHeight - heightBeforeOlder.current;
+      heightBeforeOlder.current = null;
+    }
+  }, [older]);
+
+  const seen = new Set(older.map((m) => m.id));
+  const messages = [...older, ...latest.filter((m) => !seen.has(m.id))];
+  const hasOlder = olderHasMore ?? conversation?.hasOlder ?? false;
+
+  async function loadOlder() {
+    const first = messages[0];
+    if (!first || loadingOlder) return;
+    setLoadingOlder(true);
+    try {
+      const page = await clientApi<Conversation>(
+        `/api/Chat/${relationshipId}?before=${encodeURIComponent(first.id)}`,
+      );
+      heightBeforeOlder.current = threadRef.current?.scrollHeight ?? null;
+      setOlder((current) => [...page.messages, ...current]);
+      setOlderHasMore(page.hasOlder);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load earlier messages",
+      );
+    } finally {
+      setLoadingOlder(false);
+    }
+  }
 
   async function send() {
     const trimmed = input.trim();
@@ -111,8 +151,6 @@ export default function MessagingThread({
     event.preventDefault();
     send();
   }
-
-  const messages = conversation?.messages ?? [];
 
   return (
     <section className="card overflow-visible flex min-h-[600px] flex-col overflow-hidden p-0">
@@ -148,52 +186,66 @@ export default function MessagingThread({
             </p>
           </div>
         ) : (
-          messages.map((m, i) => {
-            const isMine = m.senderId === currentUserId;
-            const prev = messages[i - 1];
-            const showDateSeparator =
-              !prev || !sameDay(new Date(prev.sentAt), new Date(m.sentAt));
-            return (
-              <div key={m.id}>
-                {showDateSeparator && (
-                  <div className="my-3 flex items-center gap-2 text-[11px] text-charcoal-blue-400">
-                    <span className="h-px flex-1 bg-charcoal-blue-200 dark:bg-white/10" />
-                    {new Date(m.sentAt).toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                    <span className="h-px flex-1 bg-charcoal-blue-200 dark:bg-white/10" />
-                  </div>
-                )}
-                <div
-                  className={cn(
-                    "flex gap-2",
-                    isMine ? "flex-row-reverse" : "flex-row",
-                  )}
+          <>
+            {hasOlder && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm min-h-9"
+                  disabled={loadingOlder}
+                  onClick={loadOlder}
                 >
+                  {loadingOlder ? "Loading…" : "Show earlier messages"}
+                </button>
+              </div>
+            )}
+            {messages.map((m, i) => {
+              const isMine = m.senderId === currentUserId;
+              const prev = messages[i - 1];
+              const showDateSeparator =
+                !prev || !sameDay(new Date(prev.sentAt), new Date(m.sentAt));
+              return (
+                <div key={m.id}>
+                  {showDateSeparator && (
+                    <div className="my-3 flex items-center gap-2 text-[11px] text-charcoal-blue-400">
+                      <span className="h-px flex-1 bg-charcoal-blue-200 dark:bg-white/10" />
+                      {new Date(m.sentAt).toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                      <span className="h-px flex-1 bg-charcoal-blue-200 dark:bg-white/10" />
+                    </div>
+                  )}
                   <div
                     className={cn(
-                      "max-w-[72%] rounded-3xl px-4 py-2.5 text-sm",
-                      isMine
-                        ? "bg-verdigris-600 text-white "
-                        : "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
+                      "flex gap-2",
+                      isMine ? "flex-row-reverse" : "flex-row",
                     )}
                   >
-                    <p className="whitespace-pre-wrap">{m.content}</p>
-                    <p
+                    <div
                       className={cn(
-                        "mt-0.5 text-right text-[10px]",
-                        isMine ? "text-white/70" : "text-charcoal-blue-400",
+                        "max-w-[72%] rounded-3xl px-4 py-2.5 text-sm",
+                        isMine
+                          ? "bg-verdigris-600 text-white "
+                          : "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
                       )}
                     >
-                      {formatTime(m.sentAt)}
-                    </p>
+                      <p className="whitespace-pre-wrap">{m.content}</p>
+                      <p
+                        className={cn(
+                          "mt-0.5 text-right text-[10px]",
+                          isMine ? "text-white/70" : "text-charcoal-blue-400",
+                        )}
+                      >
+                        {formatTime(m.sentAt)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </>
         )}
         {error && (
           <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">

@@ -1,6 +1,8 @@
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Mcp;
 using Mizan.Contracts.Prices;
 using Mizan.Contracts.Telegram;
+using Mizan.Infrastructure.Ai;
 using Mizan.Infrastructure.Identity;
 
 namespace Mizan.Infrastructure.Settings;
@@ -17,15 +19,58 @@ public class PriceCrawlOptions
     public int MaxProductsPerRun { get; set; } = 500;
 }
 
+/// <summary>The assistant gateway's settings, which the MCP server reads (docs/MCP.md#served-to-a-hosted-assistant-through-the-gateway).</summary>
+public class GatewaySettingsOptions
+{
+    public const string SectionName = "Gateway";
+
+    public string ClientKey { get; set; } = string.Empty;
+
+    public string ClientKeyHeader { get; set; } = string.Empty;
+
+    public string MetaKey { get; set; } = string.Empty;
+
+    public string JwksUrl { get; set; } = string.Empty;
+
+    public string Issuer { get; set; } = string.Empty;
+
+    public string Audience { get; set; } = string.Empty;
+
+    public string TokenType { get; set; } = string.Empty;
+}
+
 internal sealed class ServiceSettings : IServiceSettings
 {
     private readonly IRuntimeOptions<TelegramOptions> _telegram;
     private readonly IRuntimeOptions<PriceCrawlOptions> _prices;
+    private readonly IRuntimeOptions<GatewaySettingsOptions> _gateway;
+    private readonly IRuntimeOptions<AiEndUserOptions> _endUser;
 
-    public ServiceSettings(IRuntimeOptions<TelegramOptions> telegram, IRuntimeOptions<PriceCrawlOptions> prices)
+    public ServiceSettings(
+        IRuntimeOptions<TelegramOptions> telegram,
+        IRuntimeOptions<PriceCrawlOptions> prices,
+        IRuntimeOptions<GatewaySettingsOptions> gateway,
+        IRuntimeOptions<AiEndUserOptions> endUser)
     {
         _telegram = telegram;
         _prices = prices;
+        _gateway = gateway;
+        _endUser = endUser;
+    }
+
+    public async Task<McpGatewaySettings> GetMcpGatewayAsync(CancellationToken cancellationToken = default)
+    {
+        var gateway = await _gateway.GetAsync(cancellationToken);
+        var endUser = await _endUser.GetAsync(cancellationToken);
+        return new McpGatewaySettings(
+            Blank(gateway.ClientKey),
+            Blank(gateway.ClientKeyHeader),
+            Blank(gateway.MetaKey),
+            Blank(gateway.JwksUrl),
+            Blank(gateway.Issuer),
+            Blank(gateway.Audience),
+            Blank(gateway.TokenType),
+            Blank(endUser.Issuer));
     }
 
     public async Task<TelegramBotSettings> GetTelegramBotAsync(CancellationToken cancellationToken = default)

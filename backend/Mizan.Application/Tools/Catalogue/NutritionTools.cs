@@ -22,6 +22,9 @@ public static class NutritionTools
 {
     private static readonly string[] MealSlots = MealTypes.All;
 
+    /// <summary>The most foods one search returns, so a page stays well under a host's reply limit (docs/MCP.md#reply-size).</summary>
+    public const int MaxSearchPage = 40;
+
     public static IReadOnlyList<TaskTool> All { get; } =
     [
         new TaskTool
@@ -41,7 +44,7 @@ public static class NutritionTools
                 ["recipeId"] = ToolSchema.Id("recipe: one recipe by id, with ingredients, method and nutrition, instead of a search."),
                 ["favoritesOnly"] = ToolSchema.Boolean("recipe: only favourites."),
                 ["page"] = ToolSchema.Integer("Page, from 1."),
-                ["pageSize"] = ToolSchema.Integer("Results per page, 20 by default (at most 100)."),
+                ["pageSize"] = ToolSchema.Integer($"Results per page, 20 by default (at most {MaxSearchPage})."),
                 ["date"] = ToolSchema.Date("fit: the day, YYYY-MM-DD; today by default."),
                 ["count"] = ToolSchema.Integer("fit: how many recipes, 1 to 20 (5 by default)."),
             },
@@ -62,7 +65,7 @@ public static class NutritionTools
                         {
                             SearchTerm = args.OptionalString("query"),
                             Page = Math.Max(1, args.OptionalInt("page") ?? 1),
-                            PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? (context.Surface == ToolSurface.Assistant ? 10 : 20), 1, 100),
+                            PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? (context.Surface == ToolSurface.Assistant ? 10 : 20), 1, MaxSearchPage),
                         },
                     Describe = result => result switch
                     {
@@ -91,7 +94,7 @@ public static class NutritionTools
                             IncludeFavorites = true,
                             FavoritesOnly = args.OptionalBool("favoritesOnly") ?? false,
                             Page = Math.Max(1, args.OptionalInt("page") ?? 1),
-                            PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? 20, 1, 100),
+                            PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? 20, 1, MaxSearchPage),
                         },
                     Describe = result => result switch
                     {
@@ -207,6 +210,7 @@ public static class NutritionTools
                 + "never guess nutrition. The items are saved one by one: when one fails, retry only the remaining ones, and check an unconfirmed one in the diary first. "
                 + "Workouts and weight have their own tools.",
             Kind = ToolKind.Write,
+            Additive = true,
             Required = ["items"],
             Properties = new JsonObject
             {
@@ -267,6 +271,8 @@ public static class NutritionTools
                 + "show the estimate, then log it with log_food. Each food says its source: \"recipe\" (recipeId, servings), \"catalogue\" (foodId) or \"estimate\" (log by name with its figures). "
                 + "A photo renders the food-photo view in hosts that show apps.",
             Kind = ToolKind.Write,
+            Additive = true,
+            OpenWorld = true,
             ModeArgument = "kind",
             DefaultMode = "text",
             App = "ui://mizan/food-photo.html",
@@ -305,6 +311,7 @@ public static class NutritionTools
             Description = "Create or change the person's own foods and recipes: a custom food, a recipe saved from a logged meal or edited, a favourite, "
                 + "an ingredient made from a recipe, a recipe photo, or a report that a food's price is wrong. Never guess nutrition or weights; ask the person.",
             Kind = ToolKind.Write,
+            OpenWorld = true,
             ModeArgument = "kind",
             Properties = new JsonObject
             {

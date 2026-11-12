@@ -103,22 +103,18 @@ export default function SupportNotesPanel({
   };
 
   return (
-    <section
-      aria-labelledby="support-notes-title"
-      className="border border-charcoal-blue-200 p-5 sm:p-6 dark:border-charcoal-blue-700"
-    >
-      <h2
-        id="support-notes-title"
-        className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
-      >
-        Support notes
-      </h2>
-      <p className="mb-4 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-        Seen by administrators only.
-      </p>
+    <section aria-labelledby="support-notes-title" className="flex flex-col">
+      <div className="log-section-header">
+        <h2 id="support-notes-title" className="text-[20px] font-semibold">
+          Support notes
+        </h2>
+        <p className="text-[12px] text-muted-foreground">
+          Seen by administrators only
+        </p>
+      </div>
 
       <form
-        className="space-y-2"
+        className="space-y-2 pt-4"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
@@ -158,12 +154,9 @@ export default function SupportNotesPanel({
           No notes yet.
         </p>
       ) : (
-        <ul
-          aria-label="Notes"
-          className="mt-4 divide-y divide-charcoal-blue-100 dark:divide-white/10"
-        >
+        <ul aria-label="Notes" className="mt-4 border-t border-border">
           {notes.map((note) => (
-            <li key={note.id} className="py-3">
+            <li key={note.id} className="border-b border-border py-3">
               <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                 {note.authorName ||
                   note.authorEmail ||

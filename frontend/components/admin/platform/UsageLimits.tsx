@@ -21,6 +21,7 @@ import { Select } from "@/components/ui/select";
 
 const LINE_LABEL: Record<string, string> = {
   Personal: "Personal",
+  Estimates: "Meal estimates",
   Planning: "Meal planning",
   Onboarding: "Onboarding",
   TrainerClient: "Coaching",

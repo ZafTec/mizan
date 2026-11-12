@@ -48,7 +48,7 @@ public class ApplyTemplateForClientCommandHandler : IRequestHandler<ApplyTemplat
     public async Task<MealPlanCreatedResult> Handle(ApplyTemplateForClientCommand request, CancellationToken cancellationToken)
     {
         var trainerId = await CoachDrafts.RequirePlanningGrantAsync(_trainers, request.ClientId, cancellationToken);
-        var template = await _access.LoadReadableAsync(request.TemplateId, cancellationToken);
+        var template = await _access.LoadForReadingAsync(request.TemplateId, cancellationToken);
         if (template.Kind != PlanKind.Template)
             throw new EntityNotFoundException("Template", request.TemplateId);
 

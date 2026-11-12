@@ -15,6 +15,7 @@ export type RuntimeSetting = Schemas["RuntimeSettingDto"];
 export type SetRuntimeSettingRequest = Schemas["SetRuntimeSettingRequest"];
 export type SmtpTestResult = Schemas["SmtpTestResult"];
 export type AiProviderTestResult = Schemas["AiProviderTestResult"];
+export type EndUserKeyRotationResult = Schemas["EndUserKeyRotationResult"];
 
 function idempotent(): Record<string, string> {
   return { "Idempotency-Key": crypto.randomUUID() };
@@ -51,3 +52,10 @@ export const testAiProvider = () =>
     method: "POST",
     headers: idempotent(),
   });
+
+/** A new end-user signing key; the one in use stays published as the previous key. */
+export const rotateEndUserKey = () =>
+  clientApi<EndUserKeyRotationResult>(
+    "/api/admin/settings/end-user-key/rotate",
+    { method: "POST", headers: idempotent() },
+  );

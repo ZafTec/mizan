@@ -11,6 +11,7 @@ using Mizan.Application.Mail;
 using Mizan.Application.Notifications;
 using Mizan.Application.Queries;
 using Mizan.Application.Settings;
+using Mizan.Domain.Settings;
 using Mizan.Application.Usage;
 using Mizan.Contracts.Admin;
 using Mizan.Contracts.Notifications;
@@ -143,7 +144,7 @@ public sealed class GetAdminActionPreviewQueryHandler : IRequestHandler<GetAdmin
         "admin_delete_achievement", "admin_resolve_content_report", "admin_promote_exercise", "admin_update_user",
         "admin_end_relationship", "admin_delete_job", "admin_send_announcement", "admin_reply_contact",
         "admin_delete_support_note", "admin_remove_household_member", "admin_delete_household",
-        "admin_publish_ai_prompt_version", "admin_set_setting", "admin_clear_setting", "admin_delete_template",
+        "admin_publish_ai_prompt_version", "admin_set_setting", "admin_clear_setting", "admin_rotate_end_user_key", "admin_delete_template",
         "admin_update_price_alias", "admin_resolve_price_report", "admin_delete_price_source", "admin_set_feature_flag",
         "admin_set_feature_flag_override", "admin_clear_feature_flag_override", "admin_set_usage_limit",
         "admin_clear_usage_limit", "admin_activate_notification_campaign", "admin_resume_campaign", "admin_cancel_campaign",
@@ -177,6 +178,7 @@ public sealed class GetAdminActionPreviewQueryHandler : IRequestHandler<GetAdmin
             "admin_publish_ai_prompt_version" => await PromptVersion(args.RequiredGuid("id"), ct),
             "admin_set_setting" => await Setting(args.RequiredString("key"), args.OptionalString("value") ?? "", setting: true, ct),
             "admin_clear_setting" => await Setting(args.RequiredString("key"), null, setting: false, ct),
+            "admin_rotate_end_user_key" => await EndUserKey(ct),
             "admin_delete_template" => await Template(args.RequiredGuid("id"), ct),
             "admin_update_price_alias" => await PriceAlias(args, ct),
             "admin_resolve_price_report" => await PriceReport(args, ct),
@@ -383,6 +385,21 @@ public sealed class GetAdminActionPreviewQueryHandler : IRequestHandler<GetAdmin
         };
         if (setting) facts["new"] = value;
         return facts;
+    }
+
+    private async Task<JsonObject> EndUserKey(CancellationToken ct)
+    {
+        var all = await _sender.Send(new GetRuntimeSettingsQuery(), ct);
+        var group = all.Groups.Single(g => g.Id == RuntimeSettingGroups.EndUserTokens);
+        string? Value(string key) => group.Settings.Single(s => s.Key == key).Value;
+        var keyId = Value("EndUser.KeyId");
+        return new JsonObject
+        {
+            ["rotates"] = "the key Mizan signs end-user tokens with",
+            ["currentKeyId"] = keyId,
+            ["keptAsPrevious"] = keyId is null ? null : $"{keyId}, published until its tokens expire",
+            ["replacesPrevious"] = Value("EndUser.PreviousKeyId"),
+        };
     }
 
     private async Task<JsonObject> Template(Guid id, CancellationToken ct)

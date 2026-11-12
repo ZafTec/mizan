@@ -96,7 +96,7 @@ public sealed class MealPlanContextBuilder
                 .ToListAsync(cancellationToken);
             if (rows.Count > 0)
             {
-                var perServing = await RecipeNutritionLookup.ForRecipesAsync(_context, rows.Select(r => r.Id).ToList(), cancellationToken);
+                var perServing = await RecipeNutritionLookup.ForRecipesAsync(_context, rows, null, cancellationToken);
                 var servingCosts = await ServingCostsAsync(rows, region, cancellationToken);
                 text.Append(CultureInfo.InvariantCulture, $"## Your recipes (recipeId | title | serves | per serving | cost per serving in {currency})\n");
                 foreach (var row in rows)

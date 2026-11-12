@@ -103,7 +103,7 @@ app.MapPost("/internal/settings-changed", async (
 app.MapPost("/telegram/webhook", async (
     HttpContext context,
     Update update,
-    UpdateHandler handler,
+    IServiceScopeFactory scopes,
     IOptions<TelegramBotOptions> settings,
     CancellationToken ct) =>
 {
@@ -116,8 +116,13 @@ app.MapPost("/telegram/webhook", async (
 
     // Answered immediately: Telegram retries anything slower than a few
     // seconds, and an AI turn is slower than that. The work continues on the
-    // host's own lifetime rather than the request's.
-    _ = Task.Run(() => handler.HandleAsync(update, CancellationToken.None), CancellationToken.None);
+    // host's own lifetime rather than the request's, in a scope of its own: the request's scope
+    // ends with the answer.
+    _ = Task.Run(async () =>
+    {
+        await using var scope = scopes.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<UpdateHandler>().HandleAsync(update, CancellationToken.None);
+    }, CancellationToken.None);
 
     await Task.CompletedTask;
     return Results.Ok();

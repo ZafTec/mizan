@@ -354,6 +354,18 @@ test("a week drafted in chat is listed as a conversation after a reload", async 
   expect((await state(context)).unhandled).toEqual([]);
 });
 
+test("the usage panel shows the free meal estimates apart from chat", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { consented: true });
+  await page.goto("/profile/settings#assistant");
+  const line = page.getByTestId("ai-usage-estimates");
+  await expect(line).toContainText("Meals estimated");
+  await expect(line).toContainText("1 / 3");
+  expect((await state(context)).unhandled).toEqual([]);
+});
+
 test("the usage panel shows the planning allowance", async ({
   page,
   context,

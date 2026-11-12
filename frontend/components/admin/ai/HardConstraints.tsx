@@ -18,44 +18,39 @@ export default function HardConstraints({
   const [showPreamble, setShowPreamble] = useState(false);
 
   return (
-    <section className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/60 p-5 dark:border-white/10 dark:bg-white/[0.03]">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Enforced in code
-        </h2>
+    <section className="flex flex-col">
+      <div className="log-section-header flex-wrap">
+        <h2 className="text-[16px] font-semibold">Enforced in code</h2>
         <button
           type="button"
+          aria-expanded={showPreamble}
           onClick={() => setShowPreamble((v) => !v)}
-          className="text-xs text-charcoal-blue-500 underline-offset-2 hover:underline dark:text-charcoal-blue-400"
+          className="text-link"
         >
           {showPreamble ? "Hide" : "Show"} preamble
         </button>
       </div>
 
-      <p className="mt-1 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+      <p className="pt-3 text-[12px] text-muted-foreground">
         Not editable here, and not enforced by the prompt below. Changing any of
         these is a code change and a deploy.
       </p>
 
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-2">
         {constraints.map((c) => (
-          <li key={c.title} className="text-xs">
-            <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
-              {c.title}
-            </span>
-            <span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">
+          <li key={c.title} className="border-b border-border py-2.5 text-xs">
+            <span className="font-medium">{c.title}</span>
+            <span className="text-muted-foreground">
               {" — "}
               {c.detail}
             </span>
-            <span className="block text-charcoal-blue-400 dark:text-charcoal-blue-500">
-              {c.enforcedBy}
-            </span>
+            <span className="block text-muted-foreground">{c.enforcedBy}</span>
           </li>
         ))}
       </ul>
 
       {showPreamble && (
-        <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-3 font-mono text-[11px] leading-relaxed text-charcoal-blue-700 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-300">
+        <pre className="mt-3 max-h-64 overflow-auto rounded-[3px] border border-border bg-card p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">
           {preamble}
         </pre>
       )}

@@ -148,6 +148,19 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
         }
     }
 
+    public IQueryable<Food> FoodsMatching(IQueryable<Food> foods, string term)
+    {
+        if (!Database.IsNpgsql())
+        {
+            var lower = term.ToLowerInvariant();
+            return foods.Where(f => f.Name.ToLower().Contains(lower) || (f.Brand != null && f.Brand.ToLower().Contains(lower)));
+        }
+
+        var pattern = "%" + term.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%";
+        return foods.Where(f => EF.Functions.ILike(f.Name, pattern, @"\")
+            || (f.Brand != null && EF.Functions.ILike(f.Brand, pattern, @"\")));
+    }
+
     public async Task<Household?> LockHouseholdAsync(Guid householdId, CancellationToken cancellationToken = default)
     {
         if (!Database.IsRelational())
@@ -156,7 +169,7 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
         }
 
         return await Households
-            .FromSqlInterpolated($"SELECT * FROM households WHERE id = {householdId} FOR UPDATE")
+            .FromSql($"SELECT * FROM households WHERE id = {householdId} FOR UPDATE")
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -236,6 +249,9 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Trigram indexes serve the food search's ILIKE '%term%' (FoodsMatching).
+        modelBuilder.HasPostgresExtension("pg_trgm");
 
         // User configuration (READ-ONLY - managed by frontend Drizzle, excluded from backend migrations)
         modelBuilder.Entity<User>(entity =>
@@ -542,6 +558,8 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => e.Barcode);
+            entity.HasIndex(e => e.Name).HasDatabaseName("ix_foods_name_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+            entity.HasIndex(e => e.Brand).HasDatabaseName("ix_foods_brand_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
         });
 
         // Recipe configuration
@@ -623,6 +641,11 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.EntryDate });
             entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
+            // Food search and the recipe list sort by when the viewer last logged each one, a
+            // MAX(logged_at) per food or recipe for one user. These answer it from the index and
+            // stand in for the foreign-key indexes on food_id and recipe_id.
+            entity.HasIndex(e => new { e.FoodId, e.UserId, e.LoggedAt }).HasDatabaseName("ix_food_diary_entries_food_user_logged");
+            entity.HasIndex(e => new { e.RecipeId, e.UserId, e.LoggedAt }).HasDatabaseName("ix_food_diary_entries_recipe_user_logged");
             entity.HasOne(e => e.User).WithMany(u => u.FoodDiaryEntries).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany(f => f.DiaryEntries).HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.Recipe).WithMany(r => r.DiaryEntries).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.SetNull);
@@ -1101,6 +1124,8 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.SentAt).HasColumnName("sent_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.ReadAt).HasColumnName("read_at");
             entity.HasOne(e => e.Conversation).WithMany(c => c.Messages).HasForeignKey(e => e.ConversationId).OnDelete(DeleteBehavior.Cascade);
+            // A conversation is read a page at a time, newest first, keyed on (sent_at, id).
+            entity.HasIndex(e => new { e.ConversationId, e.SentAt, e.Id }).HasDatabaseName("ix_chat_messages_conversation_sent");
             entity.HasOne(e => e.Sender).WithMany().HasForeignKey(e => e.SenderId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -1333,11 +1358,18 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
                 .HasDatabaseName("ix_outbox_jobs_claim");
 
             // Enqueueing the same key twice keeps the first job. This is what
-            // makes at-least-once delivery safe to retry.
+            // makes at-least-once delivery safe to retry. text_pattern_ops lets
+            // a key-prefix LIKE (a campaign report's "schedule:{id}:%") seek the
+            // index whatever the database collation; equality still uses it.
             entity.HasIndex(e => e.DedupeKey)
                 .IsUnique()
                 .HasFilter("dedupe_key IS NOT NULL")
+                .HasOperators("text_pattern_ops")
                 .HasDatabaseName("ix_outbox_jobs_dedupe");
+
+            // The retention pass: finished jobs by status, oldest first (OutboxRetention).
+            entity.HasIndex(e => new { e.Status, e.CompletedAt })
+                .HasDatabaseName("ix_outbox_jobs_retention");
         });
 
         modelBuilder.Entity<SystemSetting>(entity =>

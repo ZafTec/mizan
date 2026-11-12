@@ -9,6 +9,7 @@ import {
   type Column,
 } from "@/components/ui/data-table";
 import AdminIngredientActions from "./AdminIngredientActions";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -117,23 +118,18 @@ export default async function AdminIngredientsPage({
   );
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Moderation</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Ingredients
-          </h1>
-        </div>
-        <Link
-          href="/admin/ingredients/add"
-          className="btn-primary !rounded-2xl"
-        >
-          Add ingredient
-        </Link>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Foods"
+        lead="The shared food catalogue that recipes and logs draw from."
+        action={
+          <Link href="/admin/ingredients/add" className="btn-primary">
+            Add food
+          </Link>
+        }
+      />
 
-      <TableToolbar searchPlaceholder="Search ingredients…" />
+      <TableToolbar searchPlaceholder="Search foods…" />
 
       <DataTable
         columns={columns}
@@ -144,14 +140,11 @@ export default async function AdminIngredientsPage({
         sort={sort}
         page={{ page, pageSize: PAGE_SIZE, totalCount, totalPages }}
         empty={{
-          title: "No ingredients match",
+          title: "No foods match",
           description: "Try a different search, or add one.",
           action: (
-            <Link
-              href="/admin/ingredients/add"
-              className="btn-primary !rounded-2xl"
-            >
-              Add ingredient
+            <Link href="/admin/ingredients/add" className="btn-primary">
+              Add food
             </Link>
           ),
         }}

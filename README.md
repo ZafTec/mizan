@@ -63,7 +63,7 @@ The environment holds only what a process needs before it can read the database,
 | `OpenApi__Enabled`, `OTLP_ENDPOINT_URL`, `LOKI_OTLP_ENDPOINT`, `ASPNETCORE_*` | .NET services | Startup wiring: Swagger, telemetry, environment name and listen address. |
 | `NEXT_PUBLIC_*`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | frontend | Baked into the build (public URLs, the image host allowlist, analytics), or needed by Next.js itself. |
 
-`Smtp__*`, `Ai__*`, `Storage__*`, `Push__*`, `Paddle__*`, `OAuth__*`, `Telegram__*`, `Authentication__Google__*`, `Authentication__GitHub__*` (`GOOGLE_*`, `GITHUB_*`), the frontend build's `NEXT_PUBLIC_PADDLE_ENV` and `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `TelegramBot__BotToken`, `TelegramBot__UseWebhook`, `TelegramBot__WebhookSecret`, `TelegramBot__MiniAppUrl` and the crawler's `Prices__UserAgent`, `Prices__RequestDelayMs` and `Prices__MaxProductsPerRun` are no longer read. Operator commands, each run once against the deployment's database:
+`Smtp__*`, `Ai__*` (including `Ai__EndUser__*`), the MCP server's `Mcp__Gateway__*`, `Storage__*`, `Push__*`, `Paddle__*`, `OAuth__*`, `Telegram__*`, `Authentication__Google__*`, `Authentication__GitHub__*` (`GOOGLE_*`, `GITHUB_*`), the frontend build's `NEXT_PUBLIC_PADDLE_ENV` and `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `TelegramBot__BotToken`, `TelegramBot__UseWebhook`, `TelegramBot__WebhookSecret`, `TelegramBot__MiniAppUrl` and the crawler's `Prices__UserAgent`, `Prices__RequestDelayMs` and `Prices__MaxProductsPerRun` are no longer read. Operator commands, each run once against the deployment's database:
 
 | Command | What it does |
 | --- | --- |
@@ -73,7 +73,7 @@ The environment holds only what a process needs before it can read the database,
 
 ## Run on the host
 
-Install Bun and .NET 10. Start PostgreSQL and Redis, then configure the backend through environment variables or ignored `backend/Mizan.Api/appsettings.Development.json`:
+Install Bun and .NET 11. Start PostgreSQL and Redis, then configure the backend through environment variables or ignored `backend/Mizan.Api/appsettings.Development.json`:
 
 ```text
 ConnectionStrings__PostgreSQL=Host=localhost;Database=mizan;Username=mizan;Password=<local password>

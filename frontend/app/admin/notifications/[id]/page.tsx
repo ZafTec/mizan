@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { getCampaignServer } from "@/lib/api/admin-notifications.server";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import CampaignControls from "@/components/admin/notifications/CampaignControls";
 import CampaignEditor from "@/components/admin/notifications/CampaignEditor";
 import { CHANNELS } from "@/lib/admin-notifications/schema";
@@ -50,28 +50,22 @@ export default async function CampaignPage({
   const editable = campaign.status === "draft" || campaign.status === "paused";
 
   return (
-    <div className="log-page space-y-8" data-testid="admin-campaign-page">
-      <header className="log-page-header block! space-y-2">
-        <Link
-          href="/admin/notifications"
-          className="text-xs text-charcoal-blue-500 hover:text-verdigris-600 dark:text-charcoal-blue-400"
-        >
-          Notifications
-        </Link>
-        <h1 className="break-words">{campaign.name}</h1>
-        <p className="text-muted-foreground">
-          {STATUS[campaign.phase] ?? campaign.phase} ·{" "}
-          {campaign.purpose === "marketing" ? "News and offers" : "Lifecycle"} ·{" "}
-          {campaign.summary}
-        </p>
-      </header>
+    <div
+      className="flex flex-col gap-10 [&>header]:mb-0 [&_h2]:text-[20px] [&_h2]:leading-[1.3] [&_h2]:font-semibold"
+      data-testid="admin-campaign-page"
+    >
+      <AdminPageHeader
+        title={campaign.name}
+        lead={`${STATUS[campaign.phase] ?? campaign.phase} · ${campaign.purpose === "marketing" ? "News and offers" : "Lifecycle"} · ${campaign.summary}`}
+        back={{ href: "/admin/notifications", label: "Campaigns" }}
+      />
 
       <CampaignControls campaign={campaign} />
 
       <section aria-labelledby="campaign-report" className="space-y-3">
-        <h2 id="campaign-report" className="text-lg font-semibold">
-          Delivery
-        </h2>
+        <div className="log-section-header">
+          <h2 id="campaign-report">Delivery</h2>
+        </div>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
           <div>
             <dt className="text-muted-foreground">Audience confirmed</dt>
@@ -107,7 +101,7 @@ export default async function CampaignPage({
                 <th className="py-2 text-right font-normal">Opened</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-charcoal-blue-200 dark:divide-charcoal-blue-700">
+            <tbody className="divide-y divide-border border-y border-border">
               {campaign.report.map((r) => (
                 <tr key={r.channel}>
                   <td className="py-2 pr-4">
@@ -162,9 +156,9 @@ export default async function CampaignPage({
 
       {editable ? (
         <section aria-labelledby="campaign-edit" className="space-y-4">
-          <h2 id="campaign-edit" className="text-lg font-semibold">
-            Edit
-          </h2>
+          <div className="log-section-header">
+            <h2 id="campaign-edit">Edit</h2>
+          </div>
           <CampaignEditor campaign={campaign} />
         </section>
       ) : (

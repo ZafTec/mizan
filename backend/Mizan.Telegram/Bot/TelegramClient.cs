@@ -38,7 +38,7 @@ public sealed class TelegramClient
     public async Task<IReadOnlyList<Update>> GetUpdatesAsync(
         long offset, int timeoutSeconds, CancellationToken ct)
     {
-        var response = await _http.PostAsJsonAsync(
+        using var response = await _http.PostAsJsonAsync(
             $"{_base}/getUpdates",
             new
             {
@@ -83,7 +83,7 @@ public sealed class TelegramClient
     {
         try
         {
-            var response = await _http.PostAsJsonAsync($"{_base}/sendPhoto", new
+            using var response = await _http.PostAsJsonAsync($"{_base}/sendPhoto", new
             {
                 chat_id = chatId,
                 photo = photoUrl,
@@ -108,7 +108,7 @@ public sealed class TelegramClient
     {
         try
         {
-            var response = await _http.PostAsJsonAsync($"{_base}/sendMessage", new
+            using var response = await _http.PostAsJsonAsync($"{_base}/sendMessage", new
             {
                 chat_id = chatId,
                 text,
@@ -171,7 +171,7 @@ public sealed class TelegramClient
     {
         try
         {
-            var response = await _http.PostAsJsonAsync($"{_base}/getWebhookInfo", new { }, Json, ct);
+            using var response = await _http.PostAsJsonAsync($"{_base}/getWebhookInfo", new { }, Json, ct);
             if (!response.IsSuccessStatusCode) return null;
             var body = await response.Content.ReadFromJsonAsync<Response<WebhookInfo>>(Json, ct);
             return body is { Ok: true } ? body.Result : null;
@@ -224,7 +224,7 @@ public sealed class TelegramClient
 
     public async Task<byte[]?> DownloadAsync(string fileId, int maxBytes, CancellationToken ct)
     {
-        var response = await _http.PostAsJsonAsync($"{_base}/getFile", new { file_id = fileId }, Json, ct);
+        using var response = await _http.PostAsJsonAsync($"{_base}/getFile", new { file_id = fileId }, Json, ct);
         if (!response.IsSuccessStatusCode) return null;
 
         var file = (await response.Content.ReadFromJsonAsync<Response<TelegramFile>>(Json, ct))?.Result;
@@ -243,7 +243,7 @@ public sealed class TelegramClient
     {
         try
         {
-            var response = await _http.PostAsJsonAsync($"{_base}/{method}", payload, Json, ct);
+            using var response = await _http.PostAsJsonAsync($"{_base}/{method}", payload, Json, ct);
             Response<JsonElement>? body = null;
             try { body = await response.Content.ReadFromJsonAsync<Response<JsonElement>>(Json, ct); }
             catch (JsonException) { }
@@ -265,7 +265,7 @@ public sealed class TelegramClient
     {
         try
         {
-            var response = await _http.PostAsJsonAsync($"{_base}/{method}", payload, Json, ct);
+            using var response = await _http.PostAsJsonAsync($"{_base}/{method}", payload, Json, ct);
 
             if (!response.IsSuccessStatusCode)
             {

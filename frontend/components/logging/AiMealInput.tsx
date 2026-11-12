@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import {
   analyzeFoodPhoto,
   analyzeFoodText,
+  isEstimateAllowanceUsed,
   type FoodAnalysis,
 } from "@/lib/api/food-photo";
 import { getErrorMessage } from "@/lib/toast";
@@ -30,18 +31,8 @@ export default function AiMealInput({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState<"text" | "photo" | null>(null);
   const [error, setError] = useState("");
-  const { isPro, loading } = useSubscription();
+  const { isPro } = useSubscription();
   const [walled, setWalled] = useState(false);
-
-  // Gated at the moment of the attempt, as everywhere else. The notice is inline rather than a dialog: this sits
-  // inside the logging sheet, which holds focus, so a second dialog opened from here could not be reached.
-  // While the plan is still loading the action runs, because the server decides.
-  const guard =
-    <A extends unknown[]>(action: (...args: A) => void) =>
-    (...args: A) => {
-      if (isPro || loading) action(...args);
-      else setWalled(true);
-    };
 
   async function run(
     source: "text" | "photo",
@@ -50,6 +41,7 @@ export default function AiMealInput({
     setBusy(source);
     onBusyChange?.(true);
     setError("");
+    setWalled(false);
     try {
       const analysis = await work();
       if (analysis.foods.length === 0) {
@@ -63,6 +55,13 @@ export default function AiMealInput({
       onProposal(analysis, source);
       if (source === "text") setText("");
     } catch (cause) {
+      // The server decides: every account has a daily estimate allowance. When a Free account has used it, the
+      // upgrade note replaces the error. It is inline rather than a dialog: this sits inside the logging sheet,
+      // which holds focus, so a second dialog opened from here could not be reached.
+      if (!isPro && isEstimateAllowanceUsed(cause)) {
+        setWalled(true);
+        return;
+      }
       setError(
         getErrorMessage(
           cause,
@@ -78,9 +77,9 @@ export default function AiMealInput({
   }
 
   const description = text.trim();
-  const estimate = guard(() => {
+  const estimate = () => {
     if (description) void run("text", () => analyzeFoodText(description));
-  });
+  };
 
   return (
     <section
@@ -127,7 +126,7 @@ export default function AiMealInput({
         <button
           type="button"
           disabled={disabled || busy !== null}
-          onClick={guard(() => fileInput.current?.click())}
+          onClick={() => fileInput.current?.click()}
           className="btn-secondary min-h-11 shrink-0"
         >
           {busy === "photo" ? "Reading…" : "Photo"}
@@ -159,10 +158,12 @@ export default function AiMealInput({
           role="note"
           className="space-y-2 border-t border-border pt-3 text-sm"
         >
-          <h3 className="font-semibold">Log a meal in plain words</h3>
+          <h3 className="font-semibold">
+            You have used today&apos;s free estimates
+          </h3>
           <p className="text-charcoal-blue-700 dark:text-charcoal-blue-300">
-            Pro turns a sentence or a photo into a meal for you to check.
-            Searching foods and recipes stays free.
+            Free includes three a day. Pro turns many more sentences and photos
+            into meals for you to check. Searching foods and recipes stays free.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/billing?checkout=pro" className="btn-primary min-h-11">

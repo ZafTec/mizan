@@ -34,11 +34,24 @@ public sealed class PlanAccess
 
     public bool IsAdmin => _currentUser.IsInRole("admin");
 
-    /// <summary>Loads a plan the caller may read, with its entries and sessions. Anyone else gets "not found".</summary>
-    public async Task<MealPlan> LoadReadableAsync(Guid planId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Loads a plan the caller may read, with its entries and sessions, tracked so the caller can change
+    /// and save it. Anyone else gets "not found". A caller that only reads uses <see cref="LoadForReadingAsync"/>.
+    /// </summary>
+    public Task<MealPlan> LoadReadableAsync(Guid planId, CancellationToken cancellationToken) =>
+        LoadAsync(_context.MealPlans, planId, cancellationToken);
+
+    /// <summary>
+    /// As <see cref="LoadReadableAsync"/>, untracked: for a caller that reads the plan (shows it, copies it,
+    /// logs from it) and saves nothing on it.
+    /// </summary>
+    public Task<MealPlan> LoadForReadingAsync(Guid planId, CancellationToken cancellationToken) =>
+        LoadAsync(_context.MealPlans.AsNoTracking(), planId, cancellationToken);
+
+    private async Task<MealPlan> LoadAsync(IQueryable<MealPlan> plans, Guid planId, CancellationToken cancellationToken)
     {
         RequireUserId();
-        var plan = await _context.MealPlans
+        var plan = await plans
             .Include(p => p.Entries)
             .Include(p => p.PrepSessions)
             .FirstOrDefaultAsync(p => p.Id == planId, cancellationToken);

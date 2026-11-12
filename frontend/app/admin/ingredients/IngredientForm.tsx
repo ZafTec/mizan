@@ -37,9 +37,9 @@ export default function IngredientForm({
         <input type="hidden" name="id" value={initialData.id} />
       )}
 
-      <div className="card p-6 space-y-5">
-        <h2 className="flex items-center gap-2 border-b border-charcoal-blue-100 pb-4 font-semibold text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-100">
-          General Information
+      <section className="space-y-5">
+        <h2 className="log-section-header text-[20px] leading-[1.3] font-semibold">
+          Details
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,18 +97,18 @@ export default function IngredientForm({
                 name="isVerified"
                 value="true"
                 defaultChecked={initialData?.isVerified}
-                className="w-5 h-5 rounded border-charcoal-blue-300 text-brand-600 focus:ring-brand-500"
+                className="w-5 h-5 rounded-[3px] border-charcoal-blue-300 text-brand-600 focus:ring-brand-500"
               />
               <span className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                Verified Ingredient
+                Verified food
               </span>
             </label>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="card p-6 space-y-5">
-        <h2 className="flex items-center gap-2 border-b border-charcoal-blue-100 pb-4 font-semibold text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-100">
+      <section className="space-y-5">
+        <h2 className="log-section-header text-[20px] leading-[1.3] font-semibold">
           Nutrition (per 100g)
         </h2>
 
@@ -192,7 +192,7 @@ export default function IngredientForm({
           <strong>per 100g</strong> of the ingredient for consistent
           calculations.
         </p>
-      </div>
+      </section>
 
       <div className="flex items-center gap-3">
         <button
@@ -219,7 +219,7 @@ export default function IngredientForm({
       </div>
 
       {formState.status === "error" && (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+        <div className="text-sm font-medium text-destructive">
           {formState.message}
         </div>
       )}

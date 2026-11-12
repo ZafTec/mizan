@@ -44,8 +44,10 @@ public static class FoodNameMatch
             else if (allowContained && haveLength >= MinimumContainedLength && Contains(wanted, have)) score = 20_000 + (wantedLength - haveLength);
             else continue;
 
+            // The tie-break name is only needed by a candidate that can still win.
+            if (score > bestScore) continue;
             var joined = string.Join(' ', have);
-            if (score < bestScore || (score == bestScore && string.CompareOrdinal(joined, bestName) < 0))
+            if (score < bestScore || string.CompareOrdinal(joined, bestName) < 0)
             {
                 best = candidate;
                 bestScore = score;
@@ -59,19 +61,20 @@ public static class FoodNameMatch
     /// <summary>The words of a name: runs of letters and digits, lower case.</summary>
     public static string[] Words(string? value)
     {
+        var text = (value ?? string.Empty).ToLowerInvariant();
         var words = new List<string>();
-        var current = new System.Text.StringBuilder();
-        foreach (var c in (value ?? string.Empty).ToLowerInvariant())
+        var start = -1;
+        for (var i = 0; i < text.Length; i++)
         {
-            if (char.IsLetterOrDigit(c))
+            if (char.IsLetterOrDigit(text[i]))
             {
-                current.Append(c);
+                if (start < 0) start = i;
                 continue;
             }
-            if (current.Length > 0) words.Add(current.ToString());
-            current.Clear();
+            if (start >= 0) words.Add(text[start..i]);
+            start = -1;
         }
-        if (current.Length > 0) words.Add(current.ToString());
+        if (start >= 0) words.Add(text[start..]);
         return words.ToArray();
     }
 
@@ -99,15 +102,24 @@ public static class FoodNameMatch
         var w = word.ToLowerInvariant();
         if (w.Length > 3)
         {
-            if (w.EndsWith("ies") && w.Length > 4) w = w[..^3] + "y";
-            else if (w.EndsWith("oes") || w.EndsWith("ches") || w.EndsWith("shes") || w.EndsWith("xes") || w.EndsWith("sses")) w = w[..^2];
-            else if (w.EndsWith('s') && !w.EndsWith("ss") && !w.EndsWith("us") && !w.EndsWith("is")) w = w[..^1];
+            // Ordinal: the suffixes are plain letters, and Pick runs this for every word of every candidate.
+            if (w.EndsWith("ies", StringComparison.Ordinal) && w.Length > 4) w = string.Concat(w.AsSpan(0, w.Length - 3), "y");
+            else if (w.EndsWith("oes", StringComparison.Ordinal) || w.EndsWith("ches", StringComparison.Ordinal)
+                || w.EndsWith("shes", StringComparison.Ordinal) || w.EndsWith("xes", StringComparison.Ordinal)
+                || w.EndsWith("sses", StringComparison.Ordinal)) w = w[..^2];
+            else if (w.EndsWith('s') && !w.EndsWith("ss", StringComparison.Ordinal)
+                && !w.EndsWith("us", StringComparison.Ordinal) && !w.EndsWith("is", StringComparison.Ordinal)) w = w[..^1];
         }
         return Synonyms.GetValueOrDefault(w, w);
     }
 
     /// <summary>The words of a name in their canonical form.</summary>
-    public static string[] CanonicalWords(string? value) => Words(value).Select(Canonical).ToArray();
+    public static string[] CanonicalWords(string? value)
+    {
+        var words = Words(value);
+        for (var i = 0; i < words.Length; i++) words[i] = Canonical(words[i]);
+        return words;
+    }
 
     /// <summary>
     /// What to look a written name up by in the database before <see cref="Pick"/> decides: its

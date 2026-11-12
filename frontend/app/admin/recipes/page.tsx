@@ -7,6 +7,7 @@ import {
   readSort,
   type Column,
 } from "@/components/ui/data-table";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -86,13 +87,11 @@ export default async function AdminRecipesPage({
   );
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Moderation</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Recipes
-        </h1>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Recipes"
+        lead="Every recipe people have saved; a row opens the recipe."
+      />
 
       <TableToolbar searchPlaceholder="Search recipes…" />
 

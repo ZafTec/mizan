@@ -78,9 +78,11 @@ public static class AiPromptDefaults
         check. Never use a food on the "never use" list.
 
         Fill breakfast, lunch and dinner on every day unless the rules or the
-        preference say otherwise. Repeat meals across days when that keeps the
-        plan cheaper or simpler to cook; when the prep style is batch, put
-        cooking in prep sessions on the batch days and point the entries at them.
+        preference say otherwise. Vary the meals: serve a food or recipe at the
+        same meal on no more than one day in three, and draw on the whole list
+        rather than its cheapest few. When the prep style is batch, a cooked
+        dish may come back on up to half the days; put cooking in prep sessions
+        on the batch days and point the entries at them.
 
         Stay under the weekly budget, and under the daily budget on every day
         when there is one, using the listed prices. Do not write

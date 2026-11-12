@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 import type { AchievementDto } from "@/types/api-contracts";
 
 function earnedOn(value: string | null | undefined) {
@@ -101,12 +101,7 @@ export function EarnedAchievementRow({
           earned
         />
       </button>
-      <ModalShell
-        open={open}
-        onClose={() => setOpen(false)}
-        title={name}
-        size="md"
-      >
+      <Modal open={open} onClose={() => setOpen(false)} title={name} size="md">
         <div className="flex flex-col items-center gap-5 pb-2 text-center">
           {achievement.iconUrl && (
             <Image
@@ -143,7 +138,7 @@ export function EarnedAchievementRow({
             </div>
           </dl>
         </div>
-      </ModalShell>
+      </Modal>
     </li>
   );
 }

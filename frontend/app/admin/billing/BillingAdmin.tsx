@@ -6,7 +6,7 @@ import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import { Pill } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 import {
   describeDeal,
   firstErrorMessage,
@@ -103,24 +103,21 @@ export default function BillingAdmin({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Pill tone={catalog.environment === "production" ? "good" : "warn"}>
           Paddle {catalog.environment}
         </Pill>
         {!catalog.configured && (
-          <span className="text-red-700 dark:text-red-400">
+          <span className="text-destructive">
             No Paddle API key is set on the server; changes will fail.
           </span>
         )}
       </div>
 
-      <section className="card space-y-4 p-6" aria-labelledby="plans-heading">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2
-            id="plans-heading"
-            className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
-          >
+      <section className="space-y-4" aria-labelledby="plans-heading">
+        <div className="log-section-header flex-wrap">
+          <h2 id="plans-heading" className="text-[20px] font-semibold">
             Plans
           </h2>
           <button
@@ -152,7 +149,7 @@ export default function BillingAdmin({
         ) : (
           <div className="-mx-6 overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-charcoal-blue-500 dark:text-charcoal-blue-400">
+              <thead className="text-left text-[13px] text-muted-foreground">
                 <tr>
                   <th className="px-6 py-2 font-medium">Plan</th>
                   <th className="px-3 py-2 font-medium">Price</th>
@@ -162,7 +159,7 @@ export default function BillingAdmin({
                   <th className="px-6 py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-charcoal-blue-200 dark:divide-charcoal-blue-700">
+              <tbody className="divide-y divide-border">
                 {catalog.plans.map((plan) => (
                   <tr key={plan.id}>
                     <td className="px-6 py-3">
@@ -236,13 +233,10 @@ export default function BillingAdmin({
         }
       />
 
-      <section
-        className="card space-y-4 p-6"
-        aria-labelledby="discounts-heading"
-      >
+      <section className="space-y-4" aria-labelledby="discounts-heading">
         <h2
           id="discounts-heading"
-          className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
+          className="log-section-header text-[20px] font-semibold"
         >
           Discounts and deals
         </h2>
@@ -251,7 +245,7 @@ export default function BillingAdmin({
             No discounts yet.
           </p>
         ) : (
-          <ul className="divide-y divide-charcoal-blue-200 dark:divide-charcoal-blue-700">
+          <ul className="divide-y divide-border">
             {catalog.discounts.map((d) => (
               <li
                 key={d.id}
@@ -347,7 +341,7 @@ export default function BillingAdmin({
         pendingLabel="Archiving…"
       />
 
-      <ModalShell
+      <Modal
         open={repricing !== null}
         onClose={() => setRepricing(null)}
         title={repricing ? `New price for ${repricing.name}` : ""}
@@ -376,9 +370,9 @@ export default function BillingAdmin({
             }
           />
         )}
-      </ModalShell>
+      </Modal>
 
-      <ModalShell
+      <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
         title={editing ? `Edit ${editing.name}` : ""}
@@ -407,7 +401,7 @@ export default function BillingAdmin({
             }
           />
         )}
-      </ModalShell>
+      </Modal>
     </div>
   );
 }
@@ -436,7 +430,7 @@ function CreatePlan({
 
   return (
     <form
-      className="card space-y-4 p-6"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         onCreate({
@@ -449,9 +443,7 @@ function CreatePlan({
         });
       }}
     >
-      <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-        New plan
-      </h2>
+      <h2 className="log-section-header text-[20px] font-semibold">New plan</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" helper="Shown at checkout and on invoices.">
           <input
@@ -543,7 +535,7 @@ function CreateDiscount({
 
   return (
     <form
-      className="card space-y-4 p-6"
+      className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         onCreate({
@@ -561,10 +553,8 @@ function CreateDiscount({
         });
       }}
     >
-      <div>
-        <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          New discount
-        </h2>
+      <div className="border-b border-foreground pb-3">
+        <h2 className="text-[20px] font-semibold">New discount</h2>
         <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
           Leave the code blank for a deal: checkout applies it and the pricing
           page shows it. A yearly deal is a discount limited to the yearly plan.

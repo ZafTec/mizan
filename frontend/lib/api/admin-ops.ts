@@ -9,6 +9,8 @@ import type { components, paths } from "@/types/api.generated";
  */
 type Schemas = components["schemas"];
 
+export type AdminOverview = Schemas["AdminOverviewDto"];
+export type AdminAttention = Schemas["AdminAttentionDto"];
 export type EmailMessage = Schemas["EmailMessageDto"];
 export type EmailMessagePage = Schemas["EmailMessageDtoPagedResult"];
 export type MailStats = Schemas["MailStatsDto"];

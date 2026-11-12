@@ -181,9 +181,9 @@ public class AiToolRunner : IAiToolRunner
     private async Task<AiToolRun?> ConsentRefusalAsync(
         string name, Guid userId, DataAxis axis, AiToolAccess access, CancellationToken cancellationToken)
     {
-        var consent = await ConsentAsync(userId, cancellationToken);
-        var permitted = access == AiToolAccess.Write ? consent.AllowsWrite(axis) : consent.Allows(axis);
-        if (permitted) return null;
+        // The rule is AssistantConsent's, shared with a hosted assistant's calls through the gateway.
+        if (await AssistantConsent.RefusalAsync(_context, userId, axis, access, cancellationToken) is not { } requirement)
+            return null;
 
         // The model still reads why, so it can explain; the surface gets the typed requirement
         // and offers to grant exactly that switch.
@@ -192,7 +192,7 @@ public class AiToolRunner : IAiToolRunner
             name,
             $"The user has not given permission to {verb} their {Describe(axis)}. "
             + "Tell them in one sentence; they are shown a way to allow it.");
-        return refused with { ConsentRequired = AiConsentRequirements.For(axis, access) };
+        return refused with { ConsentRequired = requirement };
     }
 
     /// <summary>
@@ -218,15 +218,6 @@ public class AiToolRunner : IAiToolRunner
 
     private static AiToolRun Failed(string tool, string error) =>
         new(new AiToolInvocation(tool, string.Empty, false, error), []);
-
-    private async Task<UserAiConsent> ConsentAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var stored = await _context.UserAiConsents.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-
-        // No row means never asked, which means no.
-        return stored ?? UserAiConsent.None(userId);
-    }
 
     private static string Describe(DataAxis axis) => axis switch
     {

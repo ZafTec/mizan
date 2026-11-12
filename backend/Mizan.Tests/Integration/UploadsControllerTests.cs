@@ -60,6 +60,32 @@ public class UploadsControllerTests
         client.Dispose();
     }
 
+    /// <summary>
+    /// A page on another site that makes the person's browser post a file with their session is
+    /// refused before the upload is read. The app's own pages get through, on the API's origin or on
+    /// a frontend origin the CORS settings list.
+    /// </summary>
+    [Fact]
+    public async Task APageOnAnotherSite_CannotUploadWithThePersonsSession()
+    {
+        var client = await SignedInAsync();
+
+        async Task<HttpStatusCode> Upload(string site, string origin)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Uploads/image") { Content = Png("shot.png") };
+            request.Headers.Add("Sec-Fetch-Site", site);
+            request.Headers.Add("Origin", origin);
+            return (await client.SendAsync(request)).StatusCode;
+        }
+
+        (await Upload("same-site", "https://other.localhost")).Should().Be(HttpStatusCode.Forbidden);
+        (await Upload("cross-site", "https://evil.example")).Should().Be(HttpStatusCode.Forbidden);
+        // Storage is not configured in tests, so this answer proves the request passed every check before it.
+        (await Upload("same-origin", "http://localhost")).Should().Be(HttpStatusCode.InternalServerError);
+        (await Upload("same-site", "http://localhost:3000")).Should().Be(HttpStatusCode.InternalServerError);
+        client.Dispose();
+    }
+
     // ---- 3D models for the app ----
 
     [Fact]

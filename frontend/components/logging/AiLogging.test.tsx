@@ -7,6 +7,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { ApiError } from "@/lib/api";
 import { clientApi } from "@/lib/api.client";
 import MealLogForm from "./MealLogForm";
 
@@ -336,16 +337,20 @@ describe("describing a meal to the assistant", () => {
     ).toBe("a big dinner");
   });
 
-  it("walls a free account at the moment it tries, without calling the assistant", async () => {
+  it("lets a free account estimate, and offers Pro once today's estimates are used", async () => {
     pro = false;
+    analyzed = new ApiError(429, "Too Many Requests", {
+      errorCode: "ai_quota_exceeded",
+      cap: "daily_requests",
+      error: "You have reached your daily limit of AI requests.",
+    });
     renderForm();
     await waitFor(() =>
       expect(vi.mocked(clientApi)).toHaveBeenCalledWith(
         "/api/Subscriptions/me",
       ),
     );
-    await screen.findByRole("button", { name: "Estimate meal" });
-    fireEvent.change(screen.getByLabelText("Tell me what you ate"), {
+    fireEvent.change(await screen.findByLabelText("Tell me what you ate"), {
       target: { value: "two eggs" },
     });
     await waitFor(() =>
@@ -357,17 +362,19 @@ describe("describing a meal to the assistant", () => {
         ).disabled,
       ).toBe(false),
     );
-    // Let the subscription answer land so the wall knows the account is free.
+    // Let the subscription answer land so the note knows the account is free.
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     fireEvent.click(screen.getByRole("button", { name: "Estimate meal" }));
 
-    expect(await screen.findByText("Log a meal in plain words")).toBeTruthy();
+    expect(
+      await screen.findByText("You have used today's free estimates"),
+    ).toBeTruthy();
     expect(
       vi
         .mocked(clientApi)
         .mock.calls.some(([path]) => path === "/api/Nutrition/ai/analyze-text"),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("estimates a photo through the same review", async () => {

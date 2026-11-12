@@ -243,7 +243,18 @@ function UsagePanel({ usage }: { usage: MyAiUsage }) {
         />
       </div>
 
-      {/* Its own allowance: drafting a plan never spends chat, nor chat a plan. */}
+      {/* Their own allowances: estimating a meal or drafting a plan never spends chat, nor chat either of them. */}
+      <div
+        className="border-t border-border py-3"
+        data-testid="ai-usage-estimates"
+      >
+        <Meter
+          label="Meals estimated"
+          used={usage.estimates.requestsUsed}
+          limit={usage.estimates.requestLimit}
+        />
+      </div>
+
       <div
         className="border-t border-border py-3"
         data-testid="ai-usage-planning"

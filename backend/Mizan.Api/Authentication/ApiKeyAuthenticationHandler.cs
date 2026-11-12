@@ -63,6 +63,15 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
             return AuthenticateResult.Fail("Invalid API Key");
         }
 
+        // The hosted assistant's path (docs/MCP.md): the regular key only, and never for a connection, so the
+        // gateway can neither carry an administrator's role nor borrow a connected app's grant.
+        var viaGateway = Request.Headers.ContainsKey(GatewayAccess.Header);
+        if (viaGateway && (!isRegularKey || Request.Headers.ContainsKey(GrantHeader)))
+        {
+            _logger.LogWarning("Refused a gateway call with the admin key or a connection.");
+            return AuthenticateResult.Fail("Invalid gateway call");
+        }
+
         // Check for impersonation header
         if (Request.Headers.TryGetValue("X-Impersonate-User", out var userIdString) &&
             Guid.TryParse(userIdString, out var userId))
@@ -91,6 +100,8 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 // Add standard role claim for Identity
                 new Claim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", role)
             };
+
+            if (viaGateway) claims.Add(new Claim(GatewayAccess.Claim, GatewayAccess.Path));
 
             // The MCP service names the connection a call came from. What that
             // connection may do is read from the database here, never taken from
@@ -129,11 +140,13 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
         }
 
         // If no impersonation, just authenticate as "Service"
-        var serviceClaims = new[]
+        var serviceClaims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, "service"),
             new Claim("type", "service")
         };
+        // The gateway lists tools before any person is named (docs/MCP.md).
+        if (viaGateway) serviceClaims.Add(new Claim(GatewayAccess.Claim, GatewayAccess.Path));
         var serviceIdentity = new ClaimsIdentity(serviceClaims, Scheme.Name);
         var servicePrincipal = new ClaimsPrincipal(serviceIdentity);
         var serviceTicket = new AuthenticationTicket(servicePrincipal, Scheme.Name);

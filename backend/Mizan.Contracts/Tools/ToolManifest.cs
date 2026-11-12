@@ -30,7 +30,15 @@ public sealed record ToolDescriptorDto(
     string Kind,
     JsonElement InputSchema,
     /// <summary>The MCP app page this tool renders in a host that shows apps, or null.</summary>
-    string? App);
+    string? App,
+    /// <summary>What a host may assume of the tool, true for its worst mode (docs/MCP.md#tool-hints-and-replies).</summary>
+    ToolHintsDto? Hints = null);
+
+/// <summary>
+/// A task tool's MCP annotations. Each holds for every mode the tool has: a tool with a mode that replaces or removes
+/// something is destructive, and one that may fetch an address the caller gave is open-world.
+/// </summary>
+public sealed record ToolHintsDto(bool ReadOnly, bool Destructive, bool Idempotent, bool OpenWorld);
 
 /// <summary>A call to one task tool (<c>POST /api/tools/{name}/call</c>).</summary>
 public sealed record ToolCallRequest(string? Surface, JsonElement? Arguments);

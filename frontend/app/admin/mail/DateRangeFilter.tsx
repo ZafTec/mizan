@@ -29,7 +29,7 @@ export default function DateRangeFilter() {
         </span>
         <input
           type="date"
-          className="input !w-auto !rounded-2xl !py-2 text-sm"
+          className="input !w-auto !py-2 text-sm"
           value={params.get("from") ?? ""}
           onChange={(e) => set("from", e.target.value)}
         />
@@ -40,7 +40,7 @@ export default function DateRangeFilter() {
         </span>
         <input
           type="date"
-          className="input !w-auto !rounded-2xl !py-2 text-sm"
+          className="input !w-auto !py-2 text-sm"
           value={params.get("to") ?? ""}
           onChange={(e) => set("to", e.target.value)}
         />

@@ -2,6 +2,7 @@ import { serverApi } from "@/lib/api.server";
 import { logger } from "@/lib/logger";
 import type {
   AdminHouseholdDetail,
+  AdminOverview,
   ContactQuery,
   ContactSubmission,
   ContactSubmissionPage,
@@ -57,6 +58,18 @@ export async function getContactServer(
       expectedStatuses: [400, 404],
     });
   } catch {
+    return null;
+  }
+}
+
+/** Counts, the newest accounts and what waits for an administrator; null when the API cannot be reached. */
+export async function getAdminOverviewServer(): Promise<AdminOverview | null> {
+  try {
+    return await serverApi<AdminOverview>("/api/admin/overview");
+  } catch (error) {
+    log.error("Failed to load the admin overview", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

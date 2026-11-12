@@ -116,7 +116,7 @@ public class BillingTests(ApiTestFixture fixture)
             .Which.RestrictToPriceIds.Should().Equal(yearlyPriceId);
         fixture.Paddle.Discounts.Values.Should().ContainSingle(d => d.Code == "FRIENDS10");
 
-        var plans = await anonymous.GetFromJsonAsync<List<BillingPlanDto>>("/api/Subscriptions/plans");
+        var plans = (await anonymous.GetFromJsonAsync<List<BillingPlanDto>>("/api/Subscriptions/plans"))!;
         plans!.Select(p => p.Id).Should().BeEquivalentTo(new[] { monthly, yearly });
         plans.Single(p => p.Id == monthly).Deal.Should().BeNull();
         var deal = plans.Single(p => p.Id == yearly).Deal;
@@ -316,7 +316,7 @@ public class BillingTests(ApiTestFixture fixture)
                 .IsSuccessStatusCode.Should().BeTrue();
         }
 
-        // Pro: the Telegram bot, coach requests, and photo analysis.
+        // Pro: the Telegram bot and coach requests. Photo and text estimates have a free allowance instead.
         var telegram = await free.PostAsync("/api/Telegram/link", null);
         telegram.StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
         (await telegram.Content.ReadAsStringAsync()).Should().Contain("upgrade_required");
@@ -325,11 +325,6 @@ public class BillingTests(ApiTestFixture fixture)
         await fixture.SeedUserAsync(trainerId, $"coach-{trainerId:N}@example.com", role: "trainer");
         (await free.PostAsJsonAsync("/api/Trainers/request", new { trainerId }))
             .StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
-
-        using var form = new MultipartFormDataContent { { new ByteArrayContent(new byte[] { 1, 2, 3 }), "image", "plate.jpg" } };
-        var photo = await free.PostAsync("/api/Nutrition/ai/analyze-image", form);
-        photo.StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
-        (await photo.Content.ReadAsStringAsync()).Should().Contain("upgrade_required");
 
         await fixture.GrantProAsync(freeId);
         using (var scope = fixture.Services.CreateScope())

@@ -162,13 +162,13 @@ public class ShoppingAggregatorTests
     public void LooseAmountsInUnitsThatAgree_AreAdded(double first, string? firstUnit, double second, string? secondUnit, double total, string? unit)
     {
         var tomato = Food("Tomato");
-        var a = Recipe("A", 1, Line(tomato, (decimal)first, firstUnit));
-        var b = Recipe("B", 1, Line(tomato, (decimal)second, secondUnit));
+        var a = Recipe("A", 1, Line(tomato, Dec.Of(first), firstUnit));
+        var b = Recipe("B", 1, Line(tomato, Dec.Of(second), secondUnit));
 
         var items = ShoppingAggregator.Aggregate([RecipeEntry(a, 1), RecipeEntry(b, 1)], Recipes(a, b), Foods(tomato));
 
         items.Should().ContainSingle();
-        (items[0].Amount, items[0].Unit).Should().Be(((decimal)total, unit));
+        (items[0].Amount, items[0].Unit).Should().Be((Dec.Of(total), unit));
     }
 
     [Theory]
@@ -182,7 +182,7 @@ public class ShoppingAggregatorTests
     [InlineData(1, "bunch", "piece", null)]
     public void ConvertLoose_ConvertsSpellingsAndVolumes_AndNothingElse(double amount, string? from, string? to, double? expected)
     {
-        ShoppingAggregator.ConvertLoose((decimal)amount, from, to).Should().Be(expected is null ? null : (decimal)expected);
+        ShoppingAggregator.ConvertLoose(Dec.Of(amount), from, to).Should().Be(expected is null ? null : Dec.Of(expected));
     }
 
     [Fact]

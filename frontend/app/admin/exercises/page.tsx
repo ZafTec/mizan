@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getExercises } from "@/data/exercise";
 import {
   DataTable,
@@ -10,6 +9,7 @@ import {
 } from "@/components/ui/data-table";
 import ExerciseAdminActions from "./ExerciseAdminActions";
 import NewExerciseButton from "./NewExerciseButton";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -108,21 +108,12 @@ export default async function AdminExercisesPage({
   );
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Moderation</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Exercises
-          </h1>
-        </div>
-        <div className="flex gap-2">
-          <NewExerciseButton />
-          <Link href="/workouts" className="btn-secondary !rounded-2xl">
-            Back to workouts
-          </Link>
-        </div>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Exercises"
+        lead="The exercise catalogue that workouts and templates draw from."
+        action={<NewExerciseButton />}
+      />
 
       <TableToolbar
         searchPlaceholder="Search exercises…"

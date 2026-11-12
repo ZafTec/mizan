@@ -1,22 +1,16 @@
-import Link from "next/link";
 import AchievementForm, { EMPTY_DRAFT } from "../AchievementForm";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const metadata = { title: "New achievement | Mizan admin" };
 
 export default function NewAchievementPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <header className="space-y-2">
-        <Link
-          href="/admin/achievements"
-          className="text-xs text-charcoal-blue-500 hover:text-verdigris-600 dark:text-charcoal-blue-400"
-        >
-          ← Achievements
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          New achievement
-        </h1>
-      </header>
+    <div className="max-w-2xl">
+      <AdminPageHeader
+        title="New achievement"
+        lead="What it is called, what earns it and how many points it is worth."
+        back={{ href: "/admin/achievements", label: "Achievements" }}
+      />
 
       <AchievementForm initial={EMPTY_DRAFT} />
     </div>

@@ -1,5 +1,5 @@
-import { DetailSkeleton } from "@/components/ui/skeletons";
+import { AdminDetailSkeleton } from "@/components/admin/AdminSkeletons";
 
 export default function Loading() {
-  return <DetailSkeleton />;
+  return <AdminDetailSkeleton />;
 }

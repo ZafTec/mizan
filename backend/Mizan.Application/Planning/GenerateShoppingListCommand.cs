@@ -45,7 +45,7 @@ public class GenerateShoppingListCommandHandler : IRequestHandler<GenerateShoppi
     public async Task<GenerateShoppingListResult> Handle(GenerateShoppingListCommand request, CancellationToken cancellationToken)
     {
         var userId = _plans.RequireUserId();
-        var plan = await _plans.LoadReadableAsync(request.PlanId, cancellationToken);
+        var plan = await _plans.LoadForReadingAsync(request.PlanId, cancellationToken);
         if (plan.Kind == PlanKind.Template)
             throw new DomainValidationException("Apply the template first, then make the list from the plan.");
 

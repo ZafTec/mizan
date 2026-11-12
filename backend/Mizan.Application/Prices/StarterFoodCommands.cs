@@ -18,24 +18,49 @@ public record ImportStarterFoodsCommand : IRequest<ImportStarterFoodsResult>;
 
 public class ImportStarterFoodsCommandHandler : IRequestHandler<ImportStarterFoodsCommand, ImportStarterFoodsResult>
 {
-    private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
-    private readonly HybridCache _cache;
-    private readonly ILogger<ImportStarterFoodsCommandHandler> _logger;
+    private readonly StarterFoodImport _import;
 
-    public ImportStarterFoodsCommandHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, ILogger<ImportStarterFoodsCommandHandler> logger)
+    public ImportStarterFoodsCommandHandler(ICurrentUserService currentUser, StarterFoodImport import)
+    {
+        _currentUser = currentUser;
+        _import = import;
+    }
+
+    public Task<ImportStarterFoodsResult> Handle(ImportStarterFoodsCommand request, CancellationToken cancellationToken)
+    {
+        PriceAdmin.Require(_currentUser);
+        return _import.ImportAsync(cancellationToken);
+    }
+}
+
+/// <summary>
+/// Puts the <see cref="StarterFoods"/> in the shared catalogue. An administrator runs it from the
+/// prices page; the migration step runs it when the catalogue has no shared food, so a fresh install
+/// can log and plan from the start (docs/PLANNING.md#api-step-3-as-built).
+/// </summary>
+public class StarterFoodImport
+{
+    private readonly IMizanDbContext _context;
+    private readonly HybridCache _cache;
+    private readonly ILogger<StarterFoodImport> _logger;
+
+    public StarterFoodImport(IMizanDbContext context, HybridCache cache, ILogger<StarterFoodImport> logger)
     {
         _context = context;
-        _currentUser = currentUser;
         _cache = cache;
         _logger = logger;
     }
 
-    public async Task<ImportStarterFoodsResult> Handle(ImportStarterFoodsCommand request, CancellationToken cancellationToken)
+    /// <summary>Imports the starter foods only when there is no shared food yet. Returns null when it did nothing.</summary>
+    public async Task<ImportStarterFoodsResult?> ImportIfEmptyAsync(CancellationToken cancellationToken)
     {
-        PriceAdmin.Require(_currentUser);
+        if (await _context.Foods.AnyAsync(f => f.UserId == null, cancellationToken)) return null;
+        return await ImportAsync(cancellationToken);
+    }
 
+    public async Task<ImportStarterFoodsResult> ImportAsync(CancellationToken cancellationToken)
+    {
         var ids = StarterFoods.All.Select(f => StarterFoods.IdFor(f.Name)).ToList();
         var names = StarterFoods.All.Select(f => f.Name.ToLower()).ToList();
         var existing = await _context.Foods.AsNoTracking()

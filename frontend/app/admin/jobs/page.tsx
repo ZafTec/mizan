@@ -14,6 +14,8 @@ import {
   type PillTone,
 } from "@/components/ui/data-table";
 import JobActions from "./JobActions";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminFacts from "@/components/admin/AdminFacts";
 
 export const dynamic = "force-dynamic";
 
@@ -136,32 +138,6 @@ const columns: Column<AdminJob>[] = [
   },
 ];
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone?: "bad" | "warn";
-}) {
-  const colour =
-    tone === "bad" && value > 0
-      ? "text-red-600 dark:text-red-400"
-      : tone === "warn" && value > 0
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-charcoal-blue-900 dark:text-charcoal-blue-50";
-
-  return (
-    <div className="card px-4 py-3">
-      <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-        {label}
-      </p>
-      <p className={`text-2xl font-semibold tabular-nums ${colour}`}>{value}</p>
-    </div>
-  );
-}
-
 export default async function AdminJobsPage({
   searchParams,
 }: {
@@ -184,25 +160,36 @@ export default async function AdminJobsPage({
   ]);
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Administration</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Background jobs
-        </h1>
-        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          Outbound email and eval suites run here rather than inside the request
-          that asked for them. A dead job is something a user asked for that
-          never happened - fix the cause, then retry it.
-        </p>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Jobs"
+        lead="Email, deliveries and eval suites run here, not in the request that asked for them."
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Dead" value={stats.deadLettered} tone="bad" />
-        <Stat label="Retrying" value={stats.failed} tone="warn" />
-        <Stat label="Queued" value={stats.pending + stats.running} />
-        <Stat label="Done" value={stats.succeeded} />
-      </div>
+      <p className="max-w-[68ch] text-[14px] text-muted-foreground">
+        A job that gave up is something a person asked for that never happened:
+        fix the cause, then retry it.
+      </p>
+
+      <AdminFacts
+        facts={[
+          {
+            label: "Gave up",
+            value: (
+              <span
+                className={
+                  stats.deadLettered > 0 ? "text-destructive" : undefined
+                }
+              >
+                {stats.deadLettered}
+              </span>
+            ),
+          },
+          { label: "Retrying", value: stats.failed },
+          { label: "Queued", value: stats.pending + stats.running },
+          { label: "Done", value: stats.succeeded },
+        ]}
+      />
 
       <TableToolbar
         filters={[

@@ -78,10 +78,21 @@ public class GetMcpUsageAnalyticsQueryHandler : IRequestHandler<GetMcpUsageAnaly
         var startDate = request.StartDate ?? DateTime.UtcNow.AddDays(-30);
         var endDate = request.EndDate ?? DateTime.UtcNow;
 
-        var logs = await _context.McpUsageLogs
-            .Include(l => l.Grant).ThenInclude(g => g!.Client)
+        // A month of calls can be thousands of rows: read the columns the tallies use, not tracked
+        // log, grant and client entities.
+        var logs = await _context.McpUsageLogs.AsNoTracking()
             .Where(l => l.UserId == _currentUser.UserId && l.Timestamp >= startDate && l.Timestamp <= endDate
                 && (request.GrantId == null || l.GrantId == request.GrantId))
+            .Select(l => new
+            {
+                l.ToolName,
+                l.Success,
+                l.ExecutionTimeMs,
+                l.GrantId,
+                l.Timestamp,
+                HasGrant = l.Grant != null,
+                ClientName = l.Grant != null ? l.Grant.Client.Name : null,
+            })
             .ToListAsync(cancellationToken);
 
         // Overview
@@ -108,8 +119,8 @@ public class GetMcpUsageAnalyticsQueryHandler : IRequestHandler<GetMcpUsageAnaly
 
         // Client usage: one row per connection
         var clientUsage = logs
-            .Where(l => l.Grant != null)
-            .GroupBy(l => new { GrantId = l.GrantId!.Value, l.Grant!.Client.Name })
+            .Where(l => l.HasGrant)
+            .GroupBy(l => new { GrantId = l.GrantId!.Value, Name = l.ClientName! })
             .Select(g => new ClientUsageDto
             {
                 GrantId = g.Key.GrantId,

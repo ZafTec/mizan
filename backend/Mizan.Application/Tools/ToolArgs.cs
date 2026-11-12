@@ -26,10 +26,12 @@ public sealed class ToolArgs
         return options;
     }
 
+    private static readonly JsonElement EmptyObject = JsonElement.Parse("{}");
+
     public ToolArgs(JsonElement root) =>
         Root = root.ValueKind == JsonValueKind.Object
             ? JsonSerializer.SerializeToElement(WithoutPlaceholders(JsonObject.Create(root)!))
-            : JsonDocument.Parse("{}").RootElement.Clone();
+            : EmptyObject;
 
     /// <summary>
     /// A model often fills every argument of a schema, sending an empty string or the all-zero id
@@ -67,7 +69,7 @@ public sealed class ToolArgs
     public static ToolArgs Empty { get; } = new(default);
 
     public static ToolArgs Parse(string? json) =>
-        new(string.IsNullOrWhiteSpace(json) ? default : JsonDocument.Parse(json).RootElement.Clone());
+        new(string.IsNullOrWhiteSpace(json) ? default : JsonElement.Parse(json));
 
     public JsonElement Root { get; }
 

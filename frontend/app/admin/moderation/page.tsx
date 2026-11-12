@@ -1,11 +1,16 @@
-import Image from "next/image";
-import Link from "next/link";
 import { serverApi } from "@/lib/api.server";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminFacts from "@/components/admin/AdminFacts";
 import ModerationActions from "./ModerationActions";
 import type { components } from "@/types/api.generated";
 
 type Report = components["schemas"]["ContentReportDto"];
 type Analytics = components["schemas"]["SocialAnalyticsDto"];
+
+export const metadata = {
+  title: "Moderation | Mizan admin",
+  description: "Reported posts and comments from the social feed",
+};
 
 export default async function AdminModerationPage() {
   const [reports, analytics] = await Promise.all([
@@ -15,64 +20,58 @@ export default async function AdminModerationPage() {
     serverApi<Analytics>("/api/admin/social/analytics"),
   ]);
   return (
-    <div className="space-y-6">
-      <header className="flex items-end justify-between">
-        <div>
-          <p className="eyebrow">Moderation</p>
-          <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">
-            Review queue
-          </h1>
+    <div className="flex flex-col gap-10 [&>header]:mb-0">
+      <AdminPageHeader
+        title="Moderation"
+        lead="Reported posts and comments from the social feed."
+      />
+
+      <AdminFacts
+        facts={[
+          { label: "Open reports", value: analytics.openReports },
+          { label: "Actioned", value: analytics.actionedReports },
+          {
+            label: "Profiles",
+            value: analytics.profiles,
+            note: `${analytics.acceptedFollows} follows · ${analytics.feedItems} feed items`,
+          },
+        ]}
+      />
+
+      <section aria-labelledby="reports-title" className="flex flex-col">
+        <div className="log-section-header">
+          <h2 id="reports-title" className="text-[20px] font-semibold">
+            Open reports
+          </h2>
         </div>
-        <Link href="/admin/exercises" className="btn-secondary">
-          Exercise approvals
-        </Link>
-      </header>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        {[
-          ["Profiles", analytics.profiles],
-          ["Followers", analytics.acceptedFollows],
-          ["Feed items", analytics.feedItems],
-          ["Open reports", analytics.openReports],
-          ["Actioned", analytics.actionedReports],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="card p-4">
-            <p className="text-xs uppercase text-charcoal-blue-500">{label}</p>
-            <p className="mt-2 text-2xl font-bold">{value}</p>
-          </div>
-        ))}
-      </div>
-      {reports.items.length === 0 ? (
-        <div className="card p-10 text-center">
-          <Image
-            src="/illustrations/empty-moderation.svg"
-            alt=""
-            width={240}
-            height={190}
-            className="mx-auto h-auto w-60"
-          />
-          <h2 className="mt-4 text-xl font-semibold">Queue cleared</h2>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {reports.items.map((report) => (
-            <article
-              key={report.id}
-              className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center"
-            >
-              <div className="flex-1">
-                <p className="text-xs uppercase text-charcoal-blue-500">
-                  {report.targetType} · {report.targetId}
-                </p>
-                <p className="mt-2">{report.reason}</p>
-                <p className="mt-1 text-xs text-charcoal-blue-400">
-                  {new Date(report.createdAt).toLocaleString()}
-                </p>
-              </div>
-              <ModerationActions id={report.id} />
-            </article>
-          ))}
-        </div>
-      )}
+        {reports.items.length === 0 ? (
+          <p className="log-empty text-[14px] text-muted-foreground">
+            Nothing is waiting for review.
+          </p>
+        ) : (
+          <ul>
+            {reports.items.map((report) => (
+              <li
+                key={report.id}
+                className="flex flex-col gap-3 border-b border-border py-3 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] break-all text-muted-foreground">
+                    {report.targetType} · {report.targetId}
+                  </p>
+                  <p className="mt-1 text-[14px] break-words">
+                    {report.reason}
+                  </p>
+                  <p className="mt-1 text-[12px] text-muted-foreground tabular-nums">
+                    {new Date(report.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <ModerationActions id={report.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

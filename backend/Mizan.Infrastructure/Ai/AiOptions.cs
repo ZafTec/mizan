@@ -33,6 +33,12 @@ public class AiOptions
     /// </summary>
     public string? ReasoningEffort { get; set; }
 
+    /// <summary>
+    /// Where a request with a photo goes, when it is not <see cref="BaseUrl"/>: a gateway may not
+    /// accept images (docs/AI.md#photos). Each empty field falls back to the one above.
+    /// </summary>
+    public AiVisionOptions Vision { get; set; } = new();
+
     /// <summary>How long the current conversation may be quiet before a chat app starts a new one (docs/AI.md#app-context).</summary>
     public int ConversationGapHours { get; set; } = 3;
 
@@ -72,6 +78,14 @@ public class AiOptions
     public AiTierLimits PlanningPro { get; set; } = new() { DailyRequests = 20, DailyTokens = 400_000 };
 
     /// <summary>
+    /// Photo and text food estimates, by tier. Free gets enough to log a couple of meals a day;
+    /// a photo reserves more tokens than a sentence, so the token cap leaves room for three photos.
+    /// </summary>
+    public AiTierLimits EstimatesFree { get; set; } = new() { DailyRequests = 3, DailyTokens = 30_000 };
+
+    public AiTierLimits EstimatesPro { get; set; } = new() { DailyRequests = 100, DailyTokens = 400_000 };
+
+    /// <summary>
     /// The circuit breaker on the whole provider bill. Not optional: a loop or
     /// an abusive account stops here rather than at the invoice.
     /// </summary>
@@ -97,6 +111,7 @@ public class AiOptions
             AiQuotaLine.Onboarding => Onboarding,
             AiQuotaLine.TrainerClient => Trainer,
             AiQuotaLine.Planning => isPro ? PlanningPro : PlanningFree,
+            AiQuotaLine.Estimates => isPro ? EstimatesPro : EstimatesFree,
             _ => isPro ? Pro : Free,
         };
         return new UsageLimitValues(tier.DailyRequests, tier.DailyTokens, null, null);
@@ -107,4 +122,12 @@ public class AiTierLimits
 {
     public int DailyRequests { get; set; }
     public int DailyTokens { get; set; }
+}
+
+/// <summary>The endpoint for requests that carry a photo. Empty fields use the main provider's.</summary>
+public class AiVisionOptions
+{
+    public string BaseUrl { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
 }

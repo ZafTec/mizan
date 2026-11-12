@@ -21,11 +21,15 @@ export default function ModerationActions({ id }: { id: string }) {
   }
   return (
     <div className="flex gap-2">
-      <button className="btn-ghost btn-sm" onClick={() => resolve("dismiss")}>
+      <button
+        type="button"
+        className="btn-ghost btn-sm"
+        onClick={() => resolve("dismiss")}
+      >
         Dismiss
       </button>
       <ConfirmButton
-        className="btn-danger btn-sm"
+        className="btn-ghost-destructive btn-sm"
         title="Remove the reported content?"
         description="The post or comment is deleted for everyone and the report is closed."
         confirmLabel="Remove content"

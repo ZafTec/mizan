@@ -95,10 +95,7 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
         }
         else if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            var searchTerm = request.SearchTerm.ToLower();
-            query = query.Where(f =>
-                f.Name.ToLower().Contains(searchTerm) ||
-                (f.Brand != null && f.Brand.ToLower().Contains(searchTerm)));
+            query = _context.FoodsMatching(query, request.SearchTerm);
         }
 
         if (request.MinProteinCalorieRatio.HasValue)

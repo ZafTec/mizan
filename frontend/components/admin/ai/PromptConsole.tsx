@@ -25,6 +25,7 @@ import {
 import HardConstraints from "./HardConstraints";
 import EvalMatrix from "./EvalMatrix";
 import BodyDiff from "./BodyDiff";
+import { Pill } from "@/components/ui/data-table";
 
 const DRAFT = 0;
 const PUBLISHED = 1;
@@ -216,11 +217,9 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-            Versions
-          </h2>
+      <aside className="flex flex-col">
+        <div className="log-section-header">
+          <h2 className="text-[16px] font-semibold">Versions</h2>
           <button
             type="button"
             onClick={onBranch}
@@ -232,43 +231,39 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
         </div>
 
         {prompt.versions.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-charcoal-blue-200 p-4 text-xs text-charcoal-blue-500 dark:border-white/10 dark:text-charcoal-blue-400">
+          <p className="py-4 text-[12px] text-muted-foreground">
             Nothing published. The built-in default is answering, and a new
             draft starts from it.
           </p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul>
             {prompt.versions.map((version) => (
               <li key={version.id}>
                 <button
                   type="button"
                   onClick={() => select(version)}
+                  aria-pressed={version.id === selectedId}
                   className={cn(
-                    "w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors",
-                    version.id === selectedId
-                      ? "border-verdigris-400 bg-verdigris-50 dark:border-verdigris-500/40 dark:bg-verdigris-500/10"
-                      : "border-charcoal-blue-200 hover:border-verdigris-300 dark:border-white/10",
+                    "flex min-h-11 w-full flex-col justify-center border-b border-border px-2 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                    version.id === selectedId && "bg-hair",
                   )}
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                      v{version.version}
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px]",
+                    <span className="font-medium">v{version.version}</span>
+                    <Pill
+                      tone={
                         version.status === PUBLISHED
-                          ? "bg-verdigris-100 text-verdigris-800 dark:bg-verdigris-500/15 dark:text-verdigris-300"
+                          ? "good"
                           : version.status === DRAFT
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
-                            : "bg-charcoal-blue-100 text-charcoal-blue-600 dark:bg-white/10 dark:text-charcoal-blue-300",
-                      )}
+                            ? "warn"
+                            : "neutral"
+                      }
                     >
                       {statusLabel(version.status)}
-                    </span>
+                    </Pill>
                   </span>
                   {version.authorName && (
-                    <span className="mt-0.5 block text-[11px] text-charcoal-blue-400 dark:text-charcoal-blue-500">
+                    <span className="mt-0.5 block text-[12px] text-muted-foreground">
                       {version.authorName}
                     </span>
                   )}
@@ -279,19 +274,19 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
         )}
       </aside>
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-8">
         <HardConstraints
           preamble={prompt.preamble}
           constraints={prompt.hardConstraints}
         />
 
-        <section className="card overflow-visible space-y-4 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="space-y-4">
+          <div className="log-section-header flex-wrap">
             <div>
-              <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+              <h2 className="text-[16px] font-semibold">
                 {selected ? `Version ${selected.version}` : "Built-in default"}
               </h2>
-              <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+              <p className="text-[12px] text-muted-foreground">
                 {editing
                   ? "Editable. Saving clears whatever the old text proved."
                   : "Read-only. Branch a new draft to change it."}
@@ -339,9 +334,7 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
           </div>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-charcoal-blue-500 dark:text-charcoal-blue-400">
-              Body
-            </span>
+            <span className="label">Body</span>
             <textarea
               value={body}
               readOnly={!editing}
@@ -352,9 +345,7 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-charcoal-blue-500 dark:text-charcoal-blue-400">
-              Soft policy
-            </span>
+            <span className="label">Soft policy</span>
             <textarea
               value={softPolicy}
               readOnly={!editing}
@@ -378,9 +369,8 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
         {running && (
           <div
             role="status"
-            className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+            className="border-y border-border py-3 text-sm text-muted-foreground"
           >
-            <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-500" />
             <span>
               The suite is running on the queue. Anything below is from the
               previous run until it finishes; publishing is blocked meanwhile.
@@ -389,7 +379,10 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
         )}
 
         {!running && matrix?.runError && (
-          <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+          <div
+            role="alert"
+            className="border-y border-border py-3 text-sm text-destructive"
+          >
             The last run did not finish: {matrix.runError}
           </div>
         )}

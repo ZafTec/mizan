@@ -13,7 +13,7 @@ namespace Mizan.Tests.Integration;
 
 /// <summary>
 /// A sentence becomes a proposal the way a photo does: structured foods, nothing written to the diary, metered like
-/// every other model call, and out of reach of a free plan.
+/// every other model call, with a small daily allowance on a free plan.
 /// </summary>
 [Collection("ApiIntegration")]
 public class FoodTextTests
@@ -188,15 +188,32 @@ public class FoodTextTests
     }
 
     [Fact]
-    public async Task FreeUsersAreWalled()
+    public async Task AFreeAccount_GetsThreeEstimatesADay_WithoutSpendingItsChat()
     {
         await _fixture.ResetDatabaseAsync();
+        _fixture.Ai.Reset();
         var id = Guid.NewGuid();
         var email = $"text-free-{id:N}@example.com";
         await _fixture.SeedUserAsync(id, email);
         using var client = _fixture.CreateAuthenticatedClient(id, email);
 
-        (await Post(client, "two eggs")).StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
+        for (var i = 0; i < 3; i++)
+        {
+            _fixture.Ai.Reply(Analysis);
+            (await Post(client, "two eggs")).StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        var refused = await Post(client, "two eggs");
+        refused.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        var problem = await refused.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        problem.GetProperty("errorCode").GetString().Should().Be("ai_quota_exceeded");
+        problem.GetProperty("cap").GetString().Should().Be("daily_requests");
+        _fixture.Ai.Calls.Should().HaveCount(3, "the refused estimate never reached the provider");
+
+        var usage = await client.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/Ai/usage");
+        usage.GetProperty("estimates").GetProperty("requestsUsed").GetInt32().Should().Be(3);
+        usage.GetProperty("estimates").GetProperty("requestLimit").GetInt32().Should().Be(3);
+        usage.GetProperty("today").GetProperty("requestsUsed").GetInt32().Should().Be(0, "estimates do not spend the chat allowance");
     }
 
     [Fact]

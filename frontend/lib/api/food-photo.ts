@@ -1,4 +1,5 @@
 import { resolvePublicApiOrigin } from "@/lib/api-base";
+import { ApiError } from "@/lib/api";
 import { clientApi } from "@/lib/api.client";
 import type { GamificationFeedback } from "@/types/gamification";
 import type { components } from "@/types/api.generated";
@@ -28,14 +29,17 @@ export async function analyzeFoodPhoto(file: File): Promise<FoodAnalysis> {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(
-      payload?.error ??
-        payload?.detail ??
-        "The assistant could not read that photo.",
-    );
+    throw new ApiError(response.status, response.statusText, payload);
   }
 
   return (await response.json()) as FoodAnalysis;
+}
+
+/** True when the estimate was refused because today's estimate allowance is used up. */
+export function isEstimateAllowanceUsed(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 429) return false;
+  const body = error.body as { errorCode?: string } | null;
+  return body?.errorCode === "ai_quota_exceeded";
 }
 
 /** A sentence becomes a proposal the way a photo does. Nothing is logged until the person confirms it. */

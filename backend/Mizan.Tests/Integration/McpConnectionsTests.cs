@@ -324,10 +324,12 @@ public class McpConnectionsTests
         info.GetProperty("usedThisMonth").GetInt32().Should().Be(2, "a tool and a resource read count; a failure and prompts do not");
     }
 
-    [Fact]
-    public async Task Usage_IsRecordedAgainstTheConnection_AndAppearsInAnalytics()
+    [Theory]
+    [InlineData("user")]
+    [InlineData("admin")]
+    public async Task Usage_IsRecordedAgainstTheConnection_AndAppearsInAnalytics(string role)
     {
-        var w = await WorldAsync();
+        var w = await WorldAsync(role);
         var grant = await GrantAsync(w.User, new[] { "profile:read" }, "none");
 
         using (var service = AppClient(w.User, grant, includeGrant: false))
@@ -435,12 +437,12 @@ public class McpConnectionsTests
 
     private sealed record World(Guid User, string Email, Guid HouseholdA, Guid HouseholdB, Guid ListInA, Guid ListInB, Guid PersonalList);
 
-    private async Task<World> WorldAsync()
+    private async Task<World> WorldAsync(string role = "user")
     {
         await _fixture.ResetDatabaseAsync();
         var user = Guid.NewGuid();
         var email = $"conn-{user:N}@example.com";
-        await _fixture.SeedUserAsync(user, email);
+        await _fixture.SeedUserAsync(user, email, role: role);
 
         using var scope = _fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();

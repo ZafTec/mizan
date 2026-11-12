@@ -77,6 +77,8 @@ public sealed class TaskToolRunner : ITaskToolRunner
             return Error(name, mode.Name, "not_allowed", NotAllowed(tool, mode, needs), needs);
         }
 
+        if (await ConsentRefusalAsync(tool, mode, context, cancellationToken) is { } refused) return refused;
+
         return mode.Confirm is not null
             ? await PreviewAsync(tool, mode, args, context, cancellationToken)
             : await ExecuteAsync(tool, mode, args, context, cancellationToken);
@@ -99,6 +101,7 @@ public sealed class TaskToolRunner : ITaskToolRunner
         if (Unsuccessful(result) is { } message) return Error(tool.Name, mode.Name, "failed", message);
         if (result is null && mode.NotFound is { } missing) return Error(tool.Name, mode.Name, "not_found", missing);
 
+        if (mode.Window is not null) result = mode.Window(result, args);
         var data = mode.Shape is null ? result : mode.Shape(result);
         var text = mode.Describe?.Invoke(result) ?? Serialize(data);
         return new ToolRunResult(tool.Name, mode.Name, false, text, data, Cards: mode.Cards?.Invoke(result));
@@ -173,6 +176,7 @@ public sealed class TaskToolRunner : ITaskToolRunner
         // The person's role and the connection may have changed since the preview.
         if (ToolFilter.Refusal(mode, context) is { } needs)
             return Error(tool.Name, mode.Name, "not_allowed", NotAllowed(tool, mode, needs), needs);
+        if (await ConsentRefusalAsync(tool, mode, context, cancellationToken) is { } refused) return refused;
 
         var args = ToolArgs.Parse(pending.ArgumentsJson);
         JsonNode facts;
@@ -196,6 +200,20 @@ public sealed class TaskToolRunner : ITaskToolRunner
 
         var done = await ExecuteAsync(tool, mode, args, context, cancellationToken);
         return done with { ConfirmedAction = pending.Id };
+    }
+
+    /// <summary>
+    /// A hosted assistant acts for the person, so the consent they gave the Mizan assistant applies, exactly as in the
+    /// in-app chat (<see cref="AssistantConsent"/>). The refusal names the switch, so the model can say where to turn it on.
+    /// A connected app holds the scopes the person granted it and is not asked this.
+    /// </summary>
+    private async Task<ToolRunResult?> ConsentRefusalAsync(TaskTool tool, ToolMode mode, ToolCallContext context, CancellationToken cancellationToken)
+    {
+        if (!context.Gateway) return null;
+        var requirement = await AssistantConsent.RefusalAsync(_context, context.UserId, mode, cancellationToken);
+        return requirement is null
+            ? null
+            : Error(tool.Name, mode.Name, requirement.ErrorCode, AssistantConsent.Explain(requirement), data: requirement);
     }
 
     private async Task<JsonNode> FactsAsync(ToolMode mode, ToolArgs args, ToolCallContext context, CancellationToken cancellationToken)
@@ -235,8 +253,9 @@ public sealed class TaskToolRunner : ITaskToolRunner
                 return Error(tool.Name, mode.Name, "forbidden", ex.Message);
             case AiQuotaExceededException:
                 return Error(tool.Name, mode.Name, "ai_quota_exceeded", ex.Message);
-            case AiUnavailableException:
-                return Error(tool.Name, mode.Name, "ai_unavailable", ex.Message);
+            case AiUnavailableException unavailable:
+                // ai_unavailable, ai_limit_reached, ai_rate_limited, ai_blocked or ai_account_blocked, as the API answers.
+                return Error(tool.Name, mode.Name, unavailable.ErrorCode, ex.Message);
             case PlanNeedsFoodsException:
                 return Error(tool.Name, mode.Name, PlanNeedsFoodsException.Code, ex.Message);
             case ConflictException:
@@ -270,6 +289,8 @@ public sealed class TaskToolRunner : ITaskToolRunner
     private static string NotAllowed(TaskTool tool, ToolMode mode, string needs) =>
         needs == ToolFilter.NotImpersonating
             ? $"{tool.Name} ({mode.Name}) is not available while viewing Mizan as someone else. Stop viewing as them first."
+            : needs == ToolFilter.NotGateway
+            ? $"{tool.Name} ({mode.Name}) is not available to an assistant. Administration is done in Mizan itself."
             : needs.StartsWith("role:", StringComparison.Ordinal)
             ? $"{tool.Name} ({mode.Name}) is for {needs["role:".Length..]}s only."
             : needs.StartsWith("surface:", StringComparison.Ordinal)

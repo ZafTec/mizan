@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using FluentAssertions;
 using Mizan.Domain.Settings;
 using Xunit;
@@ -57,6 +58,15 @@ public class RuntimeSettingDefinitionsTests
     [InlineData("Prices.RequestDelayMs", "250", "250", null)]
     [InlineData("Push.FcmServiceAccountJson", """{"client_email":"a@b.iam","private_key":"k"}""", """{"client_email":"a@b.iam","private_key":"k"}""", null)]
     [InlineData("Push.FcmServiceAccountJson", """{"client_email":"a@b.iam"}""", null, "Service account key must be the service account key file's JSON, with client_email and private_key.")]
+    [InlineData("EndUser.Header", "X-End-User", "X-End-User", null)]
+    [InlineData("EndUser.Header", "", "", null)]
+    [InlineData("EndUser.Header", "X End User", null, "Header must be a header name other than Authorization, such as X-End-User.")]
+    [InlineData("Gateway.ClientKeyHeader", "authorization", null, "Client key header must be a header name other than Authorization, such as X-End-User.")]
+    [InlineData("Gateway.JwksUrl", "https://gateway.example/.well-known/jwks.json", "https://gateway.example/.well-known/jwks.json", null)]
+    [InlineData("Gateway.JwksUrl", "http://gateway.example/jwks.json", null, "Gateway keys URL must be an https URL.")]
+    [InlineData("Gateway.ClientKey", "0123456789abcdef0123456789abcdef", "0123456789abcdef0123456789abcdef", null)]
+    [InlineData("Gateway.ClientKey", "too-short", null, "Client key must be at least 32 characters.")]
+    [InlineData("EndUser.LifetimeSeconds", "3601", null, "Token lifetime (seconds) must be a whole number from 60 to 3600.")]
     public void AValueIsStoredInItsCanonicalForm_OrRefusedWithAMessage(string key, string value, string? stored, string? error)
     {
         var definition = RuntimeSettingDefinitions.Find(key);
@@ -66,6 +76,35 @@ public class RuntimeSettingDefinitionsTests
 
         result.Value.Should().Be(stored);
         result.Error.Should().Be(error);
+    }
+
+    public static TheoryData<string, string, bool> Keys()
+    {
+        using var p256 = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var p384 = ECDsa.Create(ECCurve.NamedCurves.nistP384);
+        return new()
+        {
+            { "EndUser.PrivateKey", p256.ExportPkcs8PrivateKeyPem(), true },
+            { "EndUser.PrivateKey", p256.ExportPkcs8PrivateKeyPem().Trim().ReplaceLineEndings("\\n"), true },
+            { "EndUser.PrivateKey", p256.ExportSubjectPublicKeyInfoPem(), false },
+            { "EndUser.PrivateKey", p384.ExportPkcs8PrivateKeyPem(), false },
+            { "EndUser.PrivateKey", "not a key", false },
+            { "EndUser.PreviousPublicKey", p256.ExportSubjectPublicKeyInfoPem(), true },
+            { "EndUser.PreviousPublicKey", p384.ExportSubjectPublicKeyInfoPem(), false },
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(Keys))]
+    public void AKey_IsAcceptedOnlyAsP256InPem_AndStoredWithRealLineBreaks(string key, string pem, bool valid)
+    {
+        var definition = RuntimeSettingDefinitions.Find(key)!;
+
+        var result = RuntimeSettingDefinitions.Validate(definition, pem);
+
+        result.IsValid.Should().Be(valid);
+        if (valid) result.Value.Should().StartWith("-----BEGIN").And.Contain("\n").And.NotContain("\\n");
+        else result.Error.Should().NotContain("BEGIN", "the key is never quoted");
     }
 
     [Theory]
@@ -90,14 +129,14 @@ public class RuntimeSettingDefinitionsTests
         {
             groups.Should().Contain(definition.Group, definition.Key);
             definition.ConfigurationPath.Should().Be(definition.Key.Replace('.', ':'));
-            new[] { "Smtp", "Ai", "Storage", "Telegram", "Push", "Paddle", "Prices", "OAuth", "Authentication", "Outbox" }.Should().Contain(definition.Section, definition.Key);
+            new[] { "Smtp", "Ai", "Storage", "Telegram", "Push", "Paddle", "Prices", "OAuth", "Authentication", "Outbox", "EndUser", "Gateway" }.Should().Contain(definition.Section, definition.Key);
         }
 
         RuntimeSettingDefinitions.All.Select(d => d.Key).Should().OnlyHaveUniqueItems();
         RuntimeSettingDefinitions.All.Where(d => d.IsSecret).Select(d => d.Key).Should().BeEquivalentTo(
-            ["Smtp.Password", "Ai.ApiKey", "Storage.SecretAccessKey", "Telegram.BotToken", "Telegram.WebhookSecret",
+            ["Smtp.Password", "Ai.ApiKey", "Ai.Vision.ApiKey", "Storage.SecretAccessKey", "Telegram.BotToken", "Telegram.WebhookSecret",
              "Push.FcmServiceAccountJson", "Paddle.ApiKey", "Paddle.WebhookSecret", "Authentication.Google.ClientSecret",
-             "Authentication.GitHub.ClientSecret"]);
+             "Authentication.GitHub.ClientSecret", "EndUser.PrivateKey", "Gateway.ClientKey"]);
     }
 
     [Fact]

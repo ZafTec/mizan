@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/admin-platform";
 import { getPlatformUsageServer } from "@/lib/api/admin-platform.server";
 import { Select } from "@/components/ui/select";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -81,15 +82,14 @@ export default async function AdminUsagePage({
   const narrowed = filters.householdId || filters.userId;
 
   return (
-    <div className="log-page space-y-8" data-testid="admin-usage-page">
-      <header className="log-page-header block!">
-        <p className="eyebrow">Administration</p>
-        <h1 className="mt-1">Usage</h1>
-        <p className="text-muted-foreground mt-2">
-          AI requests, tokens and cost from {usage.from} to {usage.to} (UTC).
-          Refused calls cost nothing and are counted apart.
-        </p>
-      </header>
+    <div
+      className="flex flex-col gap-8 [&>header]:mb-0 [&_h2]:text-[20px] [&_h2]:leading-[1.3] [&_h2]:font-semibold"
+      data-testid="admin-usage-page"
+    >
+      <AdminPageHeader
+        title="Usage"
+        lead={`AI requests, tokens and cost from ${usage.from} to ${usage.to} (UTC); refused calls cost nothing and are counted apart.`}
+      />
 
       <form
         method="get"

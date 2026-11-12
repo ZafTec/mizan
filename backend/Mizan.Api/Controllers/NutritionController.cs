@@ -43,7 +43,6 @@ public class NutritionController : ControllerBase
     }
 
     [HttpPost("ai/analyze-image")]
-    [Authorize(Policy = "RequirePro")]
     [RequiresFeature(FeatureFlags.AiAssistant)]
     [RequestSizeLimit(10_000_000)]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImage(IFormFile image)
@@ -58,7 +57,6 @@ public class NutritionController : ControllerBase
     /// redirects). An MCP client passes the address of a photo it holds instead of writing out its bytes.
     /// </summary>
     [HttpPost("ai/analyze-image-url")]
-    [Authorize(Policy = "RequirePro")]
     [RequiresFeature(FeatureFlags.AiAssistant)]
     public Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImageUrl([FromBody] ImageUrlRequest request) =>
         EstimateAsync(new EstimateFoodFromPhotoCommand(ImageUrl: request.ImageUrl ?? string.Empty));
@@ -89,7 +87,6 @@ public class NutritionController : ControllerBase
 
     /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>
     [HttpPost("ai/analyze-text")]
-    [Authorize(Policy = "RequirePro")]
     [RequiresFeature(FeatureFlags.AiAssistant)]
     public Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request) =>
         EstimateAsync(new EstimateFoodFromTextCommand(request.Description));

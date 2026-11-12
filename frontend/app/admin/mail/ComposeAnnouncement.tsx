@@ -400,7 +400,7 @@ function TargetPicker({
             <li key={result.id}>
               <button
                 type="button"
-                className="flex w-full min-h-10 flex-col items-start px-3 py-2 text-left text-sm hover:bg-charcoal-blue-50 focus:bg-charcoal-blue-50 focus:outline-none dark:hover:bg-white/5 dark:focus:bg-white/5"
+                className="flex w-full min-h-10 flex-col items-start px-3 py-2 text-left text-sm hover:bg-charcoal-blue-50 focus-visible:bg-charcoal-blue-50 focus-visible:-outline-offset-2 dark:hover:bg-white/5 dark:focus-visible:bg-white/5"
                 onClick={() => onChange(result)}
               >
                 <span className="font-medium">{result.label}</span>

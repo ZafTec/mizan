@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 
 /**
  * The details blob, on demand.
@@ -24,12 +24,12 @@ export default function AuditDetails({ details }: { details: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="whitespace-nowrap text-xs text-verdigris-700 hover:underline dark:text-verdigris-300"
+        className="text-link whitespace-nowrap"
       >
         Details
       </button>
 
-      <ModalShell
+      <Modal
         open={open}
         onClose={() => setOpen(false)}
         size="xl"
@@ -38,7 +38,7 @@ export default function AuditDetails({ details }: { details: string }) {
         <pre className="whitespace-pre-wrap break-words bg-charcoal-blue-50 p-4 font-mono text-xs leading-relaxed text-charcoal-blue-800 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200">
           {pretty}
         </pre>
-      </ModalShell>
+      </Modal>
     </>
   );
 }

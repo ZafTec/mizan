@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { listAiPrompts, getGlobalAiUsage } from "@/data/admin/ai";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import { Pill } from "@/components/ui/data-table";
+import { Icon } from "@/components/ui/icon";
 
 export const metadata = {
   title: "Assistant | Mizan admin",
@@ -13,9 +16,9 @@ function currency(micros: number) {
 function Meter({ used, ceiling }: { used: number; ceiling: number }) {
   const pct = ceiling > 0 ? Math.min(100, (used / ceiling) * 100) : 0;
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-charcoal-blue-200 dark:bg-white/10">
-      <div
-        className={pct > 85 ? "h-full bg-red-500" : "h-full bg-verdigris-500"}
+    <div className="target-track w-full">
+      <span
+        className={pct > 85 ? "bg-destructive" : "bg-chart-1"}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -29,49 +32,38 @@ export default async function AdminAiPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Administration</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Assistant
-        </h1>
-        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          What the assistant says is a product surface, not a constant. Edit a
-          prompt, prove it against the adversarial suite, publish it.
-        </p>
-      </header>
+    <div className="flex flex-col gap-10 [&>header]:mb-0">
+      <AdminPageHeader
+        title="Assistant"
+        lead="Edit a prompt, prove it against the adversarial suite, then publish it."
+      />
 
-      <section className="card overflow-visible space-y-4 p-5">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+      <section aria-labelledby="today-title" className="flex flex-col">
+        <div className="log-section-header flex-wrap">
+          <h2 id="today-title" className="text-[20px] font-semibold">
             Today
           </h2>
-          <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          <span className="text-[12px] text-muted-foreground">
             {usage.requestsToday} calls · {usage.activeUsersToday} people ·{" "}
             {usage.failuresToday} failed
           </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">
-                Tokens
-              </span>
-              <span className="tabular-nums text-charcoal-blue-900 dark:text-charcoal-blue-50">
+        <ul>
+          <li className="flex flex-col gap-2 border-b border-border py-3">
+            <div className="flex items-baseline justify-between gap-3 text-[14px]">
+              <span className="text-muted-foreground">Tokens</span>
+              <span className="tabular-nums">
                 {usage.tokensToday.toLocaleString()} /{" "}
                 {usage.tokenCeiling.toLocaleString()}
               </span>
             </div>
             <Meter used={usage.tokensToday} ceiling={usage.tokenCeiling} />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">
-                Spend
-              </span>
-              <span className="tabular-nums text-charcoal-blue-900 dark:text-charcoal-blue-50">
+          </li>
+          <li className="flex flex-col gap-2 border-b border-border py-3">
+            <div className="flex items-baseline justify-between gap-3 text-[14px]">
+              <span className="text-muted-foreground">Spend</span>
+              <span className="tabular-nums">
                 {currency(usage.costMicrosToday)} /{" "}
                 {currency(usage.costCeilingMicros)}
               </span>
@@ -80,62 +72,73 @@ export default async function AdminAiPage() {
               used={usage.costMicrosToday}
               ceiling={usage.costCeilingMicros}
             />
-          </div>
+          </li>
+          {usage.byFeature.map((f) => (
+            <li
+              key={f.feature}
+              className="flex min-h-11 items-center justify-between gap-3 border-b border-border py-2 text-[14px]"
+            >
+              <span className="min-w-0 truncate">{f.feature}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {f.tokens.toLocaleString()} tokens
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="prompts-title" className="flex flex-col">
+        <div className="log-section-header">
+          <h2 id="prompts-title" className="text-[20px] font-semibold">
+            Prompts
+          </h2>
         </div>
 
-        {usage.byFeature.length > 0 && (
-          <ul className="flex flex-wrap gap-2 pt-1">
-            {usage.byFeature.map((f) => (
-              <li
-                key={f.feature}
-                className="rounded-full bg-charcoal-blue-100 px-3 py-1 text-xs text-charcoal-blue-700 dark:bg-white/10 dark:text-charcoal-blue-200"
-              >
-                {f.feature} · {f.tokens.toLocaleString()} tokens
+        {prompts.length === 0 ? (
+          <p className="log-empty text-[14px] text-muted-foreground">
+            No prompts yet.
+          </p>
+        ) : (
+          <ul>
+            {prompts.map((prompt) => (
+              <li key={prompt.key}>
+                <Link
+                  href={`/admin/ai/${encodeURIComponent(prompt.key)}`}
+                  className="ledger-row transition-colors duration-150 hover:bg-muted/60"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <code className="text-[14px] font-semibold break-all">
+                      {prompt.key}
+                    </code>
+                    <span className="text-[12px] text-muted-foreground">
+                      {prompt.description}
+                    </span>
+                    <span className="text-[12px] text-muted-foreground">
+                      {prompt.versionCount} version
+                      {prompt.versionCount === 1 ? "" : "s"}
+                      {prompt.draftCount > 0 && ` · ${prompt.draftCount} draft`}
+                      {prompt.draftCount > 1 && "s"}
+                    </span>
+                  </span>
+                  {prompt.publishedVersion === null ? (
+                    <Pill tone="warn" className="shrink-0">
+                      Built-in default
+                    </Pill>
+                  ) : (
+                    <Pill tone="good" className="shrink-0">
+                      v{prompt.publishedVersion} live
+                    </Pill>
+                  )}
+                  <Icon
+                    name="arrowRight"
+                    size={16}
+                    className="shrink-0 text-muted-foreground"
+                  />
+                </Link>
               </li>
             ))}
           </ul>
         )}
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Prompts
-        </h2>
-
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {prompts.map((prompt) => (
-            <li key={prompt.key}>
-              <Link
-                href={`/admin/ai/${encodeURIComponent(prompt.key)}`}
-                className="card overflow-visible block h-full space-y-2 p-5 hover:-translate-y-0.5"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <code className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                    {prompt.key}
-                  </code>
-                  {prompt.publishedVersion === null ? (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-                      built-in default
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-verdigris-100 px-2 py-0.5 text-xs text-verdigris-800 dark:bg-verdigris-500/15 dark:text-verdigris-300">
-                      v{prompt.publishedVersion} live
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                  {prompt.description}
-                </p>
-                <p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
-                  {prompt.versionCount} version
-                  {prompt.versionCount === 1 ? "" : "s"}
-                  {prompt.draftCount > 0 && ` · ${prompt.draftCount} draft`}
-                  {prompt.draftCount > 1 && "s"}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
       </section>
     </div>
   );

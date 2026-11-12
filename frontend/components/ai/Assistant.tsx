@@ -17,7 +17,8 @@ import { SidePanel, useSidePanel } from "@/components/panels/SidePanel";
 /**
  * The assistant is a side panel beside whatever the person is doing, not a page they leave for
  * (#124). The [side panel host](../panels/SidePanel.tsx) decides whether it is open; this keeps
- * the conversation it shows, remembered per person in this browser.
+ * the conversation it shows and the words not yet sent in each one, remembered per person in
+ * this browser, so a tab closed mid-sentence reopens with them.
  */
 interface AssistantState {
   open: boolean;
@@ -26,6 +27,8 @@ interface AssistantState {
   close: () => void;
   toggle: () => void;
   setThreadId: (id: string | null) => void;
+  draftFor: (threadId: string | null) => string;
+  setDraft: (threadId: string | null, text: string) => void;
   launcher: RefObject<HTMLButtonElement | null>;
 }
 
@@ -50,6 +53,42 @@ function rememberedThread(userId: string): string | null {
     return typeof value?.threadId === "string" ? value.threadId : null;
   } catch {
     return null;
+  }
+}
+
+// Unsent words by conversation ("new" for one not yet started). A few are kept; the oldest go first.
+const MAX_DRAFTS = 20;
+
+function draftsKey(userId: string) {
+  return `mizan.assistant.${userId}.drafts`;
+}
+
+function readDrafts(userId: string): Record<string, string> {
+  try {
+    const raw = window.localStorage.getItem(draftsKey(userId));
+    const value = raw ? JSON.parse(raw) : null;
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeDraft(userId: string, threadId: string | null, text: string) {
+  try {
+    const key = threadId ?? "new";
+    const kept = Object.entries(readDrafts(userId))
+      .filter(([id]) => id !== key)
+      .slice(-(MAX_DRAFTS - 1));
+    const drafts = Object.fromEntries(
+      text.trim() ? [...kept, [key, text]] : kept,
+    );
+    if (Object.keys(drafts).length === 0)
+      window.localStorage.removeItem(draftsKey(userId));
+    else window.localStorage.setItem(draftsKey(userId), JSON.stringify(drafts));
+  } catch {
+    // Without storage a draft lasts as long as the page.
   }
 }
 
@@ -102,6 +141,14 @@ export function AssistantProvider({
     [open],
   );
   const toggleAssistant = useCallback(() => toggle("assistant"), [toggle]);
+  const draftFor = useCallback(
+    (id: string | null) => readDrafts(userId)[id ?? "new"] ?? "",
+    [userId],
+  );
+  const setDraft = useCallback(
+    (id: string | null, text: string) => writeDraft(userId, id, text),
+    [userId],
+  );
 
   const value = useMemo(
     () => ({
@@ -111,9 +158,20 @@ export function AssistantProvider({
       close,
       toggle: toggleAssistant,
       setThreadId,
+      draftFor,
+      setDraft,
       launcher: launcher("assistant"),
     }),
-    [active, threadId, openPanel, close, toggleAssistant, launcher],
+    [
+      active,
+      threadId,
+      openPanel,
+      close,
+      toggleAssistant,
+      draftFor,
+      setDraft,
+      launcher,
+    ],
   );
 
   return (
@@ -140,7 +198,7 @@ export function AssistantLauncher() {
 }
 
 export function AssistantPanel() {
-  const { threadId, setThreadId } = useAssistant();
+  const { threadId, setThreadId, draftFor, setDraft } = useAssistant();
   return (
     <SidePanel name="assistant" id={ASSISTANT_PANEL_ID} label="Mizan assistant">
       {({ phone, focusToken, close }) => (
@@ -150,6 +208,8 @@ export function AssistantPanel() {
           onClose={close}
           phone={phone}
           focusToken={focusToken}
+          draftFor={draftFor}
+          onDraftChange={setDraft}
         />
       )}
     </SidePanel>

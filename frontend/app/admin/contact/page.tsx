@@ -13,6 +13,7 @@ import {
   listContactServer,
 } from "@/lib/api/admin-ops.server";
 import ContactActions from "./ContactActions";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -97,16 +98,11 @@ export default async function AdminContactPage({
   ];
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Administration</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Contact
-        </h1>
-        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          What people sent through the contact form.
-        </p>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Contact"
+        lead="What people sent through the contact form; a row opens the message and its reply."
+      />
 
       <TableToolbar
         searchPlaceholder="Search messages…"
@@ -151,7 +147,7 @@ export default async function AdminContactPage({
             </DrawerField>
             <DrawerField label="Account">
               {open.userId ? (
-                <a className="underline" href={`/admin/users/${open.userId}`}>
+                <a className="text-link" href={`/admin/users/${open.userId}`}>
                   Signed in
                 </a>
               ) : (
@@ -166,7 +162,7 @@ export default async function AdminContactPage({
             {open.replyStatus && (
               <DrawerField label="Reply">
                 <a
-                  className="underline"
+                  className="text-link"
                   href={`/admin/mail?open=${open.replyEmailMessageId}`}
                 >
                   {open.replyStatus}
@@ -177,11 +173,11 @@ export default async function AdminContactPage({
           <section className="mt-4" aria-labelledby="contact-message">
             <h3
               id="contact-message"
-              className="mb-1 text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300"
+              className="mb-1 text-sm font-medium text-muted-foreground"
             >
               Message
             </h3>
-            <p className="whitespace-pre-wrap break-words border border-charcoal-blue-200 p-3 text-sm dark:border-charcoal-blue-700">
+            <p className="border-y border-border py-3 text-sm break-words whitespace-pre-wrap">
               {open.message}
             </p>
           </section>

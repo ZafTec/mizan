@@ -67,8 +67,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
         var message = request.Message.Trim();
 
-        var thread = await ResolveThreadAsync(userId, request.ThreadId, message, cancellationToken);
-        var history = (await HistoryAsync(thread.Id, cancellationToken)).ToList();
+        var (thread, isNew) = await ResolveThreadAsync(userId, request.ThreadId, message, cancellationToken);
+        var history = isNew ? new List<AiChatHistoryTurn>() : (await HistoryAsync(thread.Id, cancellationToken)).ToList();
 
         // App context rides just before the message it explains. The same fact twice in a row is
         // stored once: a client resends what is still waiting with every message.
@@ -77,10 +77,13 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             && await _conversations.LastNoteAsync(thread.Id, cancellationToken) != clientContext;
         if (storeContext) history.Add(new AiChatHistoryTurn(false, clientContext!, IsContext: true));
 
-        // The provider call happens before either message is written: a call
-        // that fails on quota or an outage must not leave a half turn behind.
+        // The provider call happens before either message is written, and a new thread is not
+        // tracked until it answers: a turn refused for any reason (quota, an outage, a gateway's
+        // limit or content refusal) keeps neither the message nor a reply, and opens no empty
+        // thread, even when a tool saved its own work during the turn (docs/AI.md#provider-errors).
         var turn = await _ai.GetNutritionAdviceAsync(
             userId, message, history, cancellationToken, thread.Summary, request.Image);
+        if (isNew) _context.AiChatThreads.Add(thread);
 
         var now = _conversations.Now;
         var reply = new AiChatMessage
@@ -168,14 +171,15 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<AiChatThread> ResolveThreadAsync(
+    /// <summary>The thread to continue, or a new one the caller adds once the turn has an answer.</summary>
+    private async Task<(AiChatThread Thread, bool IsNew)> ResolveThreadAsync(
         Guid userId, Guid? threadId, string firstMessage, CancellationToken cancellationToken)
     {
         if (threadId is { } id)
         {
-            return await _context.AiChatThreads
+            return (await _context.AiChatThreads
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId, cancellationToken)
-                ?? throw new EntityNotFoundException("Chat thread", id);
+                ?? throw new EntityNotFoundException("Chat thread", id), false);
         }
 
         var thread = new AiChatThread
@@ -187,8 +191,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             UpdatedAt = _conversations.Now,
         };
 
-        _context.AiChatThreads.Add(thread);
-        return thread;
+        return (thread, true);
     }
 
     private async Task<IReadOnlyList<AiChatHistoryTurn>> HistoryAsync(

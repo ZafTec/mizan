@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import AiChat, { NO_ACCESS_LINE } from "./AiChat";
 import * as api from "@/lib/api/ai";
+import type { ChatEvent, ChatTransport } from "@/lib/ai/chat-transport";
 
 const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
@@ -147,6 +148,7 @@ describe("the assistant conversation", () => {
     expect(api.sendAiChatMessage).toHaveBeenCalledWith(
       null,
       "What are 3 quick meal ideas that fit my remaining macros for today?",
+      expect.any(String),
     );
     const log = screen.getByRole("log", { name: "Conversation" });
     expect(within(log).getByRole("article", { name: "You said" })).toBeTruthy();
@@ -168,7 +170,11 @@ describe("the assistant conversation", () => {
 
     fireEvent.keyDown(box(), { key: "Enter" });
     await waitFor(() =>
-      expect(api.sendAiChatMessage).toHaveBeenCalledWith(null, "hello"),
+      expect(api.sendAiChatMessage).toHaveBeenCalledWith(
+        null,
+        "hello",
+        expect.any(String),
+      ),
     );
     await screen.findByText("Sure.");
     expect(box().value).toBe("");
@@ -269,6 +275,7 @@ describe("photos", () => {
       null,
       "",
       expect.any(File),
+      expect.any(String),
     );
   });
 
@@ -534,7 +541,171 @@ describe("permission", () => {
       await within(needed).findByRole("button", { name: "Send again" }),
     );
     await waitFor(() =>
-      expect(api.sendAiChatMessage).toHaveBeenLastCalledWith("t1", "log eggs"),
+      expect(api.sendAiChatMessage).toHaveBeenLastCalledWith(
+        "t1",
+        "log eggs",
+        expect.any(String),
+      ),
     );
+  });
+});
+
+/** A turn told one event at a time, as a streaming conversation API would. */
+function scriptedTurn() {
+  const queue: ChatEvent[] = [];
+  let wake: (() => void) | null = null;
+  let ended = false;
+  async function* events(): AsyncGenerator<ChatEvent> {
+    for (;;) {
+      if (queue.length > 0) {
+        yield queue.shift()!;
+        continue;
+      }
+      if (ended) return;
+      await new Promise<void>((resolve) => {
+        wake = resolve;
+      });
+      wake = null;
+    }
+  }
+  const transport = {
+    send: vi.fn(() => events()),
+    confirm: vi.fn().mockResolvedValue(undefined),
+    submitToolResult: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockResolvedValue([]),
+    load: vi.fn(),
+    remove: vi.fn().mockResolvedValue(undefined),
+  } satisfies ChatTransport;
+  return {
+    transport,
+    async push(...next: ChatEvent[]) {
+      await act(async () => {
+        queue.push(...next);
+        if (next.some((e) => e.type === "turn_finished" || e.type === "error"))
+          ended = true;
+        wake?.();
+      });
+    },
+  };
+}
+
+async function streamedChat(transport: ChatTransport) {
+  render(
+    <AiChat
+      threadId={null}
+      onThreadChange={() => {}}
+      onClose={close}
+      transport={transport}
+    />,
+  );
+  await act(async () => {});
+}
+
+function ask(words: string) {
+  fireEvent.change(box(), { target: { value: words } });
+  fireEvent.click(screen.getByRole("button", { name: "Send" }));
+}
+
+describe("a streamed turn", () => {
+  it("joins text as it arrives, then keeps the stored reply", async () => {
+    const turnOf = scriptedTurn();
+    await streamedChat(turnOf.transport);
+    ask("ideas for dinner");
+
+    await turnOf.push(
+      { type: "turn_started", threadId: null },
+      { type: "text", delta: "Try a " },
+      { type: "text", delta: "chicken wrap." },
+    );
+    expect(await screen.findByText("Try a chicken wrap.")).toBeTruthy();
+    // Still being written: nothing to copy yet.
+    expect(screen.queryByRole("button", { name: "Copy" })).toBeNull();
+
+    await turnOf.push({
+      type: "turn_finished",
+      threadId: "t5",
+      title: "Dinner",
+      message: {
+        id: "u1",
+        fromUser: true,
+        content: "ideas for dinner",
+        createdAt: "2026-10-01T09:59:00Z",
+      },
+      reply: reply("Try a chicken wrap.", { id: "r1" }),
+    });
+    await screen.findByRole("button", { name: "Copy" });
+    expect(screen.getAllByText("Try a chicken wrap.")).toHaveLength(1);
+    expect(turnOf.transport.send).toHaveBeenCalledWith(
+      null,
+      { text: "ideas for dinner", image: undefined },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
+  });
+
+  it("shows a confirmation when one is asked, and sends the answer", async () => {
+    const turnOf = scriptedTurn();
+    await streamedChat(turnOf.transport);
+    ask("delete my plan");
+
+    await turnOf.push(
+      { type: "turn_started", threadId: "t9" },
+      {
+        type: "confirmation_requested",
+        callId: "c1",
+        question: "Delete the plan for next week?",
+        fields: [{ label: "Plan", value: "Next week" }],
+        expiresAt: null,
+      },
+    );
+    const card = await screen.findByRole("group", {
+      name: "Confirm before it acts",
+    });
+    expect(
+      within(card).getByText("Delete the plan for next week?"),
+    ).toBeTruthy();
+    expect(within(card).getByText("Next week")).toBeTruthy();
+
+    fireEvent.click(within(card).getByRole("button", { name: "Approve" }));
+    await within(card).findByText("Approved.");
+    expect(turnOf.transport.confirm).toHaveBeenCalledWith("t9", "c1", true);
+  });
+
+  it("drops a blocked message and gives the words back, with no hint to retry", async () => {
+    const turnOf = scriptedTurn();
+    await streamedChat(turnOf.transport);
+    ask("something it will not do");
+
+    await turnOf.push(
+      { type: "turn_started", threadId: null },
+      {
+        type: "error",
+        kind: "blocked",
+        code: "blocked",
+        message: "Policy refusal.",
+        retryAfter: 60,
+      },
+    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("I can't help with that.");
+    expect(screen.queryByRole("article", { name: "You said" })).toBeNull();
+    expect(box().value).toBe("something it will not do");
+  });
+
+  it("says once when to try again after too many messages", async () => {
+    const turnOf = scriptedTurn();
+    await streamedChat(turnOf.transport);
+    ask("one more");
+
+    await turnOf.push({
+      type: "error",
+      kind: "rate_limited",
+      code: "ai_rate_limited",
+      message: "The assistant is busy right now. Try again in 30 seconds.",
+      retryAfter: 30,
+    });
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The assistant is busy right now. Try again in 30 seconds.",
+    );
+    expect(box().value).toBe("one more");
   });
 });

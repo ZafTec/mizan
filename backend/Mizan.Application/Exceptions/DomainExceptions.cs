@@ -129,15 +129,117 @@ public class AiUnavailableException : DomainException
 
     /// <summary>
     /// What went wrong, as a code the admin provider test reports: not_configured, timeout,
-    /// unreachable, http_{status}, empty_response or unavailable. Never the provider's body.
+    /// unreachable, http_{status}, empty_response, limit_reached, rate_limited, blocked,
+    /// account_blocked or unavailable. Never the provider's body.
     /// </summary>
     public string Reason { get; }
+
+    /// <summary>
+    /// The stable code every surface answers with: the HTTP API's <c>errorCode</c>, a task tool's
+    /// error, and what Telegram and MCP pass on (docs/AI.md#provider-errors).
+    /// </summary>
+    public virtual string ErrorCode => "ai_unavailable";
+
+    /// <summary>"after 14:05 UTC" within the day, "on 2026-11-20 at 14:05 UTC" beyond it.</summary>
+    protected static string After(DateTime at)
+    {
+        var utc = at.Kind == DateTimeKind.Local ? at.ToUniversalTime() : at;
+        return utc - DateTime.UtcNow < TimeSpan.FromHours(20)
+            ? $"after {utc:HH:mm} UTC"
+            : $"on {utc:yyyy-MM-dd} at {utc:HH:mm} UTC";
+    }
 }
 
 /// <summary>
-/// The provider answered a non-success status (docs/AI.md#provider-errors). The person sees
-/// <see cref="Exception.Message"/>: a configuration error (400, 401, 403, 404, 422) says the
-/// assistant is misconfigured, because retrying never fixes it; 429 and 5xx say to try again.
+/// The provider stopped the call because a usage limit or budget it enforces is spent (HTTP 402).
+/// Not a fault in Mizan or the provider, so no administrator is told. Answered as 503
+/// <c>ai_limit_reached</c>, with Retry-After when the provider said when it resets. Mizan's own
+/// allowance is <see cref="AiQuotaExceededException"/>, a different thing.
+/// </summary>
+public sealed class AiLimitReachedException : AiUnavailableException
+{
+    public const string Code = "ai_limit_reached";
+
+    public AiLimitReachedException(DateTime? resetsAt)
+        : base(resetsAt is { } at
+                ? $"The assistant has reached its limit for now. It should be back {After(at)}."
+                : "The assistant has reached its limit for now.",
+            "limit_reached")
+    {
+        ResetsAt = resetsAt;
+    }
+
+    /// <summary>When the provider said the limit resets, in UTC, if it said.</summary>
+    public DateTime? ResetsAt { get; }
+
+    public override string ErrorCode => Code;
+}
+
+/// <summary>
+/// The provider asked us to slow down (HTTP 429). Answered as 429 <c>ai_rate_limited</c> with
+/// Retry-After when the wait is known. The client retries once inside the call only when the wait
+/// is a couple of seconds; a longer one is the person's to wait.
+/// </summary>
+public sealed class AiRateLimitedException : AiUnavailableException
+{
+    public const string Code = "ai_rate_limited";
+
+    public AiRateLimitedException(TimeSpan? retryAfter)
+        : base(MessageFor(retryAfter), "rate_limited")
+    {
+        RetryAfter = retryAfter is { } wait && wait < TimeSpan.Zero ? TimeSpan.Zero : retryAfter;
+    }
+
+    /// <summary>How long to wait before trying again, when the provider said.</summary>
+    public TimeSpan? RetryAfter { get; }
+
+    public override string ErrorCode => Code;
+
+    private static string MessageFor(TimeSpan? retryAfter)
+    {
+        const string lead = "The assistant is busy right now.";
+        if (retryAfter is not { } wait) return lead + " Try again shortly.";
+        if (wait <= TimeSpan.FromSeconds(90)) return $"{lead} Try again in {Math.Max(1, (int)Math.Ceiling(wait.TotalSeconds))} seconds.";
+        if (wait <= TimeSpan.FromMinutes(90)) return $"{lead} Try again in {(int)Math.Ceiling(wait.TotalMinutes)} minutes.";
+        if (wait <= TimeSpan.FromHours(36)) return $"{lead} Try again in {(int)Math.Ceiling(wait.TotalHours)} hours.";
+        return $"{lead} Try again {After(DateTime.UtcNow + wait)}.";
+    }
+}
+
+/// <summary>
+/// The provider refused the content: a guardrail, a content filter or the model's own refusal.
+/// Retrying the same words gives the same answer, so it is never retried and is not a provider
+/// fault. Answered as 422 <c>ai_blocked</c>.
+/// </summary>
+public sealed class AiBlockedException : AiUnavailableException
+{
+    public const string Code = "ai_blocked";
+    public const string DefaultMessage = "I can't help with that.";
+
+    public AiBlockedException() : base(DefaultMessage, "blocked") { }
+
+    public override string ErrorCode => Code;
+}
+
+/// <summary>
+/// The provider will not serve this person: an administrator of the provider or gateway blocked
+/// them. Answered as 403 <c>ai_account_blocked</c> with a neutral message.
+/// </summary>
+public sealed class AiAccountBlockedException : AiUnavailableException
+{
+    public const string Code = "ai_account_blocked";
+    public const string DefaultMessage = "The assistant isn't available for your account.";
+
+    public AiAccountBlockedException() : base(DefaultMessage, "account_blocked") { }
+
+    public override string ErrorCode => Code;
+}
+
+/// <summary>
+/// The provider answered a non-success status that is not a typed refusal (limit, rate, blocked;
+/// docs/AI.md#provider-errors). The person sees <see cref="Exception.Message"/>: a configuration
+/// error (400, 401, 403, 404, 422) says the assistant is misconfigured, because retrying never
+/// fixes it; 5xx says to try again.
 /// <see cref="ProviderMessage"/> is the provider's own explanation, cut short and with secrets
 /// removed, for the log and the administrators, never for the person.
 /// </summary>

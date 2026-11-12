@@ -31,6 +31,12 @@ public interface IRuntimeSettings
     /// <summary>Stores a value already checked by <see cref="RuntimeSettingDefinitions.Validate"/>. Every API instance sees it within a second.</summary>
     Task SetAsync(string key, string value, Guid? updatedByUserId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Stores several checked values in one transaction, so no instance ever reads some of them
+    /// without the others, such as a signing key without its key id.
+    /// </summary>
+    Task SetManyAsync(IReadOnlyDictionary<string, string> values, Guid? updatedByUserId, CancellationToken cancellationToken = default);
+
     /// <summary>Removes the database value so the default applies again. False when there was none.</summary>
     Task<bool> ClearAsync(string key, CancellationToken cancellationToken = default);
 }

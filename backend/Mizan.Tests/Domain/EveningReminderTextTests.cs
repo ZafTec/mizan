@@ -15,6 +15,6 @@ public class EveningReminderTextTests
     [InlineData("20:00", -5, null, "Your window closes at 20:00. Today: 0 kcal.")]
     public void TheLine_GivesTheCloseAndTheDaysCaloriesAgainstTheTarget(string end, double calories, double? target, string expected)
     {
-        EveningReminderText.Build(TimeOnly.Parse(end), (decimal)calories, (decimal?)target).Should().Be(expected);
+        EveningReminderText.Build(TimeOnly.Parse(end), Dec.Of(calories), Dec.Of(target)).Should().Be(expected);
     }
 }

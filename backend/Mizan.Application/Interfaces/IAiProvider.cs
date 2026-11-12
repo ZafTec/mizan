@@ -52,6 +52,16 @@ public record AiCompletionRequest
 
     public int? MaxOutputTokens { get; init; }
     public double Temperature { get; init; } = 0.7;
+
+    /// <summary>
+    /// The Mizan user this call is made for, so the provider can identify them to a gateway
+    /// (<see cref="IAiCallIdentity"/>). Null for work with no person behind it: background jobs and
+    /// prompt evaluations. The metered client sets it from the current request.
+    /// </summary>
+    public Guid? EndUserId { get; init; }
+
+    /// <summary>True when a message carries a photo, which goes to the vision endpoint when one is configured.</summary>
+    public bool HasImage => Messages.Any(message => message.Image is not null);
 }
 
 public record AiJsonSchema(string Name, string Schema);
@@ -86,4 +96,13 @@ public interface IAiProvider
     Task<AiProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 
     Task<AiCompletionResponse> CompleteAsync(AiCompletionRequest request, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Per-call headers that tell the provider who the call is for, such as a signed end-user token
+/// for a gateway (docs/AI.md#behind-a-gateway). Empty when the feature is off or there is no person.
+/// </summary>
+public interface IAiCallIdentity
+{
+    ValueTask<IReadOnlyList<KeyValuePair<string, string>>> HeadersForAsync(Guid? endUserId, CancellationToken cancellationToken = default);
 }

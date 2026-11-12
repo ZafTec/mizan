@@ -330,7 +330,20 @@ export async function handleAdminOps(
       bannedUsers: state.users.filter((u) => u.banned).length,
       activeSessions: 37,
       recentUsers: state.users,
-    });
+      joinedThisWeek: 6,
+      seenLastDay: 52,
+      attention: {
+        deadJobs: 0,
+        oldestDeadJobAt: null,
+        failedEmails: 1,
+        newContactMessages: 1,
+        oldestContactMessageAt: new Date(
+          Date.now() - 3 * 3600_000,
+        ).toISOString(),
+        openPriceReports: 0,
+        openContentReports: 0,
+      },
+    } satisfies Schemas["AdminOverviewDto"]);
   if (path === "/api/AuditLogs") return json(paged([], url));
   if (path === "/api/admin/overview/health") {
     const measuredAt = new Date().toISOString();

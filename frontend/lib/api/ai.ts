@@ -1,3 +1,4 @@
+import { ApiError } from "@/lib/api";
 import { clientApi } from "@/lib/api.client";
 import { resolvePublicApiOrigin } from "@/lib/api-base";
 import type { components } from "@/types/api.generated";
@@ -42,13 +43,18 @@ export const getMyAiUsage = (days = 14) =>
 
 /**
  * A turn can write to the log, so each attempt carries an idempotency key: a resend after a lost
- * response replays the stored answer instead of logging twice.
+ * response replays the stored answer instead of logging twice. The caller may name the key so a
+ * retry of the same attempt reuses it.
  */
-export const sendAiChatMessage = (threadId: string | null, message: string) =>
+export const sendAiChatMessage = (
+  threadId: string | null,
+  message: string,
+  idempotencyKey: string = crypto.randomUUID(),
+) =>
   clientApi<AiChatTurn>("/api/Ai/chat", {
     method: "POST",
     body: { threadId, message },
-    headers: { "Idempotency-Key": crypto.randomUUID() },
+    headers: { "Idempotency-Key": idempotencyKey },
   });
 
 /**
@@ -59,6 +65,7 @@ export async function sendAiChatImage(
   threadId: string | null,
   message: string,
   file: File,
+  idempotencyKey: string = crypto.randomUUID(),
 ): Promise<AiChatTurn> {
   const body = new FormData();
   body.append("image", file);
@@ -70,16 +77,19 @@ export async function sendAiChatImage(
     {
       method: "POST",
       credentials: "include",
-      headers: { "Idempotency-Key": crypto.randomUUID() },
+      headers: { "Idempotency-Key": idempotencyKey },
       body,
     },
   );
 
   if (!response.ok) {
+    // An ApiError like the JSON client's, so a spent allowance on a photo reads the same as on text.
     const payload = await response.json().catch(() => null);
-    throw new Error(
-      payload?.error ?? payload?.detail ?? "That photo could not be sent.",
-    );
+    throw new ApiError(response.status, response.statusText, {
+      ...(payload && typeof payload === "object" ? payload : {}),
+      error:
+        payload?.error ?? payload?.detail ?? "That photo could not be sent.",
+    });
   }
 
   return (await response.json()) as AiChatTurn;

@@ -85,6 +85,12 @@ describe("defaultLevels", () => {
     });
   });
 
+  it("leaves administration off even when the app asked for it", () => {
+    expect(
+      defaultLevels(groups, ["nutrition:write", "admin:read", "admin:write"]),
+    ).toEqual({ nutrition: "write", training: "none", admin: "none" });
+  });
+
   it("defaults to reading everything but administration when the app asked for nothing", () => {
     expect(defaultLevels(groups, [])).toEqual({
       nutrition: "read",

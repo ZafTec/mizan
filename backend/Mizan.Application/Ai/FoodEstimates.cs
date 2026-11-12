@@ -20,7 +20,7 @@ public sealed class FoodEstimateInputException(string errorCode, string message)
 
 /// <summary>
 /// What is in a photo of a meal, and its macros, for the person to confirm: nothing is logged.
-/// Pro only, and it spends the AI allowance. The photo comes as its bytes or as a public https
+/// It spends the estimates allowance, three a day on Free (docs/AI.md#metering). The photo comes as its bytes or as a public https
 /// address the API downloads. It is kept for 30 days after the analysis
 /// (docs/AI.md#logging-a-meal-from-words-or-a-photo).
 /// </summary>
@@ -32,7 +32,7 @@ public sealed record EstimateFoodFromPhotoCommand(byte[]? Image = null, string? 
     public object AuditDetails => new { Source = Image is null ? "url" : "upload", Bytes = Image?.Length };
 }
 
-/// <summary>The same estimate from a sentence: "two eggs, toast and a coffee". Pro only; nothing is logged.</summary>
+/// <summary>The same estimate from a sentence: "two eggs, toast and a coffee". It spends the estimates allowance; nothing is logged.</summary>
 [RequiresFeature(FeatureFlags.AiAssistant)]
 public sealed record EstimateFoodFromTextCommand(string? Description) : IRequest<FoodAnalysisResult>
 {
@@ -43,11 +43,9 @@ public sealed class EstimateFoodHandlers :
     IRequestHandler<EstimateFoodFromPhotoCommand, FoodAnalysisResult>,
     IRequestHandler<EstimateFoodFromTextCommand, FoodAnalysisResult>
 {
-    private const string ProOnly = "This is a Pro feature. Upgrade to use it.";
     private const string Unsupported = "Image must be JPEG, PNG or WebP";
 
     private readonly ICurrentUserService _currentUser;
-    private readonly IEntitlementService _entitlements;
     private readonly INutritionAiService _ai;
     private readonly IRemoteImageFetcher _images;
     private readonly AnalysisPhotos _photos;
@@ -55,14 +53,12 @@ public sealed class EstimateFoodHandlers :
 
     public EstimateFoodHandlers(
         ICurrentUserService currentUser,
-        IEntitlementService entitlements,
         INutritionAiService ai,
         IRemoteImageFetcher images,
         AnalysisPhotos photos,
         FoodAnalysisCatalogue catalogue)
     {
         _currentUser = currentUser;
-        _entitlements = entitlements;
         _ai = ai;
         _images = images;
         _photos = photos;
@@ -71,7 +67,7 @@ public sealed class EstimateFoodHandlers :
 
     public async Task<FoodAnalysisResult> Handle(EstimateFoodFromPhotoCommand request, CancellationToken cancellationToken)
     {
-        var userId = await ProUserAsync(cancellationToken);
+        var userId = CurrentUser();
 
         var hasUrl = !string.IsNullOrWhiteSpace(request.ImageUrl);
         if (hasUrl && request.Image is not null)
@@ -116,14 +112,9 @@ public sealed class EstimateFoodHandlers :
             throw new FoodEstimateInputException("description_too_long",
                 $"Keep the description to {EstimateFoodFromTextCommand.MaxDescriptionLength} characters or fewer.");
 
-        var userId = await ProUserAsync(cancellationToken);
+        var userId = CurrentUser();
         return await _catalogue.MatchAsync(userId, await _ai.AnalyzeFoodTextAsync(userId, description, cancellationToken), cancellationToken);
     }
 
-    private async Task<Guid> ProUserAsync(CancellationToken cancellationToken)
-    {
-        var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
-        if (!(await _entitlements.GetAsync(userId, cancellationToken)).IsPro) throw new UpgradeRequiredException(ProOnly);
-        return userId;
-    }
+    private Guid CurrentUser() => _currentUser.UserId ?? throw new UnauthorizedAccessException();
 }

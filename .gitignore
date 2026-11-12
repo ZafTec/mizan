@@ -99,3 +99,7 @@ design/*.html
 design/achievement-badges/deliverables/achievement-*.png
 design/achievement-badges/deliverables/level-*.png
 design/achievement-badges/deliverables/128/
+
+# Evidence knowledge base: local only, never committed (public repo)
+.knowledge/
+knowledge/

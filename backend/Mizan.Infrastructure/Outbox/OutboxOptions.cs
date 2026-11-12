@@ -30,6 +30,12 @@ public class OutboxOptions
     /// </summary>
     public int StaleAfterMinutes { get; set; } = 30;
 
+    /// <summary>A succeeded job is deleted this many days after it finished (OutboxRetention).</summary>
+    public int KeepSucceededDays { get; set; } = Domain.Outbox.OutboxRetention.DefaultSucceededDays;
+
+    /// <summary>A dead-lettered job is deleted this many days after it gave up; until then it can be retried.</summary>
+    public int KeepDeadLetteredDays { get; set; } = Domain.Outbox.OutboxRetention.DefaultDeadLetteredDays;
+
     /// <summary>
     /// <c>Outbox:Enabled</c> stays in the environment as an operations switch, read once at startup.
     /// False in tests that drive the dispatcher by hand. The other values are runtime settings.

@@ -141,7 +141,7 @@ public static class AiToolCatalogue
             (args, _) => new CreateFoodDiaryEntryCommand
             {
                 RecipeId = AiToolArgs.OptionalGuid(args, "recipeId"),
-                Name = AiToolArgs.OptionalString(args, "name"),
+                Name = AiToolArgs.OptionalString(args, "name") ?? string.Empty,
                 MealType = MealTypes.Normalize(AiToolArgs.OptionalString(args, "mealType")),
                 EntryDate = AiToolArgs.OptionalDate(args, "date"),
                 Servings = AiToolArgs.OptionalDecimal(args, "servings") ?? 1,
@@ -185,7 +185,7 @@ public static class AiToolCatalogue
             """,
             (args, _) => new Planning.CreateMealPlanCommand
             {
-                Name = AiToolArgs.OptionalString(args, "name"),
+                Name = AiToolArgs.OptionalString(args, "name") ?? string.Empty,
                 StartDate = AiToolArgs.OptionalDate(args, "startDate")
                     ?? throw new Exceptions.DomainValidationException("'startDate' is required."),
                 DurationDays = AiToolArgs.OptionalInt(args, "durationDays") ?? 7,

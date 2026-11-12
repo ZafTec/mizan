@@ -9,6 +9,7 @@ import {
   readPage,
   type Column,
 } from "@/components/ui/data-table";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const metadata = {
   title: "Sessions | Admin",
@@ -106,7 +107,7 @@ const columns: Column<AdminSession>[] = [
     cell: (s) => (
       <Link
         href={`/admin/users/${s.userId}`}
-        className="whitespace-nowrap text-xs text-verdigris-700 hover:underline dark:text-verdigris-300"
+        className="text-link whitespace-nowrap"
       >
         User
       </Link>
@@ -132,17 +133,11 @@ export default async function AdminSessionsPage({
   });
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Security</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Sessions
-        </h1>
-        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          Every sign-in the system is holding. Revoking one signs that device
-          out on its next request.
-        </p>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Sessions"
+        lead="Every sign-in the system is holding; revoking one signs that device out on its next request."
+      />
 
       <TableToolbar
         filters={[

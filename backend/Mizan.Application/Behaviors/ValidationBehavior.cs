@@ -22,13 +22,14 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         {
             var context = new ValidationContext<TRequest>(request);
 
-            var validationResults = await Task.WhenAll(
-                _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
-
-            var failures = validationResults
-                .SelectMany(r => r.Errors)
-                .Where(f => f != null)
-                .ToList();
+            // One at a time: a validator may read through the request's DbContext, which allows one
+            // operation at a time.
+            var failures = new List<FluentValidation.Results.ValidationFailure>();
+            foreach (var validator in _validators)
+            {
+                var result = await validator.ValidateAsync(context, cancellationToken);
+                failures.AddRange(result.Errors.Where(f => f != null));
+            }
 
             if (failures.Count != 0)
             {

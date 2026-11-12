@@ -226,11 +226,21 @@ public sealed class CampaignReports
 
     public CampaignReports(IMizanDbContext context) => _context = context;
 
+    /// <summary>
+    /// A LIKE pattern matching every outbox job the report of <paramref name="scheduleId"/> counts: its deliveries
+    /// (<c>schedule:{id}:...</c>) and the channel jobs they staged (<c>push:schedule:{id}:...</c> and the like).
+    /// The outbox retention pass keeps these while the campaign exists, so its report does not lose them.
+    /// </summary>
+    public static string JobPattern(Guid scheduleId) => $"%schedule:{scheduleId:N}:%";
+
     public async Task<IReadOnlyList<CampaignChannelTally>> ForAsync(Guid scheduleId, CancellationToken cancellationToken)
     {
+        // Key-prefix LIKE patterns: the dedupe index (text_pattern_ops) seeks each prefix instead of
+        // scanning every job. The keys hold only letters, digits and colons, so nothing needs escaping.
         var key = $"schedule:{scheduleId:N}:";
+        var deliveryPattern = key + "%";
         var deliveries = await _context.OutboxJobs.AsNoTracking()
-            .Where(j => j.Type == OutboxJobTypes.NotificationDelivery && j.DedupeKey!.StartsWith(key))
+            .Where(j => j.Type == OutboxJobTypes.NotificationDelivery && EF.Functions.Like(j.DedupeKey!, deliveryPattern))
             .GroupBy(j => new
             {
                 Channel = j.DedupeKey!.EndsWith(":inApp") ? 0 : j.DedupeKey.EndsWith(":telegram") ? 1 : j.DedupeKey.EndsWith(":push") ? 2 : 3,
@@ -239,9 +249,9 @@ public sealed class CampaignReports
             .Select(g => new { g.Key.Channel, g.Key.Status, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
-        string telegram = $"telegram:notification:{key}", push = $"push:{key}", email = $"email:notification:{key}";
+        string telegram = $"telegram:notification:{key}%", push = $"push:{key}%", email = $"email:notification:{key}%";
         var channelJobs = await _context.OutboxJobs.AsNoTracking()
-            .Where(j => j.DedupeKey!.StartsWith(telegram) || j.DedupeKey.StartsWith(push) || j.DedupeKey.StartsWith(email))
+            .Where(j => EF.Functions.Like(j.DedupeKey!, telegram) || EF.Functions.Like(j.DedupeKey!, push) || EF.Functions.Like(j.DedupeKey!, email))
             .GroupBy(j => new { j.Type, j.Status })
             .Select(g => new { g.Key.Type, g.Key.Status, Count = g.Count() })
             .ToListAsync(cancellationToken);

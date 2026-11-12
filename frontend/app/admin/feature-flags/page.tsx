@@ -1,5 +1,6 @@
 import FeatureFlags from "@/components/admin/platform/FeatureFlags";
 import { listFeatureFlagsServer } from "@/lib/api/admin-platform.server";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +19,14 @@ export default async function AdminFeatureFlagsPage() {
   const overrides = flags.reduce((sum, flag) => sum + flag.overrideCount, 0);
 
   return (
-    <div className="log-page space-y-8" data-testid="admin-feature-flags-page">
-      <header className="log-page-header block!">
-        <p className="eyebrow">Administration</p>
-        <h1 className="mt-1">Feature flags</h1>
-        <p className="text-muted-foreground mt-2">
-          A household&apos;s override wins over the default. A feature that is
-          off answers every surface with the same message.
-        </p>
-      </header>
+    <div
+      className="flex flex-col gap-8 [&>header]:mb-0 [&_h2]:text-[20px] [&_h2]:leading-[1.3] [&_h2]:font-semibold"
+      data-testid="admin-feature-flags-page"
+    >
+      <AdminPageHeader
+        title="Feature flags"
+        lead="A household's override wins over the default; a feature that is off answers every surface with the same message."
+      />
 
       <section aria-label="Flag summary" className="facts-strip">
         <div>

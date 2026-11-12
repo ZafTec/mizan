@@ -143,8 +143,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             else
             {
                 // Create Testcontainers PostgreSQL for local integration testing
-                _dbContainer = new PostgreSqlBuilder()
-                    .WithImage("postgres:18-alpine")
+                _dbContainer = new PostgreSqlBuilder("postgres:18-alpine")
                     .WithDatabase("mizan_test")
                     .WithUsername("mizan")
                     .WithPassword("mizan_test_password")
@@ -186,7 +185,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 // tests drive it themselves through DrainOutboxAsync.
                 ["Outbox:Enabled"] = "false",
                 ["RateLimits:OAuth:PermitLimit"] = "100000",
-                ["RateLimits:OAuthRegister:PermitLimit"] = "100000"
+                ["RateLimits:OAuthRegister:PermitLimit"] = "100000",
             };
 
             config.AddInMemoryCollection(settings);
@@ -878,6 +877,12 @@ public sealed class ScriptedAiProvider : IAiProvider
     public void Fail(string message)
     {
         lock (_calls) _scripted.Enqueue(_ => throw new AiUnavailableException(message));
+    }
+
+    /// <summary>The next call is refused with this exception, such as a gateway's typed refusal.</summary>
+    public void Refuse(Exception refusal)
+    {
+        lock (_calls) _scripted.Enqueue(_ => throw refusal);
     }
 
     /// <summary>The next call is refused the way the real client reports a non-success status.</summary>

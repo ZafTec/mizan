@@ -62,6 +62,7 @@ builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ErrorShapeFilter>();
         options.Filters.Add<FeatureGateFilter>();
+        options.Filters.Add<CrossSiteWriteFilter>();
     })
     // A body that cannot be read (bad JSON, a string where a number belongs) answers in the same shape as every
     // other error, so a client has one thing to parse (docs/ARCHITECTURE.md#errors).
@@ -317,7 +318,8 @@ if (!string.IsNullOrEmpty(redisConnectionString))
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    // The default policy, so the cross-site write check (CrossSiteWriteFilter) trusts these origins too.
+    options.AddDefaultPolicy(policy =>
     {
         var origins = (builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
             ?? new[] { "http://localhost:3000" })
@@ -358,8 +360,9 @@ otel.ConfigureResource(resource => resource
     .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
 );
 
+// ASP.NET Core 11 emits OpenTelemetry-conformant HTTP server spans and metrics itself; subscribing to
+// its source and meters replaces the instrumentation package.
 otel.WithMetrics(metrics => metrics
-    .AddAspNetCoreInstrumentation()
     .AddMeter("Microsoft.AspNetCore.Hosting")
     .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
     .AddMeter("System.Net.Http")
@@ -369,7 +372,7 @@ otel.WithMetrics(metrics => metrics
 
 otel.WithTracing(tracing =>
 {
-    tracing.AddAspNetCoreInstrumentation();
+    tracing.AddSource("Microsoft.AspNetCore");
     tracing.AddHttpClientInstrumentation();
     tracing.AddEntityFrameworkCoreInstrumentation();
 
@@ -428,7 +431,7 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 
-app.UseCors("AllowFrontend");
+app.UseCors();
 app.UseRateLimiter();
 
 app.UseExceptionHandler(errorApp =>
@@ -472,9 +475,42 @@ app.UseExceptionHandler(errorApp =>
         }
         else if (exception is AiUnavailableException aiUnavailableEx)
         {
-            Log.Warning(exception, "AI provider unavailable for {Path}", context.Request.Path);
-            context.Response.StatusCode = 503;
-            await context.Response.WriteAsJsonAsync(new { errorCode = "ai_unavailable", error = aiUnavailableEx.Message });
+            // The provider's refusal as a stable code every surface shares (docs/AI.md#provider-errors).
+            // A content or person refusal is not an outage, so it is not logged as one.
+            if (aiUnavailableEx is AiBlockedException or AiAccountBlockedException)
+                Log.Information("AI provider refused the content or the person for {Path}: {Code}", context.Request.Path, aiUnavailableEx.ErrorCode);
+            else
+                Log.Warning(exception, "AI provider unavailable for {Path}", context.Request.Path);
+
+            switch (aiUnavailableEx)
+            {
+                case AiRateLimitedException rate:
+                    context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                    long? retrySeconds = rate.RetryAfter is { } wait ? (long)Math.Max(1, Math.Ceiling(wait.TotalSeconds)) : null;
+                    if (retrySeconds is { } header)
+                        context.Response.Headers.RetryAfter = header.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    await context.Response.WriteAsJsonAsync(new { errorCode = rate.ErrorCode, error = rate.Message, retryAfterSeconds = retrySeconds });
+                    break;
+                case AiLimitReachedException limit:
+                    context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                    if (limit.ResetsAt is { } resetsAt)
+                        context.Response.Headers.RetryAfter = ((long)Math.Max(1, Math.Ceiling((resetsAt - DateTime.UtcNow).TotalSeconds)))
+                            .ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    await context.Response.WriteAsJsonAsync(new { errorCode = limit.ErrorCode, error = limit.Message, resetsAt = limit.ResetsAt });
+                    break;
+                case AiBlockedException:
+                    context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+                    await context.Response.WriteAsJsonAsync(new { errorCode = aiUnavailableEx.ErrorCode, error = aiUnavailableEx.Message });
+                    break;
+                case AiAccountBlockedException:
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    await context.Response.WriteAsJsonAsync(new { errorCode = aiUnavailableEx.ErrorCode, error = aiUnavailableEx.Message });
+                    break;
+                default:
+                    context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                    await context.Response.WriteAsJsonAsync(new { errorCode = aiUnavailableEx.ErrorCode, error = aiUnavailableEx.Message });
+                    break;
+            }
         }
         else if (exception is RateLimitedException rateLimitedEx)
         {

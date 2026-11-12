@@ -55,38 +55,97 @@ export const LOG_ACTIONS: NavItem[] = [
   },
 ];
 
+/** Which waiting count from the admin overview a section shows beside its name. */
+export type AdminAttentionKey =
+  | "deadJobs"
+  | "failedEmails"
+  | "newContactMessages"
+  | "openPriceReports"
+  | "openContentReports";
+
+export type AdminSection = {
+  href: string;
+  label: string;
+  attention?: AdminAttentionKey;
+};
+
 /**
- * Every section under /admin. Single source of truth: the persistent tab
- * strip (AdminTabs) renders these directly, and the Admin group below reuses
- * the same list for /more. Six of these - moderation, achievements,
- * relationships, audit-logs, ai and jobs - had no link into them anywhere
- * before the tab strip existed, reachable only by typing the URL.
+ * Every section under /admin, grouped by the job it serves. The admin sidebar
+ * (and its sheet on a phone) renders these; /more links to /admin once.
  */
-export const ADMIN_TABS: NavItem[] = [
-  { href: "/admin", label: "Overview", icon: "shieldCheck" },
-  { href: "/admin/users", label: "Users", icon: "users" },
-  { href: "/admin/ingredients", label: "Ingredients", icon: "search" },
-  { href: "/admin/recipes", label: "Recipes", icon: "cookingPot" },
-  { href: "/admin/exercises", label: "Exercises", icon: "zap" },
-  { href: "/admin/moderation", label: "Moderation", icon: "badgeAlert" },
-  { href: "/admin/achievements", label: "Achievements", icon: "trendingUp" },
-  { href: "/admin/relationships", label: "Relationships", icon: "users" },
-  { href: "/admin/audit-logs", label: "Audit log", icon: "shieldCheck" },
-  { href: "/admin/ai", label: "Assistant", icon: "bot" },
-  { href: "/admin/households", label: "Households", icon: "home" },
-  { href: "/admin/billing", label: "Billing", icon: "sparkles" },
-  { href: "/admin/sessions", label: "Sessions", icon: "lock" },
-  { href: "/admin/jobs", label: "Jobs", icon: "activity" },
-  { href: "/admin/mail", label: "Mail", icon: "bell" },
-  { href: "/admin/contact", label: "Contact", icon: "messageCircle" },
-  { href: "/admin/notifications", label: "Notifications", icon: "bell" },
-  { href: "/admin/prices", label: "Prices", icon: "cart" },
-  { href: "/admin/meal-plans", label: "Meal plans", icon: "calendarCheck" },
-  { href: "/admin/feature-flags", label: "Feature flags", icon: "settings" },
-  { href: "/admin/usage-limits", label: "Usage limits", icon: "lock" },
-  { href: "/admin/usage", label: "Usage", icon: "chartLine" },
-  { href: "/admin/settings", label: "Settings", icon: "settings" },
+export const ADMIN_GROUPS: { label: string; items: AdminSection[] }[] = [
+  { label: "Today", items: [{ href: "/admin", label: "Overview" }] },
+  {
+    label: "People",
+    items: [
+      { href: "/admin/users", label: "Users" },
+      { href: "/admin/households", label: "Households" },
+      { href: "/admin/relationships", label: "Coaching links" },
+      { href: "/admin/sessions", label: "Sessions" },
+    ],
+  },
+  {
+    label: "Catalogue",
+    items: [
+      { href: "/admin/ingredients", label: "Foods" },
+      { href: "/admin/recipes", label: "Recipes" },
+      { href: "/admin/exercises", label: "Exercises" },
+      { href: "/admin/achievements", label: "Achievements" },
+      { href: "/admin/meal-plans", label: "Meal plans" },
+      { href: "/admin/prices", label: "Prices", attention: "openPriceReports" },
+    ],
+  },
+  {
+    label: "Inbox",
+    items: [
+      {
+        href: "/admin/contact",
+        label: "Contact",
+        attention: "newContactMessages",
+      },
+      {
+        href: "/admin/moderation",
+        label: "Moderation",
+        attention: "openContentReports",
+      },
+      { href: "/admin/mail", label: "Mail", attention: "failedEmails" },
+    ],
+  },
+  {
+    label: "Outreach",
+    items: [{ href: "/admin/notifications", label: "Campaigns" }],
+  },
+  {
+    label: "Plans and AI",
+    items: [
+      { href: "/admin/billing", label: "Billing" },
+      { href: "/admin/usage", label: "Usage" },
+      { href: "/admin/usage-limits", label: "Usage limits" },
+      { href: "/admin/ai", label: "Assistant" },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { href: "/admin/settings", label: "Settings" },
+      { href: "/admin/feature-flags", label: "Feature flags" },
+      { href: "/admin/jobs", label: "Jobs", attention: "deadJobs" },
+      { href: "/admin/audit-logs", label: "Audit log" },
+    ],
+  },
 ];
+
+/** The section a path belongs to: the longest href that prefixes it. */
+export function activeAdminHref(pathname: string): string | undefined {
+  return ADMIN_GROUPS.flatMap((g) => g.items)
+    .map((i) => i.href)
+    .filter((href) =>
+      href === "/admin"
+        ? pathname === "/admin"
+        : pathname === href || pathname.startsWith(`${href}/`),
+    )
+    .sort((a, b) => b.length - a.length)[0];
+}
 
 /**
  * Tier 3. Everything the product does that is not the spine.
@@ -283,7 +342,15 @@ export const MORE_GROUPS: NavGroup[] = [
   },
   {
     label: "Admin",
-    items: ADMIN_TABS.map((item) => ({ ...item, adminOnly: true })),
+    items: [
+      {
+        href: "/admin",
+        label: "Administration",
+        icon: "shieldCheck",
+        description: "People, catalogue, inbox and system settings",
+        adminOnly: true,
+      },
+    ],
   },
 ];
 

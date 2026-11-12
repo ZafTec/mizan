@@ -110,7 +110,7 @@ public class UsageLimitTests
         (await refused.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("cap").GetString().Should().Be("monthly_cost");
 
         // The plans tab lists every plan, the family plan's caps sourced from it.
-        var plans = await admin.GetFromJsonAsync<List<UsageLimitSubjectDto>>("/api/admin/usage-limits?scope=Plan");
+        var plans = (await admin.GetFromJsonAsync<List<UsageLimitSubjectDto>>("/api/admin/usage-limits?scope=Plan"))!;
         plans!.Select(p => p.Name).Should().BeEquivalentTo(["Family monthly", "Solo monthly"]);
         var personal = plans.Single(p => p.SubjectId == family).Effective.Single(e => e.Line == "Personal");
         personal.DailyRequests.Should().Be(new SourcedLimitDto(4, "Plan"));

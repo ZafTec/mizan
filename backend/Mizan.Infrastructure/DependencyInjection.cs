@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
@@ -77,6 +78,8 @@ public static class DependencyInjection
         AddRuntimeOptions<ExternalSignInOptions>(services, ExternalSignInOptions.SectionName);
         AddRuntimeOptions<OutboxOptions>(services, OutboxOptions.SectionName);
         AddRuntimeOptions<PriceCrawlOptions>(services, PriceCrawlOptions.SectionName);
+        AddRuntimeOptions<AiEndUserOptions>(services, AiEndUserOptions.SectionName);
+        AddRuntimeOptions<GatewaySettingsOptions>(services, GatewaySettingsOptions.SectionName);
         services.AddSingleton<IServiceSettings, ServiceSettings>();
 
         // Domain services
@@ -140,6 +143,11 @@ public static class DependencyInjection
         // after it: an unmetered or unconsented call must not be constructible
         // (docs/AI.md).
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
+        // The end-user token for a gateway comes from the runtime settings: a half-set or
+        // invalid configuration signs nothing rather than stopping the API (docs/AI.md#behind-a-gateway).
+        services.AddSingleton<AiEndUserTokens>();
+        services.AddSingleton<IAiCallIdentity>(provider => provider.GetRequiredService<AiEndUserTokens>());
+        services.AddSingleton<IEndUserSigningKeys>(provider => provider.GetRequiredService<AiEndUserTokens>());
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
         services.AddSingleton<IAiProviderIncidents, AiProviderIncidents>();
         services.AddSingleton<IAiCeilings, AiCeilings>();

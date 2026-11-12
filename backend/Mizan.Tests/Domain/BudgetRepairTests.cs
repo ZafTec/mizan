@@ -83,9 +83,9 @@ public class BudgetRepairTests
     [InlineData(null, 158d, 158d * 0.06d / 0.52d, "the 158 g protein target")]
     public void TheCheapestWayToMeetTheTargets_IsTheFloorOnTheCost(double? kcal, double protein, double daily, string basis)
     {
-        var bound = LowerBound([Tilapia, Soy], new Targets((decimal?)kcal, (decimal)protein, null));
+        var bound = LowerBound([Tilapia, Soy], new Targets(Dec.Of(kcal), Dec.Of(protein), null));
         bound.Should().NotBeNull();
-        bound!.Value.DailyCost.Should().BeApproximately((decimal)daily, 0.01m);
+        bound!.Value.DailyCost.Should().BeApproximately(Dec.Of(daily), 0.01m);
         bound.Value.Basis.Should().Be(basis);
     }
 
@@ -99,7 +99,7 @@ public class BudgetRepairTests
     public void AnUnmetBudget_SaysWhy(double? floor, string expected)
     {
         var drivers = CostDrivers([("Soy chunks", 871.10m), ("Onion", 40m), ("Tilapia", 1208.20m)], "ETB");
-        DraftSummary.BudgetReason((decimal?)floor, "the 158 g protein target", 1500m, drivers, "ETB").Should().Be(expected);
+        DraftSummary.BudgetReason(Dec.Of(floor), "the 158 g protein target", 1500m, drivers, "ETB").Should().Be(expected);
     }
 
     [Fact]

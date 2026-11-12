@@ -74,12 +74,14 @@ public sealed class NotificationScheduler
     /// Stages one schedule's occurrences that are due now, without waiting for the next scan: how a
     /// campaign sent now goes out at once. The caller saves.
     /// </summary>
-    public Task<int> StageDueAsync(NotificationSchedule schedule, CancellationToken cancellationToken)
+    public async Task<int> StageDueAsync(NotificationSchedule schedule, CancellationToken cancellationToken)
     {
         var now = _time.GetUtcNow();
-        return schedule.NextRunAt is { } next && next <= (now + Lookahead).UtcDateTime
-            ? StageTimedAsync(schedule, now, now + Lookahead, cancellationToken)
-            : Task.FromResult(0);
+        if (schedule.NextRunAt is not { } next || next > (now + Lookahead).UtcDateTime) return 0;
+        var deliveries = new List<ScheduledJob<NotificationDeliveryJob>>();
+        var found = await StageTimedAsync(schedule, now, now + Lookahead, await RecipientsAsync([schedule], cancellationToken), deliveries, cancellationToken);
+        await _outbox.ScheduleAllAsync(OutboxJobTypes.NotificationDelivery, deliveries, cancellationToken);
+        return found;
     }
 
     /// <summary>One scan of every enabled schedule. Returns how many occurrences it found.</summary>
@@ -99,8 +101,12 @@ public sealed class NotificationScheduler
             .Where(s => s.Trigger.Kind == NotificationTriggerKind.EventOffset)
             .ToList();
 
+        // The recipients and the deliveries' keys are read once for the scan, not once per schedule.
+        var people = await RecipientsAsync(timed, cancellationToken);
+        var deliveries = new List<ScheduledJob<NotificationDeliveryJob>>();
         foreach (var schedule in timed)
-            found += await StageTimedAsync(schedule, now, horizon, cancellationToken);
+            found += await StageTimedAsync(schedule, now, horizon, people, deliveries, cancellationToken);
+        await _outbox.ScheduleAllAsync(OutboxJobTypes.NotificationDelivery, deliveries, cancellationToken);
 
         foreach (var schedule in events)
         {
@@ -121,10 +127,16 @@ public sealed class NotificationScheduler
     public Task<bool> IsEnabledAsync(string key, CancellationToken cancellationToken) =>
         _context.NotificationSchedules.AsNoTracking().AnyAsync(s => s.Key == key && s.Enabled, cancellationToken);
 
-    private async Task<int> StageTimedAsync(NotificationSchedule schedule, DateTimeOffset now, DateTimeOffset horizon, CancellationToken cancellationToken)
+    private async Task<int> StageTimedAsync(
+        NotificationSchedule schedule,
+        DateTimeOffset now,
+        DateTimeOffset horizon,
+        IReadOnlyDictionary<Guid, Recipient> people,
+        List<ScheduledJob<NotificationDeliveryJob>> deliveries,
+        CancellationToken cancellationToken)
     {
         if (schedule.Campaign is not null) return await StageCampaignAsync(schedule, now, horizon, cancellationToken);
-        var recipients = await RecipientsAsync(schedule, cancellationToken);
+        var recipients = PersonOf(schedule) is { } personId && people.TryGetValue(personId, out var person) ? [person] : new List<Recipient>();
         var zoneId = recipients.Count == 1 ? recipients[0].TimeZoneId : null;
         var zone = StreakClock.Zone(zoneId);
 
@@ -139,12 +151,10 @@ public sealed class NotificationScheduler
                     foreach (var channel in NotificationKinds.Each.Where(c => schedule.Channels.HasFlag(c)))
                     {
                         var name = NotificationKinds.Name(channel);
-                        await _outbox.ScheduleAsync(
-                            OutboxJobTypes.NotificationDelivery,
+                        deliveries.Add(new ScheduledJob<NotificationDeliveryJob>(
                             new NotificationDeliveryJob(schedule.Id, recipient.Id, occurrence.UtcDateTime, name),
                             occurrence.UtcDateTime,
-                            DeliveryKey(schedule.Id, occurrence, recipient.Id, name),
-                            cancellationToken);
+                            DeliveryKey(schedule.Id, occurrence, recipient.Id, name)));
                     }
                 }
                 schedule.LastRunAt = occurrence.UtcDateTime;
@@ -189,14 +199,19 @@ public sealed class NotificationScheduler
     public static string DeliveryKey(Guid scheduleId, DateTimeOffset occurrence, Guid userId, string channel) =>
         $"schedule:{scheduleId:N}:{occurrence.UtcDateTime:yyyyMMddTHHmm}:{userId:N}:{channel}";
 
-    private async Task<List<Recipient>> RecipientsAsync(NotificationSchedule schedule, CancellationToken cancellationToken)
+    /// <summary>The person a timed schedule goes to. One person for now; a later audience (a segment, everyone) resolves here.</summary>
+    private static Guid? PersonOf(NotificationSchedule schedule) =>
+        schedule.Campaign is null && schedule.Audience.Kind == NotificationAudienceKind.User ? schedule.Audience.UserId : null;
+
+    /// <summary>The recipients of every timed schedule given, read in one query and keyed by person. A banned person is absent.</summary>
+    private async Task<IReadOnlyDictionary<Guid, Recipient>> RecipientsAsync(IEnumerable<NotificationSchedule> schedules, CancellationToken cancellationToken)
     {
-        // One person for now. A later audience (a segment, everyone) resolves here, to the same list.
-        if (schedule.Audience.Kind != NotificationAudienceKind.User || schedule.Audience.UserId is not { } userId) return [];
+        var ids = schedules.Select(PersonOf).OfType<Guid>().Distinct().ToList();
+        if (ids.Count == 0) return new Dictionary<Guid, Recipient>();
         return await _context.Users.AsNoTracking()
-            .Where(u => u.Id == userId && !u.Banned)
+            .Where(u => ids.Contains(u.Id) && !u.Banned)
             .Select(u => new Recipient(u.Id, u.TimeZoneId))
-            .ToListAsync(cancellationToken);
+            .ToDictionaryAsync(u => u.Id, cancellationToken);
     }
 
     /// <summary>The evening reminder's schedule, created on the first scan so an administrator can turn it off.</summary>

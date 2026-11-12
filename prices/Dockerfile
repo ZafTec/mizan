@@ -1,7 +1,7 @@
 # Prices worker. Build context is the repository root: the image needs
 # backend/Mizan.Contracts as well as prices/, and prices/Dockerfile.dockerignore
 # keeps everything else out of the context.
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 
 COPY ["backend/Mizan.Contracts/Mizan.Contracts.csproj", "backend/Mizan.Contracts/"]
@@ -12,7 +12,7 @@ COPY backend/Mizan.Contracts/ backend/Mizan.Contracts/
 COPY prices/Mizan.Prices/ prices/Mizan.Prices/
 RUN dotnet publish "prices/Mizan.Prices/Mizan.Prices.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS final
 WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \

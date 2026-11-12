@@ -25,19 +25,19 @@ export default function AdminMemberRow({
   };
 
   return (
-    <li className="flex items-center justify-between gap-3 py-3">
+    <li className="ledger-row">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+        <p className="truncate text-sm font-medium">
           <a href={`/admin/users/${member.userId}`} className="hover:underline">
             {member.name ?? "(no name)"}
           </a>
           {member.isOwner && (
-            <span className="ml-2 text-xs font-normal text-charcoal-blue-500 dark:text-charcoal-blue-400">
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
               Owner
             </span>
           )}
         </p>
-        <p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+        <p className="truncate text-xs text-muted-foreground">
           {member.email} · {member.role} · joined{" "}
           {new Date(member.joinedAt).toLocaleDateString("en-GB", {
             day: "numeric",
@@ -48,7 +48,7 @@ export default function AdminMemberRow({
         </p>
       </div>
       <ConfirmButton
-        className="btn-ghost-destructive h-8"
+        className="btn-ghost-destructive btn-sm min-h-9"
         title={`Remove ${label} from this household?`}
         description="They lose access to the household's shared plans and shopping lists. Their own log is not affected."
         confirmLabel="Remove member"

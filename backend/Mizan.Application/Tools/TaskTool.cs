@@ -35,9 +35,11 @@ public enum ToolRole
 /// Who is calling and from where, as the session and the connection say. A builder takes
 /// ownership from here, never from the arguments, so a caller cannot act for someone else by
 /// writing an id (docs/AI.md#consent). <paramref name="Impersonating"/> is set while an administrator
-/// views Mizan as someone else; no admin mode is offered then.
+/// views Mizan as someone else; no admin mode is offered then. <paramref name="Gateway"/> is set when a hosted
+/// assistant acts for the person through the gateway: their assistant consent applies to every call
+/// (<see cref="AssistantConsent"/>) and no admin mode is offered (docs/MCP.md).
 /// </summary>
-public sealed record ToolCallContext(Guid UserId, ToolSurface Surface, string Role, GrantContext? Grant, bool Impersonating = false);
+public sealed record ToolCallContext(Guid UserId, ToolSurface Surface, string Role, GrantContext? Grant, bool Impersonating = false, bool Gateway = false);
 
 /// <summary>
 /// A previewed high-impact action. The preview request reads what the action would remove,
@@ -101,6 +103,12 @@ public sealed class ToolMode
     /// <summary>The message when the command answers with nothing, such as an id that names no record. Null passes the empty result on.</summary>
     public string? NotFound { get; init; }
 
+    /// <summary>
+    /// Narrows the result to the part the arguments ask for, before it is shaped and described, so a reply stays well
+    /// under the 32 KB a host takes (docs/MCP.md#reply-size). A month's meal plan is answered four days at a time.
+    /// </summary>
+    public Func<object?, ToolArgs, object?>? Window { get; init; }
+
     public bool Writes => Area.EndsWith(":write", StringComparison.Ordinal);
 }
 
@@ -130,6 +138,18 @@ public sealed class TaskTool
 
     /// <summary>The MCP app page (<c>ui://mizan/&lt;name&gt;.html</c>) this tool renders, if any.</summary>
     public string? App { get; init; }
+
+    /// <summary>
+    /// Every mode only adds something or spends an allowance, and none replaces or removes what the person entered.
+    /// A write tool without it is destructive in its annotations, because hints must hold for its worst mode.
+    /// </summary>
+    public bool Additive { get; init; }
+
+    /// <summary>Calling it again with the same arguments changes nothing more. Read tools always are.</summary>
+    public bool Idempotent { get; init; }
+
+    /// <summary>A mode may fetch an address the caller gave (an image URL), so the tool reaches beyond Mizan.</summary>
+    public bool OpenWorld { get; init; }
 
     /// <summary>
     /// Describes the mode argument in place of one line per mode, for a tool with many modes that

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/data-table";
 import AuditToolbar from "./AuditToolbar";
 import AuditDetails from "./AuditDetails";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -130,17 +131,11 @@ export default async function AdminAuditLogsPage({
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Administration</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Audit log
-        </h1>
-        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          Every command that changed something, with who ran it. Append-only —
-          nothing here can be edited or removed.
-        </p>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Audit log"
+        lead="Every command that changed something and who ran it; append-only, so nothing here can be edited or removed."
+      />
 
       <AuditToolbar
         actions={facets.actions}

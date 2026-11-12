@@ -161,6 +161,37 @@ test("the conversation stays open across pages", async ({ context, page }) => {
   await expect(page.getByText("You asked: how was my week")).toBeVisible();
 });
 
+test("words typed and not sent come back when the tab is closed and opened again, in the conversation they were typed in", async ({
+  context,
+  page,
+}) => {
+  await signIn(context, true);
+  await page.goto("/today");
+  await launcher(page).click();
+  const box = page.getByLabel("Message the assistant");
+  await box.fill("how was my week");
+  await box.press("Enter");
+  await expect(page.getByText("You asked: how was my week")).toBeVisible();
+  await box.fill("and what should I eat tonight");
+  await page.close();
+
+  const again = await context.newPage();
+  await again.goto("/today");
+  const panel = again.getByRole("complementary", { name: "Mizan assistant" });
+  await expect(panel.getByText("You asked: how was my week")).toBeVisible();
+  const reopened = panel.getByLabel("Message the assistant");
+  await expect(reopened).toHaveValue("and what should I eat tonight");
+
+  // A new conversation starts with its own empty box, and words once sent are not kept.
+  await panel.getByRole("button", { name: "New conversation" }).click();
+  await expect(reopened).toHaveValue("");
+  await reopened.fill("log two eggs");
+  await reopened.press("Enter");
+  await expect(panel.getByText("Logged: two eggs")).toBeVisible();
+  await again.reload();
+  await expect(again.getByLabel("Message the assistant")).toHaveValue("");
+});
+
 test("/ai opens the panel, and /ai?thread= opens that conversation", async ({
   context,
   page,
@@ -221,4 +252,35 @@ test("on a 360px phone the panel is a sheet that holds focus, and nothing overfl
   await page.keyboard.press("Escape");
   await expect(sheet).toBeHidden();
   await expect(launcher(page)).toBeFocused();
+});
+
+// #116: the composer shows focus once, on its border, not with a second ring around the box.
+test("the message box shows one focus indicator, its border, in light and dark", async ({
+  context,
+  page,
+}) => {
+  await signIn(context, true);
+  await page.goto("/today");
+  await launcher(page).click();
+  const panel = page.getByRole("complementary", { name: "Mizan assistant" });
+  const box = panel.getByLabel("Message the assistant");
+  const border = () =>
+    box.evaluate((el) => getComputedStyle(el.parentElement!).borderColor);
+
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.evaluate(
+      (dark) => document.documentElement.classList.toggle("dark", dark),
+      colorScheme === "dark",
+    );
+    await box.blur();
+    const resting = await border();
+
+    await box.click();
+
+    await expect(box).toBeFocused();
+    expect(await box.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe(
+      "none",
+    );
+    await expect.poll(border).not.toBe(resting);
+  }
 });

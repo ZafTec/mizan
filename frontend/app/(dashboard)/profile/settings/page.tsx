@@ -22,6 +22,7 @@ import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { useSaveStatus } from "@/lib/hooks/useSaveStatus";
+import { useSectionInView } from "@/lib/hooks/useSectionInView";
 import TimeZoneField from "@/components/appearance/TimeZoneField";
 import PriceRegionField from "@/components/prices/PriceRegionField";
 import { appToast } from "@/lib/toast";
@@ -43,6 +44,7 @@ const SECTIONS = [
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
+const SECTION_IDS = SECTIONS.map((section) => section.id);
 
 /**
  * Every account setting on one ruled page (design board Settings.dc.html):
@@ -53,7 +55,7 @@ type SectionId = (typeof SECTIONS)[number]["id"];
 export default function ProfileSettingsPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
-  const active = useSectionInView();
+  const active = useSectionInView(SECTION_IDS);
 
   if (isPending) {
     return (
@@ -129,35 +131,6 @@ export default function ProfileSettingsPage() {
       </div>
     </div>
   );
-}
-
-/** The section whose heading was last scrolled past the top third of the screen. */
-function useSectionInView(): SectionId {
-  const [active, setActive] = useState<SectionId>("account");
-  useEffect(() => {
-    const fromHash = SECTIONS.find(
-      (section) => `#${section.id}` === window.location.hash,
-    );
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one read of the URL on mount
-    if (fromHash) setActive(fromHash.id);
-    if (typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        const first = visible[0]?.target.id as SectionId | undefined;
-        if (first) setActive(first);
-      },
-      { rootMargin: "0px 0px -66% 0px" },
-    );
-    for (const section of SECTIONS) {
-      const element = document.getElementById(section.id);
-      if (element) observer.observe(element);
-    }
-    return () => observer.disconnect();
-  }, []);
-  return active;
 }
 
 function Section({
