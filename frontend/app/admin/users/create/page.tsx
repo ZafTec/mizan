@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import Link from "next/link";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { CreateUserForm } from "./create-user-form";
 
 export const metadata = {
-  title: "Create User | Admin",
+  title: "New user | Admin",
   description: "Create a new user account",
 };
 
@@ -14,27 +14,15 @@ export default async function CreateUserPage() {
   if (user.role !== "admin") redirect("/");
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Accounts</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Create user
-          </h1>
-          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            Create a new user account with specified role.
-          </p>
-        </div>
-        <Link href="/admin/users" className="btn-ghost !rounded-2xl !py-2">
-          ← Back to Users
-        </Link>
-      </header>
-
+    <>
+      <AdminPageHeader
+        title="New user"
+        lead="The account can sign in at once with this password; no verification email is sent."
+        back={{ href: "/admin/users", label: "Users" }}
+      />
       <div className="max-w-2xl">
-        <div className="card overflow-visible p-6">
-          <CreateUserForm />
-        </div>
+        <CreateUserForm />
       </div>
-    </div>
+    </>
   );
 }

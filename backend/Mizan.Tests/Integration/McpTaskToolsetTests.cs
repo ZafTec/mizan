@@ -64,9 +64,23 @@ public class McpTaskToolsetTests : IClassFixture<WebApplicationFactory<McpServer
         tools["get_nutrition"].GetProperty("_meta").GetProperty("ui").GetProperty("resourceUri").GetString()
             .Should().Be("ui://mizan/nutrition-day.html");
 
+        using (var web = _apiFixture.CreateAuthenticatedClient(userId, "mcp-tasks@example.com"))
+        {
+            (await web.PostAsJsonAsync("/api/Goals", new { GoalType = "general", TargetCalories = 2100, TargetProteinGrams = 130, TargetCarbsGrams = 200, TargetFatGrams = 70 }))
+                .IsSuccessStatusCode.Should().BeTrue();
+        }
+
         var called = await SendAsync("tools/call", new { name = "get_nutrition", arguments = new { view = "day", date = "2026-11-07" } });
         (called.TryGetProperty("isError", out var isError) && isError.GetBoolean()).Should().BeFalse(called.ToString());
-        called.GetProperty("structuredContent").ValueKind.Should().Be(JsonValueKind.Object);
+
+        // Issue #132: the nutrition widget draws its ring and bars from these fields.
+        var day = called.GetProperty("structuredContent");
+        foreach (var field in new[] { "date", "totalCalories", "totalProtein", "totalCarbs", "totalFat" })
+            day.TryGetProperty(field, out _).Should().BeTrue(field);
+        day.GetProperty("targetCalories").GetDecimal().Should().Be(2100);
+        day.GetProperty("targetProtein").GetDecimal().Should().Be(130);
+        day.GetProperty("targetCarbs").GetDecimal().Should().Be(200);
+        day.GetProperty("targetFat").GetDecimal().Should().Be(70);
 
         var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
         logs.Should().ContainSingle(l => l.ToolName == "get_nutrition" && l.Success && l.GrantId == access.GrantId);

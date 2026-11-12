@@ -31,7 +31,7 @@ public class OneRepMaxTests
     [InlineData(80, 0, 80.0)]
     [InlineData(0, 10, 0.0)]
     public void Estimate_IsEpleyToOneDecimal(double weight, int reps, double expected) =>
-        OneRepMax.Estimate((decimal)weight, reps).Should().Be((decimal)expected);
+        OneRepMax.Estimate(Dec.Of(weight), reps).Should().Be(Dec.Of(expected));
 
     public static TheoryData<(decimal? WeightKg, int? Reps)[], decimal> Sessions => new()
     {

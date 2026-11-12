@@ -2856,6 +2856,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/settings/end-user-key/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EndUserKeyRotationResult"];
+                        "application/json": components["schemas"]["EndUserKeyRotationResult"];
+                        "text/json": components["schemas"]["EndUserKeyRotationResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/settings/ai/test": {
         parameters: {
             query?: never;
@@ -4167,6 +4204,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/.well-known/jwks.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiJsonWebKeySet"];
+                        "application/json": components["schemas"]["AiJsonWebKeySet"];
+                        "text/json": components["schemas"]["AiJsonWebKeySet"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/.well-known/jwks.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiJsonWebKeySet"];
+                        "application/json": components["schemas"]["AiJsonWebKeySet"];
+                        "text/json": components["schemas"]["AiJsonWebKeySet"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Ai/usage/global": {
         parameters: {
             query?: never;
@@ -5009,7 +5142,10 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    before?: string;
+                    take?: number;
+                };
                 header?: never;
                 path: {
                     relationshipId: string;
@@ -6691,6 +6827,43 @@ export interface paths {
                         "text/plain": components["schemas"]["TelegramBotSettings"];
                         "application/json": components["schemas"]["TelegramBotSettings"];
                         "text/json": components["schemas"]["TelegramBotSettings"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/settings/mcp-gateway": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["McpGatewaySettings"];
+                        "application/json": components["schemas"]["McpGatewaySettings"];
+                        "text/json": components["schemas"]["McpGatewaySettings"];
                     };
                 };
             };
@@ -12846,6 +13019,22 @@ export interface components {
             /** Format: uuid */
             prepSessionId?: string | null;
         };
+        AdminAttentionDto: {
+            /** Format: int32 */
+            deadJobs: number;
+            /** Format: date-time */
+            oldestDeadJobAt?: string | null;
+            /** Format: int32 */
+            failedEmails: number;
+            /** Format: int32 */
+            newContactMessages: number;
+            /** Format: date-time */
+            oldestContactMessageAt?: string | null;
+            /** Format: int32 */
+            openPriceReports: number;
+            /** Format: int32 */
+            openContentReports: number;
+        };
         AdminBillingCatalogDto: {
             plans: components["schemas"]["AdminBillingPlanDto"][];
             discounts: components["schemas"]["AdminBillingDiscountDto"][];
@@ -13013,6 +13202,11 @@ export interface components {
             /** Format: int32 */
             activeSessions: number;
             recentUsers: components["schemas"]["AdminUserDto"][];
+            /** Format: int32 */
+            joinedThisWeek: number;
+            /** Format: int32 */
+            seenLastDay: number;
+            attention: components["schemas"]["AdminAttentionDto"];
         };
         AdminRelationshipDto: {
             /** Format: uuid */
@@ -13223,6 +13417,18 @@ export interface components {
             costMicros: number;
             /** Format: int32 */
             latencyMs: number;
+        };
+        AiJsonWebKey: {
+            kty: string;
+            crv: string;
+            x: string;
+            y: string;
+            kid: string;
+            alg: string;
+            use: string;
+        };
+        AiJsonWebKeySet: {
+            keys: components["schemas"]["AiJsonWebKey"][];
         };
         AiOnboardingTurnDto: {
             /** Format: uuid */
@@ -13623,6 +13829,7 @@ export interface components {
             /** Format: uuid */
             relationshipId: string;
             messages: components["schemas"]["ChatMessageDto"][];
+            hasOlder: boolean;
         };
         ChatMessageDto: {
             /** Format: uuid */
@@ -14191,6 +14398,10 @@ export interface components {
         };
         EndRelationshipRequest: {
             reason?: string | null;
+        };
+        EndUserKeyRotationResult: {
+            keyId: string;
+            previousKeyId?: string | null;
         };
         EntryNutritionDto: {
             /** Format: double */
@@ -14918,6 +15129,16 @@ export interface components {
             id: string;
             name: string;
         };
+        McpGatewaySettings: {
+            clientKey?: string | null;
+            clientKeyHeader?: string | null;
+            metaKey?: string | null;
+            jwksUrl?: string | null;
+            issuer?: string | null;
+            audience?: string | null;
+            tokenType?: string | null;
+            endUserIssuer?: string | null;
+        };
         McpTaskDto: {
             id: string;
             status: string;
@@ -15106,6 +15327,7 @@ export interface components {
             history: components["schemas"]["AiUsageDayDto"][];
             byFeature: components["schemas"]["AiUsageFeatureDto"][];
             planning: components["schemas"]["AiQuotaSnapshot"];
+            estimates: components["schemas"]["AiQuotaSnapshot"];
         };
         MyHouseholdInvitationSummary: {
             /** Format: uuid */
@@ -15825,6 +16047,16 @@ export interface components {
             /** Format: uuid */
             sourceId: string;
             status: string;
+        };
+        ProblemDetails: {
+            type?: string | null;
+            title?: string | null;
+            /** Format: int32 */
+            status?: number | null;
+            detail?: string | null;
+            instance?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         PromoteMealToRecipeCommand: {
             /** Format: date */
@@ -16691,6 +16923,13 @@ export interface components {
             kind: string;
             inputSchema: unknown;
             app?: string | null;
+            hints?: components["schemas"]["ToolHintsDto"];
+        };
+        ToolHintsDto: {
+            readOnly: boolean;
+            destructive: boolean;
+            idempotent: boolean;
+            openWorld: boolean;
         };
         ToolManifestDto: {
             surface: string;

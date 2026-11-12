@@ -44,14 +44,14 @@ public static class TrainingTools
                 ["muscleGroup"] = ToolSchema.String("exercises: only this muscle group."),
                 ["category"] = ToolSchema.String("exercises: only this category."),
                 ["page"] = ToolSchema.Integer("history, exercises: page, from 1."),
-                ["pageSize"] = ToolSchema.Integer("history, exercises: results per page, 20 by default (at most 100)."),
+                ["pageSize"] = ToolSchema.Integer("history: workouts per page, 10 at most and by default. exercises: results per page, 20 by default (at most 100)."),
             },
             Modes =
             [
                 new ToolMode
                 {
                     Name = "history",
-                    Summary = "Workouts logged, newest first, with their sets; or one by workoutId. The default.",
+                    Summary = "Workouts logged, newest first, each exercise with its set count and top set; or one by workoutId with every set. The default.",
                     Area = McpScopes.TrainingRead,
                     Surfaces = ToolSurface.Both,
                     Requests = [typeof(GetWorkoutsQuery), typeof(GetWorkoutByIdQuery)],
@@ -65,8 +65,10 @@ public static class TrainingTools
                             From = args.OptionalDate("from"),
                             To = args.OptionalDate("to"),
                             Page = Math.Max(1, args.OptionalInt("page") ?? 1),
-                            PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? (context.Surface == ToolSurface.Assistant ? 10 : 20), 1, 100),
+                            PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? 10, 1, 10),
                         },
+                    // A page of workouts carries each exercise's set count and top set; every set comes with workoutId.
+                    Shape = result => result is PagedResult<WorkoutSummaryDto> page ? BriefHistory(page) : result,
                     Describe = result => result switch
                     {
                         PagedResult<WorkoutSummaryDto> { Items.Count: > 0 } workouts => string.Join("\n", workouts.Items.Select(WorkoutLine)),
@@ -345,6 +347,33 @@ public static class TrainingTools
         args.OptionalString("notes"),
         args.OptionalGuid("templateId"),
         args.As<List<NamedWorkoutExercise>>("exercises") ?? throw new DomainValidationException("'exercises' is required: the exercises with their sets."));
+
+    private static object BriefHistory(PagedResult<WorkoutSummaryDto> page) => new
+    {
+        Items = page.Items.Select(w => new
+        {
+            w.Id,
+            w.Name,
+            w.WorkoutDate,
+            w.TemplateId,
+            w.DurationMinutes,
+            w.CaloriesBurned,
+            w.Notes,
+            Exercises = w.Exercises.Select(e => new
+            {
+                e.ExerciseId,
+                e.ExerciseName,
+                e.MuscleGroup,
+                SetCount = e.Sets.Count,
+                TopSet = e.Sets.OrderByDescending(s => s.WeightKg ?? 0).ThenByDescending(s => s.Reps ?? 0)
+                    .Select(s => new { s.Reps, s.WeightKg, s.DurationSeconds, s.DistanceMeters }).FirstOrDefault(),
+            }),
+        }),
+        page.TotalCount,
+        page.Page,
+        page.PageSize,
+        page.TotalPages,
+    };
 
     private static string WorkoutLine(WorkoutSummaryDto w) =>
         $"{w.Id} — {w.WorkoutDate:yyyy-MM-dd} {w.Name ?? "Workout"}: "

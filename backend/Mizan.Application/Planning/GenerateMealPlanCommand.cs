@@ -120,10 +120,10 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
                 // An earlier draft stands; this budget's draft had empty days and was not saved.
                 result.Skipped.Add(new SkippedBudgetDto(ceilings[i] ?? 0, ex.Message));
             }
-            catch (AiQuotaExceededException ex) when (i > 0)
+            catch (Exception ex) when (i > 0 && ex is AiQuotaExceededException or AiLimitReachedException or AiRateLimitedException)
             {
-                // The first draft stands; the allowance ran out for the rest. Each is named, so
-                // the person knows which budgets to ask for again tomorrow.
+                // The first draft stands; the allowance (Mizan's or the provider's) ran out for the
+                // rest. Each is named, so the person knows which budgets to ask for again later.
                 result.Skipped.AddRange(ceilings.Skip(i).Select(c => new SkippedBudgetDto(c ?? 0, ex.Message)));
                 break;
             }
@@ -399,16 +399,27 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         // The unsaved plan read as the plan page reads it: day totals, costs and the checks.
         var detail = await _readModel.BuildAsync(plan, userId, canEdit: true, cancellationToken);
         var violations = detail.Violations.Select(v => new PlanViolation(v.DayIndex, v.Slot, v.Rule, v.Message)).ToList();
+        // Variety is asked of a draft, not held against a plan: it goes to the repair call, never into the violations.
+        var repeats = DraftVariety.Repeats(
+            detail.Days.SelectMany(d => d.Slots).SelectMany(slot => slot.Entries)
+                .Where(e => e.RecipeId is not null || e.FoodId is not null)
+                .Select(e => new DraftVariety.Item(e.DayIndex, e.Slot, (e.RecipeId ?? e.FoodId)!.Value, e.RecipeTitle ?? e.FoodName ?? "A food")),
+            request.DurationDays,
+            plan.Rules.PrepStyle == PrepStyle.Batch);
         var problems = violations
             .Select(v => v.DayIndex is { } day
                 ? string.Create(CultureInfo.InvariantCulture, $"Day {day}{(v.Slot is null ? "" : $" {v.Slot}")}: {v.Message}")
                 : v.Message)
             // Names that did not resolve ride along with a violation; alone they are text entries, not a repair.
             .Concat(violations.Count == 0 ? [] : missing.Select(name => $"\"{name}\" is not in the catalogue; use a listed food or recipe."))
+            .Concat(repeats.Select(r => r.Message))
             .Distinct()
             .Take(30)
             .ToList();
-        return new DraftAttempt(response, draft, read, emptyDays, missing, plan, detail, violations, problems, scaledDays);
+        return new DraftAttempt(response, draft, read, emptyDays, missing, plan, detail, violations, problems, scaledDays)
+        {
+            Repeats = repeats.Count,
+        };
     }
 
     /// <summary>
@@ -494,15 +505,19 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         /// <summary>Lines code swapped or cut for the budget on the way to this draft.</summary>
         public int BudgetChanges { get; init; }
 
+        /// <summary>Foods or recipes served at one meal on too many days (<see cref="DraftVariety"/>).</summary>
+        public int Repeats { get; init; }
+
         /// <summary>
-        /// Fewer empty days first, then fewer rule violations, then fewer unknown names; when both are
-        /// over budget and otherwise even, the cheaper one. A tie keeps the first draft.
+        /// Fewer empty days first, then fewer rule violations, then fewer unknown names, then fewer repeated
+        /// meals; when both are over budget and otherwise even, the cheaper one. A tie keeps the first draft.
         /// </summary>
         public bool IsBetterThan(DraftAttempt other)
         {
             if (EmptyDays.Count != other.EmptyDays.Count) return EmptyDays.Count < other.EmptyDays.Count;
             if (Violations.Count != other.Violations.Count) return Violations.Count < other.Violations.Count;
             if (Missing.Count != other.Missing.Count) return Missing.Count < other.Missing.Count;
+            if (Repeats != other.Repeats) return Repeats < other.Repeats;
             return OverBudget && other.OverBudget && Detail?.WeeklyCost < other.Detail?.WeeklyCost;
         }
 

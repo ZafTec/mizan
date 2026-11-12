@@ -1,15 +1,16 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getAdminUser } from "@/data/admin/users";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import SupportNotesPanel from "@/components/admin/SupportNotesPanel";
 import { listSupportNotesServer } from "@/lib/api/admin-ops.server";
 import UsageThisMonth from "@/components/admin/platform/UsageThisMonth";
+import { Pill } from "@/components/ui/data-table";
 import { UserActions } from "./user-actions";
 
 export const metadata = {
-  title: "User Details | Admin",
-  description: "View and manage user",
+  title: "User | Admin",
+  description: "One account: its details, actions, usage and support notes",
 };
 
 async function getUser(userId: string) {
@@ -23,6 +24,15 @@ async function getUser(userId: string) {
   };
 }
 
+function when(value?: string | Date | null) {
+  return value ? new Date(value).toLocaleString() : "—";
+}
+
+/**
+ * One account (docs/ADMIN.md#households-users-and-support-notes): the name
+ * and email, a row of actions, the account's fields as ruled rows, then its
+ * suspension, usage this month, recent sessions and support notes.
+ */
 export default async function UserDetailPage({
   params,
 }: {
@@ -49,206 +59,144 @@ export default async function UserDetailPage({
     new Date(user.banExpires) <= new Date();
 
   const isSelf = admin.id === user.id;
+  const status = !user.banned
+    ? "Active"
+    : banEnded
+      ? "Suspension ended"
+      : "Suspended";
+
+  const fields: { label: string; value: React.ReactNode; mono?: boolean }[] = [
+    { label: "Role", value: user.role || "user" },
+    { label: "Status", value: status },
+    { label: "Email verified", value: user.emailVerified ? "Yes" : "No" },
+    { label: "Open sessions", value: user.activeSessions },
+    { label: "Joined", value: when(user.createdAt) },
+    { label: "Updated", value: when(user.updatedAt) },
+    { label: "ID", value: user.id, mono: true },
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">User Details</h1>
-          <p className="text-muted-foreground">{user.email}</p>
-        </div>
-        <Link
-          href="/admin/users"
-          className="px-4 py-2 text-sm border rounded-lg hover:bg-accent"
-        >
-          ← Back to Users
-        </Link>
+    <div className="flex flex-col gap-10 [&>header]:mb-0">
+      <div className="flex flex-col gap-5">
+        <AdminPageHeader
+          title={user.name || "Unnamed"}
+          lead={user.email}
+          back={{ href: "/admin/users", label: "Users" }}
+        />
+        {isSelf ? (
+          <p className="text-[14px] text-muted-foreground">
+            This is your own account, so the account actions are not offered
+            here.
+          </p>
+        ) : (
+          <UserActions user={user} />
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-semibold mb-4">User Information</h2>
-            <div className="space-y-4">
-              <InfoRow label="ID" value={user.id} />
-              <InfoRow label="Name" value={user.name || "-"} />
-              <InfoRow label="Email" value={user.email} />
-              <InfoRow
-                label="Email Verified"
-                value={user.emailVerified ? "Yes ✓" : "No"}
-              />
-              <InfoRow label="Role" value={user.role || "user"} />
-              <InfoRow
-                label="Status"
-                value={
-                  !user.banned
-                    ? "Active"
-                    : banEnded
-                      ? "Suspension ended"
-                      : "Suspended"
-                }
-              />
-              <InfoRow
-                label="Created"
-                value={
-                  user.createdAt
-                    ? new Date(user.createdAt).toLocaleString()
-                    : "-"
-                }
-              />
-              <InfoRow
-                label="Updated"
-                value={
-                  user.updatedAt
-                    ? new Date(user.updatedAt).toLocaleString()
-                    : "-"
-                }
-              />
-            </div>
-          </div>
-
-          {user.banned && (
-            <section
-              aria-labelledby="suspension-title"
-              className="border border-burnt-peach-300 bg-burnt-peach-50 p-6 dark:border-burnt-peach-500/30 dark:bg-burnt-peach-500/10"
+      {user.banned && (
+        <section aria-labelledby="suspension-title" className="flex flex-col">
+          <div className="log-section-header">
+            <h2
+              id="suspension-title"
+              className="text-[20px] font-semibold text-destructive"
             >
-              <h2
-                id="suspension-title"
-                className="mb-3 text-xl font-semibold text-burnt-peach-800 dark:text-burnt-peach-300"
-              >
-                {banEnded ? "Suspension ended" : "Suspended"}
-              </h2>
-              <dl className="space-y-2 text-sm">
-                <div>
-                  <dt className="font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
-                    Reason
-                  </dt>
-                  <dd className="break-words">
-                    {user.banReason || "No reason given"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
-                    Ends
-                  </dt>
-                  <dd>
-                    {user.banExpires
-                      ? `${new Date(user.banExpires).toLocaleString("en-GB", { timeZone: "UTC" })} UTC`
-                      : "When an administrator lifts it"}
-                  </dd>
-                </div>
-              </dl>
-            </section>
-          )}
+              {banEnded ? "Suspension ended" : "Suspended"}
+            </h2>
+          </div>
+          <dl>
+            <Field label="Reason">{user.banReason || "No reason given"}</Field>
+            <Field label="Ends">
+              {user.banExpires
+                ? `${new Date(user.banExpires).toLocaleString("en-GB", { timeZone: "UTC" })} UTC`
+                : "When an administrator lifts it"}
+            </Field>
+          </dl>
+        </section>
+      )}
 
-          <SupportNotesPanel
-            subjectType="User"
-            subjectId={user.id}
-            initialNotes={notes}
-          />
+      <section aria-labelledby="details-title" className="flex flex-col">
+        <div className="log-section-header">
+          <h2 id="details-title" className="text-[20px] font-semibold">
+            Details
+          </h2>
+        </div>
+        <dl>
+          {fields.map((field) => (
+            <Field key={field.label} label={field.label} mono={field.mono}>
+              {field.value}
+            </Field>
+          ))}
+        </dl>
+      </section>
 
-          <UsageThisMonth userId={user.id} />
+      <UsageThisMonth userId={user.id} />
 
-          <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Sessions</h2>
-            <div className="space-y-4">
-              {user.recentSessions.length === 0 ? (
-                <p className="text-muted-foreground">No sessions found</p>
-              ) : (
-                user.recentSessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="p-4 border rounded-lg space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        {session.ipAddress || "Unknown IP"}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          new Date(session.expiresAt) > new Date()
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                        }`}
-                      >
-                        {new Date(session.expiresAt) > new Date()
-                          ? "Active"
-                          : "Expired"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
+      <section aria-labelledby="sessions-title" className="flex flex-col">
+        <div className="log-section-header">
+          <h2 id="sessions-title" className="text-[20px] font-semibold">
+            Recent sessions
+          </h2>
+        </div>
+        {user.recentSessions.length === 0 ? (
+          <p className="log-empty text-[14px] text-muted-foreground">
+            No sessions yet.
+          </p>
+        ) : (
+          <ul>
+            {user.recentSessions.map((session) => {
+              const open = new Date(session.expiresAt) > new Date();
+              return (
+                <li key={session.id} className="ledger-row items-start">
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-[14px] font-medium">
+                      {session.ipAddress || "Unknown IP"}
+                    </span>
+                    <span className="truncate text-[12px] text-muted-foreground">
                       {session.userAgent || "Unknown device"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Created: {new Date(session.createdAt).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Expires: {new Date(session.expiresAt).toLocaleString()}
-                    </p>
+                    </span>
+                    <span className="text-[12px] text-muted-foreground tabular-nums">
+                      Started {when(session.createdAt)} · ends{" "}
+                      {when(session.expiresAt)}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+                  <Pill tone={open ? "good" : "neutral"}>
+                    {open ? "Open" : "Expired"}
+                  </Pill>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
-        <div className="space-y-6">
-          <div className="bg-card rounded-lg border p-6">
-            <h2 className="text-xl font-semibold mb-4">Quick Stats</h2>
-            <div className="space-y-4">
-              <StatItem label="Active Sessions" value={user.activeSessions} />
-              <StatItem
-                label="Account Status"
-                value={user.banned ? "Suspended" : "Active"}
-                valueClassName={user.banned ? "text-red-600" : "text-green-600"}
-              />
-            </div>
-          </div>
-
-          {!isSelf && (
-            <div className="bg-card rounded-lg border p-6">
-              <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
-              <UserActions user={user} />
-            </div>
-          )}
-
-          {isSelf && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                This is your own account. Some admin actions are restricted.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      <SupportNotesPanel
+        subjectType="User"
+        subjectId={user.id}
+        initialNotes={notes}
+      />
     </div>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between py-2 border-b last:border-b-0">
-      <span className="font-medium text-muted-foreground">{label}</span>
-      <span className="text-right break-all max-w-[60%]">{value}</span>
-    </div>
-  );
-}
-
-function StatItem({
+function Field({
   label,
-  value,
-  valueClassName,
+  mono,
+  children,
 }: {
   label: string;
-  value: string | number;
-  valueClassName?: string;
+  mono?: boolean;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex justify-between items-center">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`text-lg font-semibold ${valueClassName || ""}`}>
-        {value}
-      </span>
+    <div className="grid min-h-11 gap-x-6 gap-y-0.5 border-b border-border py-2.5 sm:grid-cols-[180px_minmax(0,1fr)]">
+      <dt className="text-[14px] text-muted-foreground">{label}</dt>
+      <dd
+        className={
+          mono ? "font-mono text-[13px] break-all" : "text-[14px] break-words"
+        }
+      >
+        {children}
+      </dd>
     </div>
   );
 }

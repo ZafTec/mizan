@@ -57,14 +57,14 @@ export function CreateUserForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
-          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-        </div>
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
       )}
 
       <div>
         <label htmlFor="email" className="label">
-          Email <span className="text-red-500">*</span>
+          Email <span className="text-destructive">*</span>
         </label>
         <input
           type="email"
@@ -80,7 +80,7 @@ export function CreateUserForm() {
 
       <div>
         <label htmlFor="name" className="label">
-          Full Name <span className="text-red-500">*</span>
+          Full name <span className="text-destructive">*</span>
         </label>
         <input
           type="text"
@@ -96,7 +96,7 @@ export function CreateUserForm() {
 
       <div>
         <label htmlFor="role" className="label">
-          Role <span className="text-red-500">*</span>
+          Role <span className="text-destructive">*</span>
         </label>
         <Select
           id="role"
@@ -122,7 +122,7 @@ export function CreateUserForm() {
 
       <div>
         <label htmlFor="password" className="label">
-          Password <span className="text-red-500">*</span>
+          Password <span className="text-destructive">*</span>
         </label>
         <input
           type="password"
@@ -141,7 +141,7 @@ export function CreateUserForm() {
 
       <div>
         <label htmlFor="confirmPassword" className="label">
-          Confirm Password <span className="text-red-500">*</span>
+          Confirm password <span className="text-destructive">*</span>
         </label>
         <input
           type="password"
@@ -159,7 +159,7 @@ export function CreateUserForm() {
         {formData.password &&
           formData.confirmPassword &&
           formData.password !== formData.confirmPassword && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-300">
+            <p className="mt-2 text-sm text-destructive">
               Passwords do not match
             </p>
           )}
@@ -169,9 +169,9 @@ export function CreateUserForm() {
         <button
           type="submit"
           disabled={isLoading || formData.password !== formData.confirmPassword}
-          className="btn-primary flex-1"
+          className="btn-primary"
         >
-          {isLoading ? "Creating..." : "Create User"}
+          {isLoading ? "Creating..." : "Create user"}
         </button>
         <button
           type="button"
@@ -181,13 +181,6 @@ export function CreateUserForm() {
         >
           Cancel
         </button>
-      </div>
-
-      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          <strong>Note:</strong> The user will not receive an email verification
-          link. They can log in immediately with the credentials provided.
-        </p>
       </div>
     </form>
   );

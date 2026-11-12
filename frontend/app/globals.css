@@ -748,6 +748,21 @@ html {
   }
 }
 
+/* Vaul drawers (components/ui/drawer.tsx) move on the phone sheet's curve:
+   280ms in, 200ms out. Vaul's own rules are unlayered, so these are too, one
+   attribute more specific. Reduced motion below still ends them at once. */
+[data-vaul-drawer][data-state="open"] {
+  animation-duration: 280ms;
+  animation-timing-function: var(--ease-drawer);
+}
+[data-vaul-drawer][data-state="closed"] {
+  animation-duration: 200ms;
+  animation-timing-function: var(--ease-out);
+}
+[data-vaul-overlay][data-state] {
+  animation-duration: 200ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),

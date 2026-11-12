@@ -6,6 +6,7 @@ type Options = {
   empty?: boolean;
   role?: "admin" | "user";
   pro?: boolean;
+  estimatesUsed?: number;
   aiPlanning?: { consented?: boolean };
 };
 type State = {
@@ -85,18 +86,18 @@ test.describe("logging a meal with the assistant", () => {
     expect(saved[0].body).not.toHaveProperty("calories");
   });
 
-  test("a free account is walled when it tries, and can still search", async ({
+  test("a free account that used today's estimates is told so, and can still search", async ({
     context,
     page,
   }) => {
-    await signIn(context, { pro: false });
+    await signIn(context, { pro: false, estimatesUsed: 3 });
     await openMealLog(page);
 
     await page.getByLabel("Tell me what you ate").fill("a bowl of oats");
     await page.getByRole("button", { name: "Estimate meal" }).click();
 
     await expect(page.getByRole("note")).toContainText(
-      "Log a meal in plain words",
+      "You have used today's free estimates",
     );
     expect(
       writesTo(await state(context), "/api/Nutrition/ai/analyze-text"),
@@ -352,9 +353,7 @@ test.describe("administrators", () => {
     await signIn(context, { role: "admin" });
     await page.goto("/admin/users/cccccccc-cccc-4ccc-8ccc-cccccccccccc");
 
-    await page
-      .getByRole("button", { name: "View the site as this user" })
-      .click();
+    await page.getByRole("button", { name: "View as this person" }).click();
 
     await page.waitForURL("**/today");
     const banner = page.getByRole("status").filter({ hasText: "Viewing as" });

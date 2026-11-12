@@ -168,8 +168,6 @@ public sealed class PlanReadModel
         var recipes = fullRecipes.Values.ToDictionary(
             r => r.Id,
             r => new RecipeHead(r.Id, r.Title, r.ImageUrl, r.Ingredients.Where(i => i.FoodId != null).Select(i => i.FoodId!.Value).ToList()));
-        var perServing = await RecipeNutritionLookup.ForRecipesAsync(_context, recipeIds, cancellationToken);
-
         var foodIds = plan.Entries.Where(e => e.FoodId.HasValue).Select(e => e.FoodId!.Value)
             .Concat(recipes.Values.SelectMany(r => r.FoodIds))
             .Distinct()
@@ -177,16 +175,23 @@ public sealed class PlanReadModel
         var foods = foodIds.Count == 0
             ? new Dictionary<Guid, Food>()
             : await _context.Foods.AsNoTracking().Where(f => foodIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, cancellationToken);
+        // The recipes and every ingredient's food were read above, so nutrition reads only the snapshots.
+        var perServing = await RecipeNutritionLookup.ForRecipesAsync(_context, fullRecipes.Values, foods, cancellationToken);
 
         var logged = new HashSet<Guid>();
         if (plan.StartDate is { } start && plan.Entries.Count > 0)
         {
             var entryIds = plan.Entries.Select(e => e.Id).ToList();
+            var dateByEntry = plan.Entries.ToDictionary(e => e.Id, e => PlanSchedule.DateOf(start, e.DayIndex));
+            // Only a row on its entry's own date counts, so the plan's dates bound the read: the
+            // (user, date) index then reads those days instead of the viewer's whole diary.
+            var first = dateByEntry.Values.Min();
+            var last = dateByEntry.Values.Max();
             var rows = await _context.FoodDiaryEntries.AsNoTracking()
-                .Where(d => d.UserId == viewerId && d.PlanEntryId != null && entryIds.Contains(d.PlanEntryId.Value))
+                .Where(d => d.UserId == viewerId && d.EntryDate >= first && d.EntryDate <= last
+                    && d.PlanEntryId != null && entryIds.Contains(d.PlanEntryId.Value))
                 .Select(d => new { EntryId = d.PlanEntryId!.Value, d.EntryDate })
                 .ToListAsync(cancellationToken);
-            var dateByEntry = plan.Entries.ToDictionary(e => e.Id, e => PlanSchedule.DateOf(start, e.DayIndex));
             foreach (var row in rows)
                 if (dateByEntry.TryGetValue(row.EntryId, out var date) && date == row.EntryDate) logged.Add(row.EntryId);
         }

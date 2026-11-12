@@ -84,3 +84,9 @@ public record AiProviderTestResult(
 
 /// <summary>One check of the provider test. <c>Passed</c> false carries the error class and the provider's reason.</summary>
 public record AiProviderCheckResult(bool Passed, string? ErrorClass, string? ProviderMessage, int LatencyMs);
+
+/// <summary>
+/// What POST /api/admin/settings/end-user-key/rotate did: the new signing key's id, and the id of
+/// the key it replaced, which stays published until its tokens expire (docs/AI.md#behind-a-gateway).
+/// </summary>
+public record EndUserKeyRotationResult(string KeyId, string? PreviousKeyId);

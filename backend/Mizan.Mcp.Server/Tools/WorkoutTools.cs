@@ -11,6 +11,8 @@ namespace Mizan.Mcp.Server.Tools;
 [McpServerToolType]
 public sealed class WorkoutTools
 {
+    private static readonly JsonSerializerOptions CaseInsensitive = new() { PropertyNameCaseInsensitive = true };
+
     private readonly IBackendApiClient _api;
     public WorkoutTools(IBackendApiClient api) => _api = api;
 
@@ -92,9 +94,7 @@ public sealed class WorkoutTools
     {
         try
         {
-            return JsonSerializer.Deserialize<List<WorkoutExerciseDto>>(
-                json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+            return JsonSerializer.Deserialize<List<WorkoutExerciseDto>>(json, CaseInsensitive) ?? new();
         }
         catch (JsonException ex)
         {

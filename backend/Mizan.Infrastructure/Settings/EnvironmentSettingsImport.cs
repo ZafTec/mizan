@@ -63,6 +63,23 @@ public static class EnvironmentSettingsImport
         ["Authentication.Google.ClientSecret"] = ["GOOGLE_CLIENT_SECRET"],
         ["Authentication.GitHub.ClientId"] = ["GITHUB_CLIENT_ID"],
         ["Authentication.GitHub.ClientSecret"] = ["GITHUB_CLIENT_SECRET"],
+        ["EndUser.Header"] = ["Ai:EndUser:Header"],
+        ["EndUser.Issuer"] = ["Ai:EndUser:Issuer"],
+        ["EndUser.Audience"] = ["Ai:EndUser:Audience"],
+        ["EndUser.KeyId"] = ["Ai:EndUser:KeyId"],
+        ["EndUser.PrivateKey"] = ["Ai:EndUser:PrivateKey"],
+        ["EndUser.LifetimeSeconds"] = ["Ai:EndUser:LifetimeSeconds"],
+        ["EndUser.PreviousPublicKey"] = ["Ai:EndUser:PreviousPublicKey"],
+        ["EndUser.PreviousKeyId"] = ["Ai:EndUser:PreviousKeyId"],
+
+        // The MCP server's variables: run the import with them set, or enter the values in the admin area.
+        ["Gateway.ClientKey"] = ["Mcp:Gateway:ClientKey"],
+        ["Gateway.ClientKeyHeader"] = ["Mcp:Gateway:ClientKeyHeader"],
+        ["Gateway.MetaKey"] = ["Mcp:Gateway:MetaKey"],
+        ["Gateway.JwksUrl"] = ["Mcp:Gateway:JwksUrl"],
+        ["Gateway.Issuer"] = ["Mcp:Gateway:Issuer"],
+        ["Gateway.Audience"] = ["Mcp:Gateway:Audience"],
+        ["Gateway.TokenType"] = ["Mcp:Gateway:TokenType"],
     };
 
     /// <summary>Old keys that held a TimeSpan where the new key holds a whole number.</summary>

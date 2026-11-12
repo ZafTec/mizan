@@ -63,7 +63,7 @@ test("an administrator edits a setting, is told why a value is refused, and clea
   await field.fill("2525");
   await port.getByRole("button", { name: "Save" }).click();
   await expect(port.getByTestId("setting-value")).toHaveText("2525");
-  await expect(port).toContainText("Set here");
+  await expect(port).toContainText("Stored");
   await expect(port.getByRole("alert")).toHaveCount(0);
 
   await port.getByRole("button", { name: "Clear SMTP port" }).click();
@@ -102,12 +102,12 @@ test("a secret is entered masked and never shown, and the test buttons report ba
   await field.fill("fixture-smtp-secret");
   await field.press("Enter");
   await expect(password.getByTestId("setting-value")).toHaveText("Set");
-  await expect(password).toContainText("Set here");
+  await expect(password).toContainText("Stored");
   await expect(page.locator("body")).not.toContainText("fixture-smtp-secret");
 
   const key = row(page, "Ai.ApiKey");
   await expect(key.getByTestId("setting-value")).toHaveText("Set");
-  await expect(key).toContainText("Set here");
+  await expect(key).toContainText("Stored");
 
   const email = page.getByRole("region", { name: "Email" });
   await email.getByRole("button", { name: "Send test email" }).click();

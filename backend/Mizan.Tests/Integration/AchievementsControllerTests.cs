@@ -126,9 +126,9 @@ public class AchievementsControllerTests
         var email = $"ach-points-{userId:N}@example.com";
         await _fixture.SeedUserAsync(userId, email);
         await SeedSpecificAchievementsAsync(
-            ("Low", "fitness", "workouts_logged", 10, points: 5),
-            ("High", "fitness", "workouts_logged", 10, points: 500),
-            ("Mid", "fitness", "workouts_logged", 10, points: 50));
+            ("Low", "fitness", "workouts_logged", 10, Points: 5),
+            ("High", "fitness", "workouts_logged", 10, Points: 500),
+            ("Mid", "fitness", "workouts_logged", 10, Points: 50));
 
         using var client = _fixture.CreateAuthenticatedClient(userId, email);
 

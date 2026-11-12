@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Backend Development Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS base
 WORKDIR /src
 
 ENV ASPNETCORE_ENVIRONMENT=Development

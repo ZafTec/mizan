@@ -13,19 +13,19 @@ public class DraftSummaryTests
     [InlineData(5000d, 2000d, 0.5d)]    // never below half
     [InlineData(2500d, null, 1d)]      // no target
     public void ADayOverItsCalories_IsScaledToTheTarget_NeverBelowHalf(double calories, double? target, double factor) =>
-        PortionScaling.DayFactor((decimal)calories, (decimal?)target).Should().Be((decimal)factor);
+        PortionScaling.DayFactor(Dec.Of(calories), Dec.Of(target)).Should().Be(Dec.Of(factor));
 
     [Theory]
     [InlineData(150d, 0.67d, 100d)]
     [InlineData(4d, 0.5d, 5d)]
     public void ScaledGrams_AreRoundedToFiveGrams(double grams, double factor, double expected) =>
-        PortionScaling.Grams((decimal)grams, (decimal)factor).Should().Be((decimal)expected);
+        PortionScaling.Grams(Dec.Of(grams), Dec.Of(factor)).Should().Be(Dec.Of(expected));
 
     [Theory]
     [InlineData(2d, 0.6d, 1.25d)]
     [InlineData(0.25, 0.5, 0.25)]
     public void ScaledServings_AreRoundedToAQuarter(double servings, double factor, double expected) =>
-        PortionScaling.Servings((decimal)servings, (decimal)factor).Should().Be((decimal)expected);
+        PortionScaling.Servings(Dec.Of(servings), Dec.Of(factor)).Should().Be(Dec.Of(expected));
 
     [Fact]
     public void EachUnmetRule_IsOneLineWithItsAmountAndTarget_AndTheNoteCountsThem()

@@ -53,7 +53,7 @@ test("an administrator writes a campaign, previews it, tests it and starts it fo
   await signIn(context, { role: "admin" });
   await page.goto("/admin/notifications");
   await expect(
-    page.getByRole("heading", { name: "Notifications", level: 1 }),
+    page.getByRole("heading", { name: "Campaigns", level: 1 }),
   ).toBeVisible();
 
   // The history: the live welcome and its delivery report.

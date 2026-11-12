@@ -74,7 +74,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
         Domain.Entities.MealPlan plan;
         try
         {
-            plan = await _access.LoadReadableAsync(planId, cancellationToken);
+            plan = await _access.LoadForReadingAsync(planId, cancellationToken);
         }
         catch (Exceptions.EntityNotFoundException)
         {
@@ -99,7 +99,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
 
     private async ValueTask<PlanDayViewDto?> LoadAsync(Guid userId, DateOnly date, IReadOnlyList<Guid> households, CancellationToken cancellationToken)
     {
-        var candidates = await _context.MealPlans
+        var candidates = await _context.MealPlans.AsNoTracking()
             .Include(p => p.Entries)
             .Include(p => p.PrepSessions)
             .Where(p => p.Kind == PlanKind.Personal && p.Status == PlanStatus.Active && p.StartDate != null

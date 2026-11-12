@@ -20,7 +20,7 @@ public sealed class RequestResponseLoggingMiddlewareTests
                 It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()))
-            .Callback(new InvocationAction(invocation => messages.Add(invocation.Arguments[2].ToString() ?? string.Empty)));
+            .Callback(new InvocationAction(invocation => messages.Add(invocation.Arguments[2]?.ToString() ?? string.Empty)));
         var middleware = new RequestResponseLoggingMiddleware(_ => Task.CompletedTask, logger.Object);
         var context = new DefaultHttpContext();
         context.Request.QueryString = new QueryString("?token=raw-secret&view=feed");

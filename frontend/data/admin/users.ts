@@ -31,13 +31,6 @@ export interface AdminSession {
   expiresAt: string;
 }
 
-export interface AdminOverview {
-  totalUsers: number;
-  activeTrainers: number;
-  bannedUsers: number;
-  activeSessions: number;
-  recentUsers: AdminUser[];
-}
 
 export interface AdminUserDetail {
   user: AdminUser;
@@ -51,23 +44,6 @@ interface Paged<T> {
   page: number;
   pageSize: number;
   totalPages: number;
-}
-
-const EMPTY_OVERVIEW: AdminOverview = {
-  totalUsers: 0,
-  activeTrainers: 0,
-  bannedUsers: 0,
-  activeSessions: 0,
-  recentUsers: [],
-};
-
-export async function getAdminOverview(): Promise<AdminOverview> {
-  try {
-    return await serverApi<AdminOverview>("/api/admin/overview");
-  } catch (error) {
-    adminLogger.error("Failed to load admin overview", { error });
-    return EMPTY_OVERVIEW;
-  }
 }
 
 export async function listAdminUsers(params: {

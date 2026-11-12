@@ -142,6 +142,62 @@ public class NotificationCampaignStoryTests
         outId.Should().NotBe(inId);
     }
 
+    [Fact]
+    public async Task ASentCampaignsReport_KeepsItsNumbersAfterOldJobsAreCleanedUp()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var world = new PlatformAdminWorld(_fixture);
+        var (_, admin) = await world.AdminAsync();
+        var (_, reader) = await world.PersonAsync("reader", name: "Sara Tesfaye");
+        await PlatformAdminWorld.OkAsync(reader.PutAsJsonAsync("/api/Notifications/preferences",
+            new UpdateNotificationPreferencesRequest([new NotificationKindPreferenceUpdate(NotificationKinds.Marketing, InApp: true, Email: true)])));
+
+        var news = await PlatformAdminWorld.ReadAsync<NotificationCampaignDto>(admin.PostAsJsonAsync(Base, new SaveNotificationCampaignRequest(
+            "Autumn menu",
+            "marketing",
+            new CampaignContent("Autumn is here, {firstName}", "Soups for the season"),
+            new CampaignTiming("now"),
+            Channels: ["inApp", "email"])));
+        await PlatformAdminWorld.OkAsync(admin.PostAsJsonAsync($"{Base}/{news.Id}/activate", new ActivateNotificationCampaignRequest(1)));
+        await RunDueAsync();
+
+        // The email the delivery staged waits for the test clock, which the database clock does not follow.
+        await world.DbAsync(db => db.OutboxJobs.Where(j => j.Status == OutboxJobStatus.Pending)
+            .ExecuteUpdateAsync(j => j.SetProperty(x => x.RunAfter, DateTime.UtcNow.AddSeconds(-1))));
+        await _fixture.DrainOutboxAsync();
+
+        var before = (await admin.GetFromJsonAsync<NotificationCampaignDto>($"{Base}/{news.Id}"))!.Report;
+        before.Should().BeEquivalentTo(
+        [
+            new CampaignChannelReport("inApp", 0, 1, 0, 0, 0),
+            new CampaignChannelReport("email", 0, 1, 0, 0, null),
+        ]);
+
+        // A year on, the retention pass removes finished jobs, but not the ones this campaign's report counts.
+        var unrelated = await world.DbAsync(async db =>
+        {
+            var job = new OutboxJob
+            {
+                Id = Guid.NewGuid(),
+                Type = OutboxJobTypes.Email,
+                Payload = "{}",
+                Status = OutboxJobStatus.Succeeded,
+                DedupeKey = "email:notification:someone-else",
+                CreatedAt = DateTime.UtcNow.AddDays(-400),
+                CompletedAt = DateTime.UtcNow.AddDays(-400),
+                RunAfter = DateTime.UtcNow.AddDays(-400),
+            };
+            db.OutboxJobs.Add(job);
+            await db.SaveChangesAsync();
+            return job.Id;
+        });
+        var dispatcher = _fixture.Services.GetServices<IHostedService>().OfType<OutboxDispatcher>().Single();
+        (await dispatcher.PruneAsync(DateTime.UtcNow.AddDays(365), CancellationToken.None)).Should().Be(1);
+        (await world.DbAsync(db => db.OutboxJobs.AnyAsync(j => j.Id == unrelated))).Should().BeFalse();
+
+        (await admin.GetFromJsonAsync<NotificationCampaignDto>($"{Base}/{news.Id}"))!.Report.Should().BeEquivalentTo(before);
+    }
+
     private Task<int> ScanAsync() =>
         _fixture.Services.GetServices<IHostedService>().OfType<NotificationSchedulerService>().Single().RunOnceAsync(CancellationToken.None);
 

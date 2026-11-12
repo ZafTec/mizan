@@ -96,6 +96,9 @@ public static class TaskToolCatalogue
             Required = tool.Required,
             App = tool.App,
             ModeHelp = tool.ModeHelp,
+            Additive = tool.Additive,
+            Idempotent = tool.Idempotent,
+            OpenWorld = tool.OpenWorld,
             Modes =
             [
                 .. tool.Modes,

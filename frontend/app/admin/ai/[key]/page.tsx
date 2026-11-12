@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import {
@@ -7,6 +6,7 @@ import {
   type AiEvalMatrix,
 } from "@/data/admin/ai";
 import PromptConsole from "@/components/admin/ai/PromptConsole";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export default async function AdminAiPromptPage({
   params,
@@ -33,23 +33,14 @@ export default async function AdminAiPromptPage({
   }
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-2">
-        <Link
-          href="/admin/ai"
-          className="text-xs text-charcoal-blue-500 hover:text-verdigris-600 dark:text-charcoal-blue-400"
-        >
-          ← Assistant
-        </Link>
-        <h1 className="font-mono text-2xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          {prompt.key}
-        </h1>
-        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          {prompt.description}
-        </p>
-      </header>
+    <>
+      <AdminPageHeader
+        title={prompt.key}
+        lead={prompt.description}
+        back={{ href: "/admin/ai", label: "Assistant" }}
+      />
 
       <PromptConsole prompt={prompt} initialMatrix={matrix} />
-    </div>
+    </>
   );
 }

@@ -266,7 +266,7 @@ public class GoalHintsTests
     public void EachMacro_IsHeldToItsShareOfCalories(int calories, double? protein, double? carbs, double? fat, string? warned)
     {
         var hints = GoalHints.CheckGoalSanity(
-            "general", calories, (decimal?)protein, (decimal?)carbs, (decimal?)fat, targetDate: null);
+            "general", calories, Dec.Of(protein), Dec.Of(carbs), Dec.Of(fat), targetDate: null);
 
         var shares = hints.Where(h => h.Contains("of your calories")).ToList();
         if (warned is null) shares.Should().BeEmpty();

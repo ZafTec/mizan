@@ -8,13 +8,18 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
-  type KeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDragStrip,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 /**
  * The app shell's side panels: the assistant and the notifications. Each is a panel beside
@@ -23,9 +28,9 @@ import { cn } from "@/lib/utils";
  * and the open panel is remembered per person in this browser.
  *
  * From 1280px the panel docks at 420px on the right and leaves the page usable. Between 768px
- * and 1280px the page could not keep its layout beside it, so the panel is a drawer over the
- * page from the right. Below 768px it is a full-height sheet from the bottom. Drawer and sheet
- * both hold focus until they are closed.
+ * and 1280px the page could not keep its layout beside it, so the panel is the shared drawer
+ * (`ui/drawer`) over the page from the right. Below 768px it is a full-height sheet from the
+ * bottom that drags closed by its top edge. Drawer and sheet hold focus until they are closed.
  *
  * A panel opens from the address too: `?panel=assistant` or `?panel=notifications` is consumed
  * once, which is how `/ai` and `/notifications` keep working as links.
@@ -78,25 +83,13 @@ function remembered(userId: string): PanelName | null {
   }
 }
 
-function useMedia(media: string) {
-  return useSyncExternalStore(
-    (changed) => {
-      const query = window.matchMedia?.(media);
-      query?.addEventListener("change", changed);
-      return () => query?.removeEventListener("change", changed);
-    },
-    () => window.matchMedia?.(media).matches ?? false,
-    () => false,
-  );
-}
-
 export function usePhone() {
-  return useMedia(PHONE);
+  return useMediaQuery(PHONE);
 }
 
 /** True when an open panel covers the page (a drawer or a sheet) instead of docking beside it. */
 export function useCoveringPanel() {
-  return useMedia(NARROW);
+  return useMediaQuery(NARROW);
 }
 
 export function SidePanelProvider({
@@ -174,9 +167,6 @@ export function SidePanelProvider({
   );
 }
 
-const FOCUSABLE =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 export interface SidePanelContent {
   /** A sheet from the bottom of a phone. */
   phone: boolean;
@@ -189,7 +179,9 @@ export interface SidePanelContent {
 
 /**
  * One side panel. Its content is mounted on first open and kept afterwards, so closing does not
- * throw away what it holds (a conversation, a scrolled list).
+ * throw away what it holds (a conversation, a scrolled list). The content renders into one
+ * element that moves between the docked column and the drawer, so changing between them, or
+ * closing the drawer, keeps it too.
  */
 export function SidePanel({
   name,
@@ -206,8 +198,6 @@ export function SidePanel({
   const open = active === name;
   const phone = usePhone();
   const covers = useCoveringPanel();
-  const drawer = covers && !phone;
-  const panel = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(open);
   const [opened, setOpened] = useState(open ? 1 : 0);
   const [seenOpen, setSeenOpen] = useState(open);
@@ -219,6 +209,20 @@ export function SidePanel({
     }
   }
 
+  // Created in the browser only; the content is never server-rendered (it mounts on first open).
+  const [host] = useState(() => {
+    if (typeof document === "undefined") return null;
+    const node = document.createElement("div");
+    node.className = "flex min-h-0 flex-1 flex-col";
+    return node;
+  });
+  const attach = useCallback(
+    (slot: HTMLElement | null) => {
+      if (slot && host && host.parentNode !== slot) slot.appendChild(host);
+    },
+    [host],
+  );
+
   // Closing hands focus back to the launcher, unless another panel took this one's place.
   const wasOpen = useRef(open);
   useEffect(() => {
@@ -227,92 +231,78 @@ export function SidePanel({
     wasOpen.current = open;
   }, [open, active, launcher, name]);
 
-  // A drawer or a sheet is modal: what is behind it cannot be reached until it closes.
-  useEffect(() => {
-    const root = panel.current;
-    const shell = root?.parentElement;
-    if (!open || !covers || !shell) return;
-    const behind = Array.from(shell.children).filter(
-      (child): child is HTMLElement =>
-        child !== root && child instanceof HTMLElement && !child.inert,
-    );
-    for (const element of behind) element.inert = true;
-    return () => {
-      for (const element of behind) element.inert = false;
-    };
-  }, [open, covers]);
-
-  // A sheet whose focused control just went away (a list row it replaced) still closes on Escape.
-  useEffect(() => {
-    if (!open || !covers) return;
-    function escape(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape" && document.activeElement === document.body)
+  // Docked, Escape inside the panel closes it. The content is portaled into the panel, so its
+  // keys reach it through the DOM rather than React; a photo or a confirmation opened from the
+  // panel sits outside it and closes itself instead.
+  const dock = useCallback(
+    (slot: HTMLDivElement | null) => {
+      attach(slot);
+      if (!slot) return;
+      const escape = (event: globalThis.KeyboardEvent) => {
+        if (event.key !== "Escape" || event.defaultPrevented) return;
+        event.preventDefault();
         close();
-    }
-    document.addEventListener("keydown", escape);
-    return () => document.removeEventListener("keydown", escape);
-  }, [open, covers, close]);
+      };
+      slot.addEventListener("keydown", escape);
+      return () => slot.removeEventListener("keydown", escape);
+    },
+    [attach, close],
+  );
 
-  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    // A photo or a confirmation opened from the panel is portaled out of it, but its keys still
-    // bubble here through React. Those close themselves, not the panel.
-    if (!panel.current?.contains(event.target as Node)) return;
-    if (event.key === "Escape" && !event.defaultPrevented) {
-      event.preventDefault();
-      close();
-      return;
-    }
-    if (event.key !== "Tab" || !covers) return;
-    const items = Array.from(
-      panel.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [],
-    ).filter((item) => item.offsetParent !== null);
-    if (items.length === 0) return;
-    const first = items[0];
-    const last = items[items.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
+  const content =
+    mounted && host
+      ? createPortal(
+          children({ phone, covers, focusToken: opened, close }),
+          host,
+        )
+      : null;
+
+  if (covers)
+    return (
+      <>
+        <Drawer
+          open={open}
+          onOpenChange={(next) => {
+            if (!next) close();
+          }}
+          direction={phone ? "bottom" : "right"}
+          // The content puts focus in itself once it is ready (focusToken).
+          autoFocus={false}
+        >
+          <DrawerContent
+            id={id}
+            data-side-panel={name}
+            aria-modal="true"
+            aria-describedby={undefined}
+            handle={false}
+            // The launcher takes focus back as the panel closes (above).
+            onCloseAutoFocus={(event) => event.preventDefault()}
+            className={phone ? "h-dvh max-h-none rounded-none border-0" : ""}
+          >
+            <DrawerTitle className="sr-only">{label}</DrawerTitle>
+            {phone && <DrawerDragStrip />}
+            <div ref={attach} className="flex min-h-0 flex-1 flex-col" />
+          </DrawerContent>
+        </Drawer>
+        {content}
+      </>
+    );
 
   return (
     <>
-      {open && covers && (
-        <div
-          aria-hidden="true"
-          className="fixed inset-0 z-[59] animate-overlay-in bg-charcoal-blue-950/45"
-          onClick={close}
-        />
-      )}
       <div
-        ref={panel}
+        ref={dock}
         id={id}
         data-side-panel={name}
         tabIndex={-1}
         hidden={!open}
-        role={covers ? "dialog" : "complementary"}
-        aria-modal={covers ? true : undefined}
+        role="complementary"
         aria-label={label}
-        onKeyDown={onKeyDown}
-        className={cn(
-          "flex h-full min-w-0 flex-[0_0_420px] flex-col border-l border-border bg-background focus:outline-none [&[hidden]]:hidden",
-          // Docked, it fades in a few pixels from the edge it sits on and
-          // closes at once, so the page never waits on an empty column.
-          !covers &&
-            "transition-[opacity,translate] duration-200 ease-out starting:translate-x-3 starting:opacity-0",
-          // Between a phone and a wide screen it is a drawer over the page, in from the right.
-          drawer &&
-            "fixed inset-y-0 right-0 z-60 h-dvh w-[420px] max-w-full shadow-xl transition-[translate,display] transition-discrete duration-280 ease-(--ease-drawer) starting:translate-x-full [&[hidden]]:translate-x-full [&[hidden]]:duration-200 [&[hidden]]:ease-out",
-          // On a phone it is a sheet: up from the bottom, and back down.
-          phone &&
-            "fixed inset-0 z-60 h-dvh border-l-0 transition-[translate,display] transition-discrete duration-280 ease-(--ease-drawer) starting:translate-y-full [&[hidden]]:translate-y-full [&[hidden]]:duration-200 [&[hidden]]:ease-out",
-        )}
-      >
-        {mounted && children({ phone, covers, focusToken: opened, close })}
-      </div>
+        // Docked, it fades in a few pixels from the edge it sits on and closes at once, so the
+        // page never waits on an empty column.
+        className="flex h-full min-w-0 flex-[0_0_420px] flex-col border-l border-border bg-background transition-[opacity,translate] duration-200 ease-out focus:outline-none starting:translate-x-3 starting:opacity-0 [&[hidden]]:hidden"
+      />
+      {content}
     </>
   );
 }

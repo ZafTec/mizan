@@ -43,8 +43,8 @@ export default function BodyDiff({
   const changed = rows.some((r) => r.kind !== "same");
 
   return (
-    <section className="card overflow-visible space-y-3 p-5">
-      <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+    <section className="flex flex-col gap-3">
+      <h2 className="log-section-header text-[16px] font-semibold">
         {liveLabel} → {draftLabel}
       </h2>
 

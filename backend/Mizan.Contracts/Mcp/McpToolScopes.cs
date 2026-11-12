@@ -108,7 +108,7 @@ public static class McpToolScopes
             "admin_list_price_review_queue", "admin_update_price_alias", "admin_accept_price_alias_suggestions",
             "admin_import_starter_foods", "admin_add_manual_price",
             "admin_list_price_reports", "admin_resolve_price_report",
-            "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp",
+            "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp", "admin_rotate_end_user_key",
             "admin_list_mail", "admin_retry_mail", "admin_send_announcement", "admin_list_contact",
             "admin_reply_contact", "admin_mark_contact_handled", "admin_get_system_health",
             "admin_list_support_notes", "admin_add_support_note",

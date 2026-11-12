@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminFacts from "@/components/admin/AdminFacts";
 import SupportNotesPanel from "@/components/admin/SupportNotesPanel";
 import {
   getAdminHouseholdServer,
@@ -11,7 +13,7 @@ import AdminMemberRow from "./AdminMemberRow";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Household detail | Mizan admin",
+  title: "Household | Mizan admin",
 };
 
 function day(value: string) {
@@ -44,67 +46,42 @@ export default async function AdminHouseholdDetail({
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <Link
-          href="/admin/households"
-          className="text-xs uppercase tracking-[0.14em] text-brand-700 hover:underline dark:text-brand-300"
-        >
-          ← All households
-        </Link>
-        <h1 className="break-words text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          {detail.name}
-        </h1>
-        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          Created {day(detail.createdAt)} · {detail.members.length}{" "}
-          {detail.members.length === 1 ? "member" : "members"}
-        </p>
-      </header>
+    <div className="flex flex-col gap-10 [&>header]:mb-0">
+      <AdminPageHeader
+        title={detail.name}
+        lead={`Created ${day(detail.createdAt)} · ${detail.members.length} ${detail.members.length === 1 ? "member" : "members"}`}
+        back={{ href: "/admin/households", label: "Households" }}
+      />
 
-      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="border border-charcoal-blue-200 p-4 dark:border-charcoal-blue-700">
-          <dt className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            Owner
-          </dt>
-          <dd className="mt-1 break-words text-sm font-medium">
-            {detail.ownerUserId ? (
-              <a
+      <AdminFacts
+        facts={[
+          {
+            label: "Owner",
+            value: detail.ownerUserId ? (
+              <Link
                 href={`/admin/users/${detail.ownerUserId}`}
-                className="hover:underline"
+                className="text-[16px] hover:underline"
               >
                 {detail.ownerName || detail.ownerEmail}
-              </a>
+              </Link>
             ) : (
-              "No owner among the members"
-            )}
-          </dd>
-        </div>
-        <div className="border border-charcoal-blue-200 p-4 dark:border-charcoal-blue-700">
-          <dt className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            Meal plans
-          </dt>
-          <dd className="mt-1 text-2xl font-semibold tabular-nums">
-            {detail.mealPlanCount}
-          </dd>
-        </div>
-        <div className="border border-charcoal-blue-200 p-4 dark:border-charcoal-blue-700">
-          <dt className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            Shopping lists
-          </dt>
-          <dd className="mt-1 text-2xl font-semibold tabular-nums">
-            {detail.shoppingListCount}
-          </dd>
-        </div>
-      </dl>
+              <span className="text-[14px] font-normal text-muted-foreground">
+                No owner among the members
+              </span>
+            ),
+          },
+          { label: "Meal plans", value: detail.mealPlanCount },
+          { label: "Shopping lists", value: detail.shoppingListCount },
+        ]}
+      />
 
-      <section className="card p-5 sm:p-6" aria-labelledby="members-title">
-        <h2
-          id="members-title"
-          className="mb-4 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
-        >
-          Members
-        </h2>
-        <ul className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
+      <section aria-labelledby="members-title" className="flex flex-col">
+        <div className="log-section-header">
+          <h2 id="members-title" className="text-[20px] font-semibold">
+            Members
+          </h2>
+        </div>
+        <ul>
           {detail.members.map((m) => (
             <AdminMemberRow key={m.userId} householdId={detail.id} member={m} />
           ))}
@@ -114,24 +91,20 @@ export default async function AdminHouseholdDetail({
       <UsageThisMonth householdId={detail.id} />
 
       {detail.pendingInvitations.length > 0 && (
-        <section className="card p-5 sm:p-6" aria-labelledby="invites-title">
-          <h2
-            id="invites-title"
-            className="mb-4 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
-          >
-            Pending invitations
-          </h2>
-          <ul className="space-y-2">
+        <section aria-labelledby="invites-title" className="flex flex-col">
+          <div className="log-section-header">
+            <h2 id="invites-title" className="text-[20px] font-semibold">
+              Pending invitations
+            </h2>
+          </div>
+          <ul>
             {detail.pendingInvitations.map((inv) => (
-              <li
-                key={inv.id}
-                className="flex items-center justify-between rounded-2xl border border-dashed border-charcoal-blue-200 bg-charcoal-blue-50/40 px-4 py-3 text-sm dark:border-white/10 dark:bg-charcoal-blue-900/40"
-              >
+              <li key={inv.id} className="ledger-row text-sm">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+                  <p className="truncate font-medium">
                     {inv.invitedName ?? inv.invitedEmail}
                   </p>
-                  <p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                  <p className="truncate text-xs text-muted-foreground">
                     {inv.invitedEmail} · {inv.role} · expires{" "}
                     {day(inv.expiresAt)}
                   </p>

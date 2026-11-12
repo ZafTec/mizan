@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Mizan.Application.Features;
@@ -25,12 +26,7 @@ public sealed class FeatureGateFilter : IAsyncActionFilter
 
         if (context.ActionDescriptor is ControllerActionDescriptor action)
         {
-            var keys = action.MethodInfo.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
-                .Concat(action.ControllerTypeInfo.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true))
-                .Cast<RequiresFeatureAttribute>()
-                .Select(a => a.Key)
-                .Distinct();
-            foreach (var key in keys) await _gate.EnsureEnabledAsync(key, cancellation);
+            foreach (var key in KeysOf(action)) await _gate.EnsureEnabledAsync(key, cancellation);
         }
 
         var request = context.HttpContext.Request;
@@ -42,6 +38,17 @@ public sealed class FeatureGateFilter : IAsyncActionFilter
 
         await next();
     }
+
+    // An action's attributes never change, so they are read once per action rather than on every request.
+    private static readonly ConditionalWeakTable<ControllerActionDescriptor, string[]> Keys = new();
+
+    private static string[] KeysOf(ControllerActionDescriptor action) =>
+        Keys.GetValue(action, static a => a.MethodInfo.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
+            .Concat(a.ControllerTypeInfo.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true))
+            .Cast<RequiresFeatureAttribute>()
+            .Select(attribute => attribute.Key)
+            .Distinct()
+            .ToArray());
 
     private static bool IsWrite(string method) =>
         !(HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method));

@@ -68,11 +68,13 @@ public class GetDailyNutritionQueryHandler : IRequestHandler<GetDailyNutritionQu
 
     private async ValueTask<DailyNutritionResult> LoadAsync(GetDailyNutritionQuery request, CancellationToken cancellationToken)
     {
-        var entries = await _context.FoodDiaryEntries
+        // Only the columns the totals need, untracked: this is a read.
+        var entries = await _context.FoodDiaryEntries.AsNoTracking()
             .Where(e => e.UserId == _currentUser.UserId && e.EntryDate == request.Date)
+            .Select(e => new { e.MealType, e.Calories, e.ProteinGrams, e.CarbsGrams, e.FatGrams })
             .ToListAsync(cancellationToken);
 
-        var goal = await _context.UserGoals
+        var goal = await _context.UserGoals.AsNoTracking()
             .Where(g => g.UserId == _currentUser.UserId && g.IsActive)
             .OrderByDescending(g => g.CreatedAt) // the goal GET /api/Goals shows, should two ever be active
             .FirstOrDefaultAsync(cancellationToken);

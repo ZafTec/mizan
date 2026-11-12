@@ -9,10 +9,7 @@ export default function ChannelPreviews({
 }) {
   return (
     <section aria-labelledby="campaign-preview" className="space-y-3">
-      <h2
-        id="campaign-preview"
-        className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-      >
+      <h2 id="campaign-preview" className="text-[15px] font-semibold">
         Preview
       </h2>
       {preview.warnings.length > 0 && (
@@ -31,7 +28,7 @@ export default function ChannelPreviews({
           className="border border-charcoal-blue-200 p-3 text-sm dark:border-charcoal-blue-700"
           data-testid={`preview-${c.channel}`}
         >
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             {CHANNELS.find((x) => x.value === c.channel)?.label ?? c.channel}
           </p>
           <p className="mt-1 font-medium break-words">{c.title}</p>

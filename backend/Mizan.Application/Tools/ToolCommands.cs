@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Mcp;
 using Mizan.Contracts.Tools;
 using Mizan.Domain.Constants;
 
@@ -18,7 +19,9 @@ public sealed class GetToolManifestQueryHandler : IRequestHandler<GetToolManifes
 
     public Task<ToolManifestDto> Handle(GetToolManifestQuery request, CancellationToken cancellationToken)
     {
-        var context = ToolCalls.ContextOf(_currentUser, request.Surface);
+        var context = _currentUser.UserId is null && _currentUser.ViaGateway
+            ? ToolCalls.GatewayListing(request.Surface)
+            : ToolCalls.ContextOf(_currentUser, request.Surface);
         var tools = TaskToolCatalogue.All
             .Select(tool => ToolFilter.Describe(tool, context))
             .OfType<ToolDescriptorDto>()
@@ -47,11 +50,15 @@ public sealed class CallTaskToolCommand : IRequest<ToolRunResult>, IRedactedAudi
     /// <summary>Filled in by the handler so the audit row says what the call came to.</summary>
     internal ToolRunResult? Outcome { get; set; }
 
+    /// <summary><c>gateway</c> for a hosted assistant, null for a connected app or the web (docs/MCP.md).</summary>
+    internal string? Path { get; set; }
+
     public object AuditDetails => new
     {
         Tool,
         Mode = Outcome?.Mode,
         Surface = ToolFilter.SurfaceName(Surface),
+        Path,
         Outcome = Outcome is null ? null : Outcome.IsError ? Outcome.ErrorCode : Outcome.Confirmation is not null ? "previewed" : "done",
         ConfirmedAction = Outcome?.ConfirmedAction,
     };
@@ -71,6 +78,7 @@ public sealed class CallTaskToolCommandHandler : IRequestHandler<CallTaskToolCom
     public async Task<ToolRunResult> Handle(CallTaskToolCommand request, CancellationToken cancellationToken)
     {
         var context = ToolCalls.ContextOf(_currentUser, request.Surface);
+        request.Path = context.Gateway ? GatewayAccess.Path : null;
         var result = await _runner.RunAsync(request.Tool, new ToolArgs(request.Arguments), context, cancellationToken);
         request.Outcome = result;
         return result;
@@ -94,7 +102,9 @@ public sealed class ConfirmToolActionCommand : IRequest<ToolRunResult>, IRedacte
 
     internal Guid? ConfirmedAction { get; set; }
 
-    public object AuditDetails => new { ConfirmedAction, Surface = ToolFilter.SurfaceName(Surface) };
+    internal string? Path { get; set; }
+
+    public object AuditDetails => new { ConfirmedAction, Surface = ToolFilter.SurfaceName(Surface), Path };
 }
 
 public sealed class ConfirmToolActionCommandHandler : IRequestHandler<ConfirmToolActionCommand, ToolRunResult>
@@ -110,7 +120,9 @@ public sealed class ConfirmToolActionCommandHandler : IRequestHandler<ConfirmToo
 
     public async Task<ToolRunResult> Handle(ConfirmToolActionCommand request, CancellationToken cancellationToken)
     {
-        var result = await _runner.ConfirmAsync(request.Token, ToolCalls.ContextOf(_currentUser, request.Surface), cancellationToken);
+        var context = ToolCalls.ContextOf(_currentUser, request.Surface);
+        request.Path = context.Gateway ? GatewayAccess.Path : null;
+        var result = await _runner.ConfirmAsync(request.Token, context, cancellationToken);
         request.ConfirmedAction = result.ConfirmedAction;
         return result;
     }
@@ -146,7 +158,13 @@ public static class ToolCalls
 {
     public static ToolCallContext ContextOf(ICurrentUserService currentUser, ToolSurface surface) =>
         new(currentUser.UserId ?? throw new UnauthorizedAccessException(), surface, currentUser.Role ?? "user", currentUser.Grant,
-            currentUser.ImpersonatorId is not null);
+            currentUser.ImpersonatorId is not null, currentUser.ViaGateway);
+
+    /// <summary>
+    /// The gateway lists tools before it names a person, so the list is the one a person with no role of their own
+    /// sees there. A trainer's tools are still answered when the trainer calls them.
+    /// </summary>
+    public static ToolCallContext GatewayListing(ToolSurface surface) => new(Guid.Empty, surface, "user", null, Gateway: true);
 }
 
 /// <summary>The vocabularies of the tools' arguments, from the Domain lists the commands validate against.</summary>

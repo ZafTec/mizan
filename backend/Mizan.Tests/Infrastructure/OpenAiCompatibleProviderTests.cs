@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.Ai;
 using Moq;
@@ -208,7 +209,7 @@ public class OpenAiCompatibleProviderTests
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.TooManyRequests, "The assistant returned an error (429). Try again shortly.", false)]
+    [InlineData(HttpStatusCode.InternalServerError, "The assistant returned an error (500). Try again shortly.", false)]
     [InlineData(HttpStatusCode.BadGateway, "The assistant returned an error (502). Try again shortly.", false)]
     [InlineData(HttpStatusCode.Unauthorized, "The assistant is misconfigured. An administrator has been told.", true)]
     public async Task OnlyARefusalThatRetryingCannotFix_SaysTheAssistantIsMisconfigured(HttpStatusCode status, string message, bool configuration)
@@ -248,6 +249,201 @@ public class OpenAiCompatibleProviderTests
         handler.Bodies[2].GetProperty("reasoning_effort").GetString().Should().Be("none", "the endpoint is remembered");
     }
 
+    private const string GatewayUrl = "https://gateway.test/v1";
+
+    private static AiOptions GatewayOptions() => new()
+    {
+        BaseUrl = GatewayUrl,
+        ApiKey = "test-gateway-key",
+        Model = "route-alias",
+    };
+
+    /// <summary>One gateway refusal each: what it answers, and what the person and every surface get.</summary>
+    public static TheoryData<string, int, string, string?, string?, Type, string, string> Refusals => new()
+    {
+        { "a budget stop with its reset", 402, """{"error":{"code":"budget_exhausted","message":"Budget spent.","request_id":"req-1","resets_at":"2031-01-02T03:04:05Z"}}""", null, null,
+            typeof(AiLimitReachedException), "ai_limit_reached", "The assistant has reached its limit for now. It should be back on 2031-01-02 at 03:04 UTC." },
+        { "a usage stop with no reset", 402, """{"error":{"code":"usage_stop_reached","message":"Stopped."}}""", null, null,
+            typeof(AiLimitReachedException), "ai_limit_reached", "The assistant has reached its limit for now." },
+        { "a rate limit in seconds", 429, """{"error":{"code":"rate_limited","message":"Slow down."}}""", "Retry-After", "120",
+            typeof(AiRateLimitedException), "ai_rate_limited", "The assistant is busy right now. Try again in 2 minutes." },
+        { "a long window from RateLimit alone", 429, """{"error":{"code":"end_user_rate_limited","message":"Slow down."}}""", "RateLimit", "\"burst\";r=5;t=10, \"week\";r=0;t=7200",
+            typeof(AiRateLimitedException), "ai_rate_limited", "The assistant is busy right now. Try again in 2 hours." },
+        { "a guardrail", 403, """{"error":{"code":"guardrail_blocked","message":"Refused."}}""", null, null,
+            typeof(AiBlockedException), "ai_blocked", "I can't help with that." },
+        { "a blocked person", 403, """{"error":{"code":"end_user_blocked","message":"Blocked."}}""", null, null,
+            typeof(AiAccountBlockedException), "ai_account_blocked", "The assistant isn't available for your account." },
+        { "a wrong end-user token", 401, """{"error":{"code":"end_user_token_invalid","message":"Bad token."}}""", null, null,
+            typeof(AiProviderRejectedException), "ai_unavailable", AiProviderRejectedException.MisconfiguredMessage },
+    };
+
+    [Theory]
+    [MemberData(nameof(Refusals))]
+    public async Task AGatewayRefusal_BecomesItsOwnErrorForEverySurface_WithoutARetry(
+        string story, int status, string body, string? header, string? headerValue, Type expected, string code, string message)
+    {
+        using var handler = new RecordingHandler(((HttpStatusCode)status, body));
+        if (header is not null) handler.ResponseHeaders = response => response.Headers.TryAddWithoutValidation(header, headerValue);
+        var provider = Provider(GatewayOptions(), handler);
+
+        var call = () => provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        var thrown = (await call.Should().ThrowAsync<AiUnavailableException>(story)).Which;
+        thrown.Should().BeOfType(expected, story);
+        thrown.ErrorCode.Should().Be(code, story);
+        thrown.Message.Should().Be(message, story);
+        thrown.Message.Should().NotContain("test-gateway-key");
+        handler.Requests.Should().HaveCount(1, "a long wait or a refusal is not retried inside the request");
+    }
+
+    [Fact]
+    public async Task ARateLimitWithAnHttpDate_SaysWhenToTryAgain()
+    {
+        using var handler = new RecordingHandler((HttpStatusCode.TooManyRequests, """{"error":{"code":"rate_limited"}}"""));
+        handler.ResponseHeaders = response => response.Headers.RetryAfter =
+            new System.Net.Http.Headers.RetryConditionHeaderValue(DateTimeOffset.UtcNow.AddMinutes(30));
+        var provider = Provider(GatewayOptions(), handler);
+
+        var call = () => provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        var thrown = (await call.Should().ThrowAsync<AiRateLimitedException>()).Which;
+        thrown.RetryAfter.Should().BeCloseTo(TimeSpan.FromMinutes(30), TimeSpan.FromSeconds(5));
+        thrown.Message.Should().Be("The assistant is busy right now. Try again in 30 minutes.");
+    }
+
+    [Fact]
+    public async Task AShortRateLimit_IsWaitedOutOnce_InsideTheCall()
+    {
+        using var handler = new RecordingHandler(
+            (HttpStatusCode.TooManyRequests, """{"error":{"code":"rate_limited"}}"""), (HttpStatusCode.OK, TextResponse));
+        handler.ResponseHeaders = response =>
+        {
+            if (response.StatusCode == HttpStatusCode.TooManyRequests) response.Headers.TryAddWithoutValidation("Retry-After", "0");
+        };
+        var provider = Provider(GatewayOptions(), handler);
+
+        var response = await provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        response.Content.Should().Be("A recorded meal.");
+        handler.Requests.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task AShortRateLimit_TwiceInARow_IsRetriedOnlyOnce()
+    {
+        using var handler = new RecordingHandler((HttpStatusCode.TooManyRequests, """{"error":{"code":"rate_limited"}}"""));
+        handler.ResponseHeaders = response => response.Headers.TryAddWithoutValidation("Retry-After", "0");
+        var provider = Provider(GatewayOptions(), handler);
+
+        var call = () => provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        await call.Should().ThrowAsync<AiRateLimitedException>();
+        handler.Requests.Should().HaveCount(2);
+    }
+
+    [Theory]
+    [InlineData("""{"choices":[{"message":{"content":null,"refusal":"No."},"finish_reason":"stop"}]}""")]
+    [InlineData("""{"choices":[{"message":{"content":""},"finish_reason":"content_filter"}]}""")]
+    public async Task AContentRefusalInAnAnswer_IsBlocked(string body)
+    {
+        using var handler = new RecordingHandler(body);
+        var provider = Provider(GatewayOptions(), handler);
+
+        var call = () => provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        (await call.Should().ThrowAsync<AiBlockedException>()).Which.Message.Should().Be("I can't help with that.");
+    }
+
+    [Theory]
+    [InlineData("""{"choices":[{"message":{"content":"Eighteen character"}}],"gateway_extra":{"route":"x"}}""", null, null)]
+    [InlineData("""{"choices":[{"message":{"content":"Eighteen character"}}],"usage":{"prompt_tokens":7}}""", 7, null)]
+    [InlineData("""{"choices":[{"message":{"content":"Eighteen character"}}],"usage":{"completion_tokens":9}}""", null, 9)]
+    public async Task AnAnswerWithMissingOrPartialUsage_IsEstimatedFromItsCharacters(string body, int? reportedPrompt, int? reportedCompletion)
+    {
+        using var handler = new RecordingHandler(body);
+        var provider = Provider(GatewayOptions(), handler);
+
+        var response = await provider.CompleteAsync(new AiCompletionRequest
+        {
+            Messages = [new(AiRole.System, new string('s', 400)), new(AiRole.User, "Hello there.")],
+        });
+
+        response.Content.Should().Be("Eighteen character");
+        response.Model.Should().Be("route-alias", "an answer that names no model keeps the configured alias");
+        response.Usage.PromptTokens.Should().Be(reportedPrompt ?? (400 + 12) / 4);
+        response.Usage.CompletionTokens.Should().Be(reportedCompletion ?? (18 + 3) / 4);
+    }
+
+    [Fact]
+    public async Task TheKeyGoesOnlyAsBearer_ToAnEndpointThatIsNotAzure()
+    {
+        using var handler = new RecordingHandler(TextResponse);
+        var provider = Provider(GatewayOptions(), handler);
+
+        await provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        handler.Authorization.Should().Be("Bearer test-gateway-key");
+        handler.ApiKey.Should().BeNull();
+        handler.Body.GetProperty("model").GetString().Should().Be("route-alias");
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public async Task TheEndUserToken_IsSentOnlyWhenEnabled_AndOnlyForAPerson(bool enabled, bool forAPerson)
+    {
+        using var handler = new RecordingHandler(TextResponse);
+        using var tokens = AiEndUserTokensTests.Tokens(enabled ? AiEndUserTokensTests.Options() : new AiEndUserOptions());
+        var provider = Provider(GatewayOptions(), handler, identity: tokens);
+        var userId = Guid.NewGuid();
+
+        await provider.CompleteAsync(new AiCompletionRequest
+        {
+            Messages = [new(AiRole.User, "Hello.")],
+            EndUserId = forAPerson ? userId : null,
+        });
+
+        var headers = handler.Headers.Single();
+        if (enabled && forAPerson)
+        {
+            AiEndUserTokensTests.Claims(headers["X-End-User"]).GetProperty("sub").GetString().Should().Be(userId.ToString("D"));
+        }
+        else
+        {
+            headers.Should().NotContainKey("X-End-User");
+        }
+    }
+
+    [Fact]
+    public async Task APhoto_GoesToTheVisionEndpoint_WithoutTheEndUserToken_AndTextStaysOnTheGateway()
+    {
+        using var handler = new RecordingHandler(TextResponse);
+        using var tokens = AiEndUserTokensTests.Tokens(AiEndUserTokensTests.Options());
+        var options = GatewayOptions();
+        options.Vision = new AiVisionOptions { BaseUrl = "https://vision.test/v1", ApiKey = "test-vision-key", Model = "vision-model" };
+        var provider = Provider(options, handler, identity: tokens);
+
+        await provider.CompleteAsync(new AiCompletionRequest
+        {
+            Messages = [new(AiRole.User, "Identify this.", new AiImage([1, 2, 3], "image/png"))],
+            EndUserId = Guid.NewGuid(),
+        });
+        await provider.CompleteAsync(new AiCompletionRequest
+        {
+            Messages = [new(AiRole.User, "Hello.")],
+            EndUserId = Guid.NewGuid(),
+        });
+
+        handler.Requests[0].Should().Be(new Uri("https://vision.test/v1/chat/completions"));
+        handler.Bodies[0].GetProperty("model").GetString().Should().Be("vision-model");
+        handler.Headers[0]["Authorization"].Should().Be("Bearer test-vision-key");
+        handler.Headers[0].Should().NotContainKey("X-End-User");
+        handler.Requests[1].Should().Be(new Uri("https://gateway.test/v1/chat/completions"));
+        handler.Bodies[1].GetProperty("model").GetString().Should().Be("route-alias");
+        handler.Headers[1].Should().ContainKey("X-End-User");
+    }
+
     private static AiOptions AzureOptions(string reasoningEffort) => new()
     {
         BaseUrl = "https://mizan-test.openai.azure.com/openai/v1",
@@ -257,12 +453,14 @@ public class OpenAiCompatibleProviderTests
         SupportsTemperature = false,
     };
 
-    private static OpenAiCompatibleProvider Provider(AiOptions options, RecordingHandler handler, RecordingLogger? logger = null)
+    private static OpenAiCompatibleProvider Provider(
+        AiOptions options, RecordingHandler handler, RecordingLogger? logger = null, IAiCallIdentity? identity = null)
     {
         var clients = new Mock<IHttpClientFactory>();
         clients.Setup(factory => factory.CreateClient(OpenAiCompatibleProvider.HttpClientName))
             .Returns(() => new HttpClient(handler, disposeHandler: false));
-        return new OpenAiCompatibleProvider(new FixedRuntimeOptions<AiOptions>(options), clients.Object, logger ?? new RecordingLogger());
+        return new OpenAiCompatibleProvider(
+            new FixedRuntimeOptions<AiOptions>(options), clients.Object, logger ?? new RecordingLogger(), identity);
     }
 
     /// <summary>Answers each request with the next scripted status and body; the last one repeats.</summary>
@@ -285,6 +483,11 @@ public class OpenAiCompatibleProviderTests
         public string? ApiKey { get; private set; }
         public JsonElement Body { get; private set; }
         public List<JsonElement> Bodies { get; } = [];
+        public List<Uri> Requests { get; } = [];
+        public List<Dictionary<string, string>> Headers { get; } = [];
+
+        /// <summary>Headers on every scripted response, such as Retry-After.</summary>
+        public Action<HttpResponseMessage>? ResponseHeaders { get; set; }
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
@@ -292,15 +495,19 @@ public class OpenAiCompatibleProviderTests
             Method = request.Method;
             RequestUri = request.RequestUri;
             Authorization = request.Headers.Authorization?.ToString();
-            ApiKey = request.Headers.GetValues("api-key").Single();
+            ApiKey = request.Headers.TryGetValues("api-key", out var keys) ? keys.Single() : null;
+            Requests.Add(request.RequestUri!);
+            Headers.Add(request.Headers.ToDictionary(h => h.Key, h => string.Join(",", h.Value), StringComparer.OrdinalIgnoreCase));
             using var document = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
             Body = document.RootElement.Clone();
             Bodies.Add(Body);
             var (status, body) = _responses.Count > 0 ? _responses.Dequeue() : _last;
-            return new HttpResponseMessage(status)
+            var response = new HttpResponseMessage(status)
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json"),
             };
+            ResponseHeaders?.Invoke(response);
+            return response;
         }
     }
 

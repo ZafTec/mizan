@@ -93,18 +93,18 @@ export function householdSummary(
  * Default levels for the consent screen. If the app asked for specific scopes,
  * those are on and everything else is off, because a person cannot grant more
  * than was asked. If it asked for nothing, reading is on and the rest is off.
+ * Administration always starts off, even when asked for: an administrator
+ * turns it on deliberately.
  */
 export function defaultLevels(
   groups: ScopeGroup[],
   requested: readonly string[],
 ): AccessLevels {
-  if (requested.length === 0) {
-    const levels: AccessLevels = {};
-    for (const group of groups) {
-      levels[group.group] = group.group === "admin" ? "none" : "read";
-    }
-    return levels;
-  }
+  const levels: AccessLevels =
+    requested.length === 0
+      ? Object.fromEntries(groups.map((group) => [group.group, "read"]))
+      : levelsFromScopes(groups, requested);
 
-  return levelsFromScopes(groups, requested);
+  if ("admin" in levels) levels.admin = "none";
+  return levels;
 }

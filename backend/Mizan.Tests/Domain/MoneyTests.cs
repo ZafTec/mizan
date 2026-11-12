@@ -14,5 +14,5 @@ public class MoneyTests
     [InlineData(300, null, "300.00")]
     [InlineData(300, " ", "300.00")]
     public void Format_PutsTheCodeFirst_AsTheWebDoes(double amount, string? currency, string expected) =>
-        Money.Format((decimal)amount, currency).Should().Be(expected);
+        Money.Format(Dec.Of(amount), currency).Should().Be(expected);
 }

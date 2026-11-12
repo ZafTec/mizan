@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { listAdminUsers, type AdminUser } from "@/data/admin/users";
 import {
   DataTable,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/data-table";
 
 export const metadata = {
-  title: "User management | Admin",
+  title: "Users | Admin",
   description: "Accounts, roles and bans",
 };
 
@@ -55,7 +56,7 @@ const columns: Column<AdminUser>[] = [
     header: "Status",
     cell: (u) =>
       u.banned ? (
-        <Pill tone="bad">Banned</Pill>
+        <Pill tone="bad">Suspended</Pill>
       ) : (
         <Pill tone="good">Active</Pill>
       ),
@@ -86,7 +87,7 @@ const columns: Column<AdminUser>[] = [
     cell: (u) => (
       <Link
         href={`/admin/users/${u.id}`}
-        className="whitespace-nowrap text-xs text-verdigris-700 hover:underline dark:text-verdigris-300"
+        className="text-link whitespace-nowrap"
       >
         Details
       </Link>
@@ -118,18 +119,16 @@ export default async function AdminUsersPage({
   });
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Accounts</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            User management
-          </h1>
-        </div>
-        <Link href="/admin/users/create" className="btn-primary !rounded-2xl">
-          New user
-        </Link>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Users"
+        lead="Accounts, their roles and suspensions."
+        action={
+          <Link href="/admin/users/create" className="btn-primary">
+            New user
+          </Link>
+        }
+      />
 
       <TableToolbar
         searchPlaceholder="Name or email…"
@@ -146,7 +145,7 @@ export default async function AdminUsersPage({
           {
             name: "banned",
             label: "Any status",
-            options: [{ value: "true", label: "Banned only" }],
+            options: [{ value: "true", label: "Suspended only" }],
           },
         ]}
       />

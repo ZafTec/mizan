@@ -488,6 +488,13 @@ public sealed class AdminTools
     public Task<string> ClearSetting(string key, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", ct);
 
+    [McpServerTool(Name = "admin_rotate_end_user_key", Destructive = true)]
+    [Description(
+        "Admin only. Makes a new key for the end-user tokens Mizan signs and starts signing with it. "
+        + "The current key stays published as the previous one until its tokens expire. Returns key ids only.")]
+    public Task<string> RotateEndUserKey(CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/settings/end-user-key/rotate", null, ct);
+
     [McpServerTool(Name = "admin_test_smtp")]
     [Description(
         "Admin only. Queues a test email to your own address with the SMTP settings as they stand, "

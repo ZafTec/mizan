@@ -10,7 +10,7 @@ import {
 
 const PRO_FEATURES = [
   "Everything in Free",
-  "Photo analysis — snap a plate, confirm the estimate",
+  "Many more meals from a photo or a sentence",
   "A working daily assistant allowance",
   "Telegram bot",
   "Coach relationships",
@@ -38,6 +38,7 @@ export function PricingSection({ plans = [] }: { plans?: BillingPlan[] }) {
         "Recipes, meal plans, shopping lists",
         "Streaks and achievements",
         "A small daily assistant allowance",
+        "Three meals a day from a photo or a sentence",
       ],
       cta: "Start logging",
       ctaHref: "/register",
@@ -90,7 +91,7 @@ export function PricingSection({ plans = [] }: { plans?: BillingPlan[] }) {
         <p className="mt-3 text-[15px] leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">
           A tracker that paywalls the thing it exists to do is a tracker you
           stop opening. Pro pays for what actually costs money: the AI, and
-          photo analysis.
+          more of it.
         </p>
       </div>
 

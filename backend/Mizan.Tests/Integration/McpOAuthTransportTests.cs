@@ -87,7 +87,7 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         doc.GetProperty("authorization_servers").EnumerateArray().Select(e => e.GetString())
             .Should().BeEquivalentTo(new[] { "https://mizan.example/api" });
         doc.GetProperty("scopes_supported").EnumerateArray().Select(e => e.GetString())
-            .Should().Contain("nutrition:read").And.NotContain("admin");
+            .Should().Contain("nutrition:read").And.Contain("admin:write", "an administrator can only grant what the client asked for");
     }
 
     [Fact]

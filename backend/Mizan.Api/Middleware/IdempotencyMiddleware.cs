@@ -126,9 +126,16 @@ public sealed class IdempotencyMiddleware
         using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         sha.AppendData(System.Text.Encoding.UTF8.GetBytes($"{request.Method}\n{request.Path}{request.QueryString}\n"));
 
-        var bytes = new byte[16 * 1024];
-        int read;
-        while ((read = await request.Body.ReadAsync(bytes)) > 0) sha.AppendData(bytes.AsSpan(0, read));
+        var bytes = System.Buffers.ArrayPool<byte>.Shared.Rent(16 * 1024);
+        try
+        {
+            int read;
+            while ((read = await request.Body.ReadAsync(bytes)) > 0) sha.AppendData(bytes.AsSpan(0, read));
+        }
+        finally
+        {
+            System.Buffers.ArrayPool<byte>.Shared.Return(bytes);
+        }
         request.Body.Position = 0;
         return Convert.ToHexStringLower(sha.GetHashAndReset());
     }

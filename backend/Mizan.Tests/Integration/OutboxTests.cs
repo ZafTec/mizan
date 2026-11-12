@@ -4,11 +4,13 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Mizan.Application.Admin;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Outbox;
 using Xunit;
 
 namespace Mizan.Tests.Integration;
@@ -244,6 +246,46 @@ public class OutboxTests
 
         (await client.GetAsync("/api/Admin/Jobs")).StatusCode
             .Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    // ---- Retention --------------------------------------------------------
+
+    [Fact]
+    public async Task FinishedJobsPastRetentionAreDeleted_WorkThatCanStillRunIsKept()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+
+        async Task<Guid> JobAsync(OutboxJobStatus status, int finishedDaysAgo, int createdDaysAgo = 400)
+        {
+            var id = await QueueAsync(OutboxJobTypes.Email, Message("kept@example.com"));
+            await UpdateAsync(id, j =>
+            {
+                j.Status = status;
+                j.CreatedAt = now.AddDays(-createdDaysAgo);
+                j.CompletedAt = status is OutboxJobStatus.Succeeded or OutboxJobStatus.DeadLettered ? now.AddDays(-finishedDaysAgo) : null;
+            });
+            return id;
+        }
+
+        var oldSent = await JobAsync(OutboxJobStatus.Succeeded, finishedDaysAgo: 31);
+        var recentSent = await JobAsync(OutboxJobStatus.Succeeded, finishedDaysAgo: 29);
+        var oldGaveUp = await JobAsync(OutboxJobStatus.DeadLettered, finishedDaysAgo: 91);
+        var gaveUpLastMonth = await JobAsync(OutboxJobStatus.DeadLettered, finishedDaysAgo: 45);
+        var pending = await JobAsync(OutboxJobStatus.Pending, 0);
+        var retrying = await JobAsync(OutboxJobStatus.Failed, 0);
+        var running = await JobAsync(OutboxJobStatus.Running, 0);
+
+        var dispatcher = _fixture.Services.GetServices<IHostedService>().OfType<OutboxDispatcher>().Single();
+        (await dispatcher.PruneAsync(now, CancellationToken.None)).Should().Be(2);
+
+        using var scope = _fixture.Services.CreateScope();
+        var left = await scope.ServiceProvider.GetRequiredService<MizanDbContext>().OutboxJobs.AsNoTracking().Select(j => j.Id).ToListAsync();
+        left.Should().BeEquivalentTo([recentSent, gaveUpLastMonth, pending, retrying, running]);
+        left.Should().NotContain([oldSent, oldGaveUp]);
+
+        // Two months on, the other finished jobs are past their windows too; nothing that can run is touched.
+        (await dispatcher.PruneAsync(now.AddDays(60), CancellationToken.None)).Should().Be(2);
     }
 
     // ---- Helpers ----------------------------------------------------------

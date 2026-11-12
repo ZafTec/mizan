@@ -105,7 +105,21 @@ public sealed class BotSettingsRefresher : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var read = await RefreshAsync(stoppingToken);
+            bool read;
+            try
+            {
+                read = await RefreshAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                // Since .NET 11 an exception that leaves ExecuteAsync stops the host, and with it the bot.
+                _logger.LogError(ex, "Refreshing the bot settings failed; retrying");
+                read = false;
+            }
             var wait = read ? Interval : retry;
             retry = read ? TimeSpan.FromSeconds(1) : TimeSpan.FromSeconds(Math.Min(retry.TotalSeconds * 2, 60));
 

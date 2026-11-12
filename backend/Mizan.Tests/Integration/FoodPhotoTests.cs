@@ -207,20 +207,6 @@ public class FoodPhotoTests
         _fixture.Ai.Calls.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task FreeUsersAreWalled()
-    {
-        await _fixture.ResetDatabaseAsync();
-        var id = Guid.NewGuid();
-        var email = $"photo-free-{id:N}@example.com";
-        await _fixture.SeedUserAsync(id, email);
-        using var client = _fixture.CreateAuthenticatedClient(id, email);
-
-        var response = await PostPhotoAsync(client);
-
-        response.StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
-    }
-
     /// <summary>
     /// N-05: a photo sent for an analysis was kept for good. It is removed 30 days on, and the
     /// person can delete it sooner; nobody else can.

@@ -85,7 +85,7 @@ export default function TableToolbar({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {searchPlaceholder && (
-        <div className="relative min-w-0 flex-1 sm:max-w-xs">
+        <div className="relative min-w-0 grow basis-full sm:basis-0 sm:max-w-xs">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400">
             <Icon name="search" size={14} />
           </span>

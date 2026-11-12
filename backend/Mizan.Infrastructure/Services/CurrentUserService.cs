@@ -62,6 +62,9 @@ public class CurrentUserService : ICurrentUserService
         }
     }
 
+    public bool ViaGateway =>
+        string.Equals(Context?.User?.FindFirst(GatewayAccess.Claim)?.Value, GatewayAccess.Path, StringComparison.Ordinal);
+
     public Guid? ImpersonatorId =>
         Guid.TryParse(Context?.User?.FindFirst(ImpersonationClaims.Impersonator)?.Value, out var id) ? id : null;
 

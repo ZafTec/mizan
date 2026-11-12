@@ -10,6 +10,7 @@ import {
   listPriceReportsServer,
   listPriceSourcesServer,
 } from "@/lib/api/prices.server";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -39,15 +40,14 @@ export default async function AdminPricesPage({
   ]);
 
   return (
-    <div className="log-page space-y-10" data-testid="admin-prices-page">
-      <header className="log-page-header block!">
-        <p className="eyebrow">Administration</p>
-        <h1 className="mt-1">Prices</h1>
-        <p className="text-muted-foreground mt-2">
-          Where prices come from, the products waiting for a food, and what
-          people report.
-        </p>
-      </header>
+    <div
+      className="flex flex-col gap-10 [&>header]:mb-0 [&_h2]:text-[20px] [&_h2]:leading-[1.3] [&_h2]:font-semibold"
+      data-testid="admin-prices-page"
+    >
+      <AdminPageHeader
+        title="Prices"
+        lead="Where prices come from, the products waiting for a food, and what people report."
+      />
 
       <section aria-label="Price summary" className="facts-strip">
         <div>

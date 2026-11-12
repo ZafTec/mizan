@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using FluentAssertions;
 using MediatR;
 using Mizan.Application.Tools;
@@ -89,7 +90,7 @@ public class TaskToolCatalogueTests
         {
             [AdminActionKind.ReadOnly] = 40,
             [AdminActionKind.RunsAtOnce] = 26,
-            [AdminActionKind.Destructive] = 26,
+            [AdminActionKind.Destructive] = 27,
             [AdminActionKind.SafetyStop] = 3,
         });
     }
@@ -125,13 +126,84 @@ public class TaskToolCatalogueTests
     /// tools; no one is both, so no one sees 37. Viewing Mizan as someone else leaves no admin tool.
     /// </summary>
     [Theory]
-    [InlineData("user", false, 26)]
-    [InlineData("trainer", false, 31)]
-    [InlineData("admin", false, 32)]
-    [InlineData("admin", true, 26)]
-    public void TheRoleSetsTheCeiling(string role, bool impersonating, int tools)
+    [InlineData("user", false, false, 26)]
+    [InlineData("trainer", false, false, 31)]
+    [InlineData("admin", false, false, 32)]
+    [InlineData("admin", true, false, 26)]
+    [InlineData("admin", false, true, 26)]
+    [InlineData("trainer", false, true, 31)]
+    public void TheRoleSetsTheCeiling(string role, bool impersonating, bool gateway, int tools)
     {
-        Visible(new ToolCallContext(Guid.NewGuid(), ToolSurface.Mcp, role, null, impersonating)).Should().Be(tools);
+        Visible(new ToolCallContext(Guid.NewGuid(), ToolSurface.Mcp, role, null, impersonating, gateway)).Should().Be(tools);
+    }
+
+    /// <summary>
+    /// The annotations a client trusts before it asks the person (docs/MCP.md#tool-hints), true for each tool's worst
+    /// mode: (readOnly, destructive, idempotent, openWorld). A write tool is destructive unless every mode only adds.
+    /// </summary>
+    public static TheoryData<string, bool, bool, bool, bool> Hints => new()
+    {
+        { "get_my_account", true, false, true, false },
+        { "get_nutrition", true, false, true, false },
+        { "find_food", true, false, true, false },
+        { "get_training", true, false, true, false },
+        { "get_body_trend", true, false, true, false },
+        { "get_meal_plan", true, false, true, false },
+        { "get_shopping_list", true, false, true, false },
+        { "get_social", true, false, true, false },
+        { "get_my_coach", true, false, true, false },
+        { "get_household", true, false, true, false },
+        { "get_clients", true, false, true, false },
+        { "admin_overview", true, false, true, false },
+        { "admin_lookup", true, false, true, false },
+        { "admin_inbox", true, false, true, false },
+        { "find_action", true, false, true, false },
+        { "log_food", false, false, false, false },
+        { "estimate_food", false, false, false, true },
+        { "manage_household", false, false, false, false },
+        { "manage_clients", false, false, false, false },
+        { "draft_client_plan", false, false, false, false },
+        { "ask_about_client", false, false, false, false },
+        { "update_my_settings", false, true, true, false },
+        { "log_body", false, true, true, false },
+        { "save_food", false, true, false, true },
+        { "set_goal", false, true, false, false },
+        { "log_workout", false, true, false, false },
+        { "save_workout_template", false, true, false, false },
+        { "plan_meals", false, true, false, false },
+        { "edit_meal_plan", false, true, false, false },
+        { "update_shopping_list", false, true, false, false },
+        { "set_reminder", false, true, false, false },
+        { "social_action", false, true, false, false },
+        { "manage_my_coach", false, true, false, false },
+        { "save_plan_template", false, true, false, false },
+        { "run_action", false, true, false, false },
+        { "delete", false, true, false, false },
+        { "confirm_action", false, true, false, false },
+    };
+
+    [Theory]
+    [MemberData(nameof(Hints))]
+    public void EveryTool_AnnouncesTheHintsOfItsWorstMode_AndAnObjectSchema(string name, bool readOnly, bool destructive, bool idempotent, bool openWorld)
+    {
+        var tool = TaskToolCatalogue.All.Single(t => t.Name == name);
+        ToolFilter.Hints(tool).Should().Be(new Mizan.Contracts.Tools.ToolHintsDto(readOnly, destructive, idempotent, openWorld));
+
+        var schema = ToolFilter.Schema(tool, tool.Modes);
+        schema["type"]!.GetValue<string>().Should().Be("object");
+        schema["additionalProperties"]!.GetValue<bool>().Should().BeFalse();
+        foreach (var (property, definition) in schema["properties"]!.AsObject())
+            definition!["description"]?.GetValue<string>().Should().NotBeNullOrWhiteSpace($"{name}.{property} says what it is");
+        // An optional mode argument also takes null, which picks the default mode.
+        if (tool.ModeArgument is { } argument)
+            schema["properties"]![argument]!["enum"]!.AsArray().OfType<JsonNode>().Select(v => v.GetValue<string>())
+                .Should().BeEquivalentTo(tool.Modes.Select(m => m.Name));
+    }
+
+    [Fact]
+    public void TheHintsTable_CoversEveryTool()
+    {
+        Hints.Select(row => (string)row[0]).Should().BeEquivalentTo(TaskToolCatalogue.All.Select(t => t.Name));
     }
 
     private static int Visible(ToolCallContext context) => TaskToolCatalogue.All.Count(t => ToolFilter.Describe(t, context) is not null);

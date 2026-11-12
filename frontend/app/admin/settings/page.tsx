@@ -1,4 +1,5 @@
 import RuntimeSettingsAdmin from "@/components/admin/settings/RuntimeSettingsAdmin";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { getRuntimeSettingsServer } from "@/lib/api/admin-settings.server";
 
 export const dynamic = "force-dynamic";
@@ -18,17 +19,11 @@ export default async function AdminSettingsPage() {
   const settings = await getRuntimeSettingsServer();
 
   return (
-    <div className="log-page space-y-10" data-testid="admin-settings-page">
-      <header className="log-page-header block!">
-        <p className="eyebrow">Administration</p>
-        <h1 className="mt-1">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Email, storage, AI, Telegram, billing and the rest are set here, not
-          in the environment. A change applies from the next email, call or
-          webhook, on every server and service. Clear a value to go back to its
-          default. Secrets are stored encrypted and never shown.
-        </p>
-      </header>
+    <div data-testid="admin-settings-page">
+      <AdminPageHeader
+        title="Settings"
+        lead="A change applies on every server without a redeploy; clearing a value goes back to its default, and secrets are stored encrypted and never shown."
+      />
       <RuntimeSettingsAdmin settings={settings} />
     </div>
   );

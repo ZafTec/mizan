@@ -301,6 +301,24 @@ public class PricesTests
         (await PlanAsync(client, planId)).Currency.Should().Be("ETB");
     }
 
+    /// <summary>Issue #122: a fresh install had no foods, so logging and planning had nothing to offer.</summary>
+    [Fact]
+    public async Task AFreshInstall_GetsTheStarterFoodsFromTheMigrationStep_AndALaterDeployLeavesTheCatalogueAlone()
+    {
+        await _fixture.ResetDatabaseAsync();
+
+        (await Mizan.Api.DatabaseMigrations.ApplyAsync(_fixture.Services)).Should().Be(0);
+
+        var shared = await _world.DbAsync(db => db.Foods.AsNoTracking().Where(f => f.UserId == null).Select(f => f.Name).ToListAsync());
+        shared.Should().HaveCount(Mizan.Application.Prices.StarterFoods.All.Count).And.Contain(["Injera", "Lentils"]);
+
+        await _world.DbAsync(db => db.Foods.Where(f => f.Name == "Lentils").ExecuteDeleteAsync());
+        (await Mizan.Api.DatabaseMigrations.ApplyAsync(_fixture.Services)).Should().Be(0);
+
+        (await _world.DbAsync(db => db.Foods.AnyAsync(f => f.Name == "Lentils")))
+            .Should().BeFalse("a catalogue that has shared foods is an administrator's, and a deploy does not put back what they removed");
+    }
+
     [Fact]
     public async Task AnAdminImportsTheStarterFoodsTwice_AndTheCatalogueHasEachOnce()
     {

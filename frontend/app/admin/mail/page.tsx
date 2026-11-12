@@ -18,6 +18,7 @@ import { mailKindLabel } from "@/lib/admin-ops/labels";
 import ComposeAnnouncement from "./ComposeAnnouncement";
 import DateRangeFilter from "./DateRangeFilter";
 import RetryEmailButton from "./RetryEmailButton";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -117,30 +118,27 @@ export default async function AdminMailPage({
   const closeHref = withParams("/admin/mail", params, { open: null });
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2">
-          <p className="eyebrow">Administration</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Mail
-          </h1>
-          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Mail"
+        lead={
+          <>
             <span className="tabular-nums">{stats.queued}</span> queued ·{" "}
             <span className="tabular-nums">{stats.sent}</span> sent ·{" "}
             <span
               className={
                 stats.failed > 0
-                  ? "tabular-nums font-medium text-burnt-peach-700 dark:text-burnt-peach-400"
+                  ? "font-medium text-destructive tabular-nums"
                   : "tabular-nums"
               }
             >
               {stats.failed}
             </span>{" "}
-            failed
-          </p>
-        </div>
-        <ComposeAnnouncement />
-      </header>
+            failed. A row opens the message and its error.
+          </>
+        }
+        action={<ComposeAnnouncement />}
+      />
 
       <TableToolbar
         searchPlaceholder="Search by recipient…"
@@ -212,16 +210,16 @@ export default async function AdminMailPage({
             <section className="mt-4" aria-labelledby="mail-error">
               <h3
                 id="mail-error"
-                className="mb-1 text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300"
+                className="mb-1 text-sm font-medium text-muted-foreground"
               >
                 {open.status === "Failed" ? "Why it failed" : "Last error"}
               </h3>
-              <p className="whitespace-pre-wrap break-words border border-burnt-peach-200 bg-burnt-peach-50 p-3 font-mono text-xs text-burnt-peach-800 dark:border-burnt-peach-800 dark:bg-burnt-peach-950/40 dark:text-burnt-peach-200">
+              <p className="border-y border-border py-3 font-mono text-xs break-words whitespace-pre-wrap text-destructive">
                 {open.lastError}
               </p>
             </section>
           )}
-          <p className="mt-4 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          <p className="mt-4 text-xs text-muted-foreground">
             The body is not kept: it can hold a sign-in link.
           </p>
           {open.canRetry && (

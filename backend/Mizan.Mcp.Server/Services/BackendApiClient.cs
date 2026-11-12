@@ -1,6 +1,8 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
+using Mizan.Contracts.Mcp;
+using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Authorization;
 
 namespace Mizan.Mcp.Server.Services;
@@ -8,6 +10,9 @@ namespace Mizan.Mcp.Server.Services;
 public interface IBackendApiClient
 {
     Task<string> GetAsync(string endpoint, CancellationToken ct = default);
+
+    /// <summary>The assistant gateway's settings, read with the service key acting for nobody.</summary>
+    Task<McpGatewaySettings> GetGatewaySettingsAsync(CancellationToken ct = default);
     Task<string> PostAsync(string endpoint, object? body = null, CancellationToken ct = default);
     Task<string> PutAsync(string endpoint, object body, CancellationToken ct = default);
     Task<string> PatchAsync(string endpoint, object body, CancellationToken ct = default);
@@ -94,7 +99,11 @@ public sealed class BackendApiClient : IBackendApiClient
     private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, object? body = null)
     {
         var user = McpCallIdentity.Of(_httpContextAccessor.HttpContext);
-        var request = ActingFor(method, endpoint, GetUserId(), user);
+        // The gateway before it names a person: the regular key for nobody, which the API answers only with the
+        // tool list a person with no role of their own would see.
+        var request = GatewayPrincipals.IsClient(user)
+            ? ForGateway(new HttpRequestMessage(method, endpoint))
+            : ActingFor(method, endpoint, GetUserId(), user);
 
         // Names the connection, so the API applies what the user allowed it. The API
         // reads the grant from its own database and never trusts anything in this header.
@@ -112,11 +121,26 @@ public sealed class BackendApiClient : IBackendApiClient
     private HttpRequestMessage ActingFor(HttpMethod method, string endpoint, Guid userId, ClaimsPrincipal? caller)
     {
         var request = new HttpRequestMessage(method, endpoint);
+        // The gateway path never carries the admin key, whoever the person is (docs/MCP.md).
+        if (GatewayPrincipals.IsGateway(caller))
+        {
+            ForGateway(request);
+            request.Headers.Add("X-Impersonate-User", userId.ToString());
+            return request;
+        }
+
         var isAdmin = caller is not null
             && (caller.IsInRole("admin") || string.Equals(caller.FindFirst("role")?.Value, "admin", StringComparison.OrdinalIgnoreCase))
             && GetCallerId(caller) == userId;
         request.Headers.Add("X-Api-Key", isAdmin ? _adminServiceApiKey : _serviceApiKey);
         request.Headers.Add("X-Impersonate-User", userId.ToString());
+        return request;
+    }
+
+    private HttpRequestMessage ForGateway(HttpRequestMessage request)
+    {
+        request.Headers.Add("X-Api-Key", _serviceApiKey);
+        request.Headers.Add(GatewayAccess.Header, GatewayAccess.Path);
         return request;
     }
 
@@ -175,6 +199,15 @@ public sealed class BackendApiClient : IBackendApiClient
     };
 
     public Task<string> GetAsync(string endpoint, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Get, endpoint), ct);
+
+    public async Task<McpGatewaySettings> GetGatewaySettingsAsync(CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/internal/settings/mcp-gateway");
+        request.Headers.Add("X-Api-Key", _serviceApiKey);
+        var content = await SendAsync(request, ct);
+        return JsonSerializer.Deserialize<McpGatewaySettings>(content, JsonSerializerOptions.Web)
+            ?? throw new JsonException("The gateway settings were empty.");
+    }
     public Task<string> PostAsync(string endpoint, object? body = null, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Post, endpoint, body), ct);
     public Task<string> PutAsync(string endpoint, object body, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Put, endpoint, body), ct);
     public Task<string> PatchAsync(string endpoint, object body, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Patch, endpoint, body), ct);

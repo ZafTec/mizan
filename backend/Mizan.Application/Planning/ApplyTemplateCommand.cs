@@ -45,7 +45,7 @@ public class ApplyTemplateCommandHandler : IRequestHandler<ApplyTemplateCommand,
     public async Task<MealPlanCreatedResult> Handle(ApplyTemplateCommand request, CancellationToken cancellationToken)
     {
         var userId = _access.RequireUserId();
-        var template = await _access.LoadReadableAsync(request.TemplateId, cancellationToken);
+        var template = await _access.LoadForReadingAsync(request.TemplateId, cancellationToken);
         if (template.Kind != PlanKind.Template)
             throw new EntityNotFoundException("Template", request.TemplateId);
         if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))

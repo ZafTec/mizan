@@ -6,8 +6,9 @@ namespace Mizan.Application.Queries;
 
 /// <summary>
 /// The one check before a coach reads a client's area. The client must share the area with the
-/// coach; when a connected app is asking, the client must also have allowed AI to read it, because
-/// the data goes to an outside model (docs/AI.md#consent). The web app asks only the first.
+/// coach; when a connected app or a hosted assistant through the gateway is asking, the client must also
+/// have allowed AI to read it, because the data goes to an outside model (docs/AI.md#consent). The web
+/// app asks only the first.
 /// </summary>
 public static class ClientReadAccess
 {
@@ -23,7 +24,7 @@ public static class ClientReadAccess
         if (!await policy.CanReadAsync(trainerId, clientId, axis, AccessPurpose.Display, cancellationToken))
             throw new ForbiddenAccessException(notShared);
 
-        if (currentUser.Grant is not null
+        if ((currentUser.Grant is not null || currentUser.ViaGateway)
             && !await policy.CanReadAsync(trainerId, clientId, axis, AccessPurpose.AiContext, cancellationToken))
             throw new ClientAiConsentRequiredException(AreaName(axis));
     }

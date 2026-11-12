@@ -1,5 +1,6 @@
 import TemplateManager from "@/components/planning/TemplateManager";
 import { listTemplatesServer } from "@/lib/api/mealPlans.server";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -22,14 +23,14 @@ export default async function AdminMealPlansPage() {
     0,
   );
   return (
-    <div className="log-page space-y-10" data-testid="admin-meal-plans-page">
-      <header className="log-page-header block!">
-        <p className="eyebrow">Administration</p>
-        <h1 className="mt-1">Meal plans</h1>
-        <p className="text-muted-foreground mt-2">
-          Templates everyone can start a plan from.
-        </p>
-      </header>
+    <div
+      className="flex flex-col gap-10 [&>header]:mb-0 [&_h2]:text-[20px] [&_h2]:leading-[1.3] [&_h2]:font-semibold"
+      data-testid="admin-meal-plans-page"
+    >
+      <AdminPageHeader
+        title="Meal plans"
+        lead="Templates everyone can start a plan from."
+      />
 
       <section aria-label="Template summary" className="facts-strip">
         <div>

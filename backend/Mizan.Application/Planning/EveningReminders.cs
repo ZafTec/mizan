@@ -79,7 +79,7 @@ public sealed class EveningReminders : INotificationEventSource
             .ToDictionaryAsync(u => u.Id, u => u.TimeZoneId, cancellationToken);
         var lastSent = await LastSentAsync(userIds, cancellationToken);
 
-        var staged = 0;
+        var jobs = new List<ScheduledJob<EveningReminderJob>>();
         foreach (var userId in userIds)
         {
             var zone = StreakClock.Zone(zones.GetValueOrDefault(userId));
@@ -87,16 +87,14 @@ public sealed class EveningReminders : INotificationEventSource
             if (next.Due.At > horizon) continue;
 
             var at = next.Due.At.UtcDateTime;
-            await _outbox.ScheduleAsync(
-                OutboxJobTypes.EveningReminder,
+            jobs.Add(new ScheduledJob<EveningReminderJob>(
                 new EveningReminderJob(userId, next.Plan.PlanId, next.Due.Day, at),
-                runAfter: at,
-                dedupeKey: $"evening-reminder:{userId:N}:{next.Due.Day:yyyyMMdd}:{at:HHmm}",
-                cancellationToken);
-            staged++;
+                at,
+                $"evening-reminder:{userId:N}:{next.Due.Day:yyyyMMdd}:{at:HHmm}"));
         }
 
-        return staged;
+        await _outbox.ScheduleAllAsync(OutboxJobTypes.EveningReminder, jobs, cancellationToken);
+        return jobs.Count;
     }
 
     /// <summary>

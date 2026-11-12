@@ -20,10 +20,10 @@ import {
 import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 
 const PRO_PERKS = [
-  "Photo analysis: snap a plate, confirm the estimate",
+  "100 meal estimates a day, from words or a photo",
   "A working daily assistant allowance",
   "The Telegram bot",
   "Coach relationships",
@@ -586,7 +586,7 @@ function Subscribed({
         cancelLabel="Keep Pro"
       />
 
-      <ModalShell
+      <Modal
         open={preview !== null}
         onClose={() => setPreview(null)}
         title={preview ? `Switch to ${preview.plan.name}?` : ""}
@@ -650,7 +650,7 @@ function Subscribed({
             </p>
           </div>
         )}
-      </ModalShell>
+      </Modal>
     </div>
   );
 }

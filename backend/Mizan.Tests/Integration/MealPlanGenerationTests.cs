@@ -357,6 +357,27 @@ public class MealPlanGenerationTests
     }
 
     [Fact]
+    public async Task ADraftWithTheSameBreakfastEveryDay_IsAskedForVariety_AndTheVariedDraftIsSaved()
+    {
+        var (_, client) = await StartAsync(pro: true);
+        await _world.FoodAsync("Oats", 389, 16.9m, 66.3m, 6.9m);
+        await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        await _world.FoodAsync("Yogurt", 61, 3.5m, 4.7m, 3.3m);
+        _fixture.Ai.Reply(Breakfasts("Oats", "Oats", "Oats", "Oats", "Oats", "Oats"));
+        _fixture.Ai.Reply(Breakfasts("Oats", "Eggs", "Yogurt", "Oats", "Eggs", "Yogurt"));
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request(durationDays: 6));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
+        _fixture.Ai.Calls.Should().HaveCount(2);
+        _fixture.Ai.Calls[1].Messages[^1].Content.Should().Contain("Oats is at breakfast on 6 of 6 days; use it on at most 2");
+        draft.Plan.Days.SelectMany(PlanningWorld.Entries).Select(e => e.FoodName).Distinct()
+            .Should().BeEquivalentTo("Oats", "Eggs", "Yogurt");
+        draft.Violations.Should().BeEmpty("variety is asked of a draft, it is not a rule the plan breaks");
+    }
+
+    [Fact]
     public async Task WhenTheRepairCallFails_TheFirstDraftStands_AndBothCallsAreSettled()
     {
         var (_, client) = await StartAsync(pro: true);
@@ -448,9 +469,9 @@ public class MealPlanGenerationTests
               {"slot":"BREAKFAST","kind":"recipe","foodName":null,"recipeId":"{{misir.Id}}","grams":null,"servings":2,"note":null,"prepSessionIndex":null}]}
             """;
         var reply = $$"""{"name":"Protein week","note":"Within budget.","prepSessions":[],"days":[{{day(0)}},{{day(1)}},{{day(2)}}]}""";
-        // The first budget is met by code's swaps, so no repair call; the second is not, so one repair
-        // call, whose same answer does not improve the draft.
-        for (var i = 0; i < 3; i++) _fixture.Ai.Reply(reply);
+        // Each draft serves the same meals on all three days, so each gets one repair call asking for
+        // variety; the same answer does not improve it, and the first budget is still met by code's swaps.
+        for (var i = 0; i < 4; i++) _fixture.Ai.Reply(reply);
 
         var response = await client.PostAsJsonAsync("/api/MealPlans/generate", new GenerateMealPlanRequest
         {
@@ -485,11 +506,11 @@ public class MealPlanGenerationTests
             .And.Contain("Most of the cost: Lentils (");
 
         // The model read each recipe's cost per serving, worked out as the plan's cost table works it out.
-        _fixture.Ai.Calls.Should().HaveCount(3);
+        _fixture.Ai.Calls.Should().HaveCount(4);
         _fixture.Ai.Calls[0].Messages.Should().Contain(m =>
             m.Content.Contains("cost per serving in ETB") && m.Content.Contains($"{misir.Id} | Misir wot | 4 | 232 kcal") && m.Content.Contains("| 20\n"));
         var ledger = await LedgerAsync();
-        ledger.Should().HaveCount(3).And.OnlyContain(l => l.Feature == AiFeatures.Planning && l.Outcome == AiCallOutcome.Succeeded);
+        ledger.Should().HaveCount(4).And.OnlyContain(l => l.Feature == AiFeatures.Planning && l.Outcome == AiCallOutcome.Succeeded);
     }
 
     private static IEnumerable<PlanEntryDto> Entries(MealPlanDetailDto plan) =>
@@ -580,6 +601,11 @@ public class MealPlanGenerationTests
             {"slot":"DINNER","kind":"food","foodName":"{{second}}","recipeId":null,"grams":300,"servings":null,"note":null,"prepSessionIndex":null}]}
         ]}
         """;
+
+    /// <summary>One breakfast of 80 g a day, in the meal_plan_v1 shape.</summary>
+    private static string Breakfasts(params string[] foods) =>
+        $$"""{"name":"Breakfasts","note":"Simple mornings.","prepSessions":[],"days":[{{string.Join(",", foods.Select((food, day) =>
+            $$"""{"dayIndex":{{day}},"entries":[{"slot":"BREAKFAST","kind":"food","foodName":"{{food}}","recipeId":null,"grams":80,"servings":null,"note":null,"prepSessionIndex":null}]}"""))}}]}""";
 
     private async Task PriceAsync(Food food, decimal pricePerKg)
     {

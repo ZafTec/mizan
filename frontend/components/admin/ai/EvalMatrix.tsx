@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Pill } from "@/components/ui/data-table";
 import type { AiEvalMatrix, AiEvalRun } from "@/data/admin/ai";
 
 const PASSED = 0;
@@ -13,11 +13,7 @@ function currency(micros: number) {
 
 function Outcome({ run }: { run: AiEvalRun | undefined }) {
   if (!run) {
-    return (
-      <span className="rounded-full bg-charcoal-blue-100 px-2 py-0.5 text-[11px] text-charcoal-blue-500 dark:bg-white/10 dark:text-charcoal-blue-400">
-        not run
-      </span>
-    );
+    return <Pill className="shrink-0">not run</Pill>;
   }
 
   const label =
@@ -28,18 +24,18 @@ function Outcome({ run }: { run: AiEvalRun | undefined }) {
         : "errored";
 
   return (
-    <span
-      className={cn(
-        "rounded-full px-2 py-0.5 text-[11px]",
+    <Pill
+      className="shrink-0"
+      tone={
         run.outcome === PASSED
-          ? "bg-verdigris-100 text-verdigris-800 dark:bg-verdigris-500/15 dark:text-verdigris-300"
+          ? "good"
           : run.outcome === FAILED
-            ? "bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300"
-            : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
-      )}
+            ? "bad"
+            : "warn"
+      }
     >
       {label}
-    </span>
+    </Pill>
   );
 }
 
@@ -56,7 +52,7 @@ export default function EvalMatrix({
 
   if (loading) {
     return (
-      <section className="card overflow-visible p-5 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+      <section className="border-t border-foreground py-4 text-[14px] text-muted-foreground">
         Loading evals…
       </section>
     );
@@ -64,7 +60,7 @@ export default function EvalMatrix({
 
   if (!matrix) {
     return (
-      <section className="card overflow-visible p-5 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+      <section className="border-t border-foreground py-4 text-[14px] text-muted-foreground">
         {editable
           ? "No results for this text yet. Run the suite."
           : "No results recorded for this version."}
@@ -79,12 +75,10 @@ export default function EvalMatrix({
       : matrix.costMicros - matrix.publishedCostMicros;
 
   return (
-    <section className="card overflow-visible space-y-4 p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Evals
-        </h2>
-        <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+    <section className="flex flex-col">
+      <div className="log-section-header flex-wrap">
+        <h2 className="text-[16px] font-semibold">Evals</h2>
+        <span className="text-[12px] text-muted-foreground">
           {currency(matrix.costMicros)} to run
           {delta !== null && matrix.costMicros > 0 && (
             <>
@@ -105,39 +99,35 @@ export default function EvalMatrix({
       </div>
 
       {matrix.blockedReason && (
-        <p className="rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <p className="border-b border-border py-3 text-[14px] text-tuscan-sun-700 dark:text-tuscan-sun-400">
           {matrix.blockedReason}
         </p>
       )}
 
-      <ul className="space-y-1.5">
+      <ul>
         {matrix.cases.map((evalCase) => {
           const run = runs.get(evalCase.id);
           const expanded = open === evalCase.id;
 
           return (
-            <li
-              key={evalCase.id}
-              className="rounded-xl border border-charcoal-blue-200 dark:border-white/10"
-            >
+            <li key={evalCase.id} className="border-b border-border">
               <button
                 type="button"
                 onClick={() => setOpen(expanded ? null : evalCase.id)}
-                className="flex w-full items-center gap-3 px-3 py-2 text-left"
+                aria-expanded={expanded}
+                className="flex min-h-11 w-full items-center gap-3 py-2 text-left transition-colors hover:bg-muted/60"
               >
                 {evalCase.isAdversarial && (
                   <span
                     title="Gates publish"
-                    className="rounded bg-charcoal-blue-900 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white dark:bg-white dark:text-charcoal-blue-900"
+                    className="shrink-0 text-[12px] font-semibold"
                   >
-                    gate
+                    Gate
                   </span>
                 )}
-                <span className="flex-1 text-sm text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                  {evalCase.name}
-                </span>
+                <span className="min-w-0 flex-1 text-sm">{evalCase.name}</span>
                 {run && (
-                  <span className="hidden text-[11px] tabular-nums text-charcoal-blue-400 sm:inline dark:text-charcoal-blue-500">
+                  <span className="hidden text-[12px] text-muted-foreground tabular-nums sm:inline">
                     {run.tokens} tok · {run.latencyMs} ms
                   </span>
                 )}
@@ -145,7 +135,7 @@ export default function EvalMatrix({
               </button>
 
               {expanded && (
-                <div className="space-y-2 border-t border-charcoal-blue-200 px-3 py-2 text-xs dark:border-white/10">
+                <div className="space-y-2 pb-3 text-xs">
                   <Field label="Input">{evalCase.input}</Field>
                   {evalCase.context && (
                     <Field label="Context">{evalCase.context}</Field>
@@ -168,7 +158,7 @@ export default function EvalMatrix({
 function Field({ label, children }: { label: string; children: string }) {
   return (
     <div>
-      <span className="text-[10px] font-medium uppercase tracking-wide text-charcoal-blue-400 dark:text-charcoal-blue-500">
+      <span className="text-[12px] font-medium text-muted-foreground">
         {label}
       </span>
       <pre className="mt-0.5 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300">

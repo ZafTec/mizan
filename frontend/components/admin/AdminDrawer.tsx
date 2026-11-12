@@ -1,14 +1,23 @@
 "use client";
 
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useNarrowScreen } from "@/lib/hooks/useMediaQuery";
 
 /**
- * A side sheet for one row of an admin list, opened by `?open={id}` so the
- * row is a link and the URL can be shared. Closing goes back to the list
- * without the parameter. Full width on a phone, a column on a wide screen;
- * focus stays inside while it is open and Escape closes it.
+ * A drawer for one row of an admin list, opened by `?open={id}` so the row is
+ * a link and the URL can be shared. Closing goes back to the list without the
+ * parameter once the drawer has moved away. A sheet from the bottom of a
+ * phone, a column from the right of a wider screen.
  */
 export default function AdminDrawer({
   title,
@@ -22,43 +31,33 @@ export default function AdminDrawer({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const narrow = useNarrowScreen();
+  const [open, setOpen] = useState(true);
 
   return (
-    <DialogPrimitive.Root
-      open
-      onOpenChange={(open) => {
-        if (!open) router.replace(closeHref, { scroll: false });
+    <Drawer
+      open={open}
+      onOpenChange={setOpen}
+      onAnimationEnd={(isOpen) => {
+        if (!isOpen) router.replace(closeHref, { scroll: false });
       }}
+      direction={narrow ? "bottom" : "right"}
     >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <DialogPrimitive.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col overflow-y-auto border-l border-charcoal-blue-200 bg-background p-5 shadow-xl focus:outline-none sm:p-6 dark:border-charcoal-blue-700">
-          <div className="mb-4 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <DialogPrimitive.Title className="break-words text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                {title}
-              </DialogPrimitive.Title>
-              {description ? (
-                <DialogPrimitive.Description className="mt-1 break-words text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                  {description}
-                </DialogPrimitive.Description>
-              ) : (
-                <DialogPrimitive.Description className="sr-only">
-                  Details
-                </DialogPrimitive.Description>
-              )}
-            </div>
-            <DialogPrimitive.Close
-              className="btn-ghost btn-sm shrink-0"
-              aria-label="Close"
+      <DrawerContent className="sm:w-full sm:max-w-lg">
+        <DrawerHeader>
+          <div className="min-w-0 flex-1 pt-2">
+            <DrawerTitle className="text-lg break-words">{title}</DrawerTitle>
+            <DrawerDescription
+              className={description ? "break-words" : "sr-only"}
             >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </DialogPrimitive.Close>
+              {description ?? "Details"}
+            </DrawerDescription>
           </div>
-          {children}
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+          <DrawerCloseButton />
+        </DrawerHeader>
+        <DrawerBody>{children}</DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

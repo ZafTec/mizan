@@ -101,6 +101,13 @@ public interface IMizanDbContext
     Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// <paramref name="foods"/> whose name or brand contains <paramref name="term"/>, ignoring case. On
+    /// PostgreSQL this is <c>ILIKE '%term%'</c>, which the trigram indexes on both columns serve; the term's
+    /// own <c>%</c>, <c>_</c> and <c>\</c> match themselves.
+    /// </summary>
+    IQueryable<Food> FoodsMatching(IQueryable<Food> foods, string term);
+
+    /// <summary>
     /// Loads a household and, inside a transaction on PostgreSQL, holds its row
     /// with FOR UPDATE. Inserting a member, invitation, list or plan that
     /// references it waits for that lock, so a caller's checks stay true until

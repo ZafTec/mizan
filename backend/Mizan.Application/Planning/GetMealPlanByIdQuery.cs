@@ -61,7 +61,7 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
         Domain.Entities.MealPlan plan;
         try
         {
-            plan = await _access.LoadReadableAsync(request.Id, cancellationToken);
+            plan = await _access.LoadForReadingAsync(request.Id, cancellationToken);
         }
         catch (Exceptions.EntityNotFoundException)
         {

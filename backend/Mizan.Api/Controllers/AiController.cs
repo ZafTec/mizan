@@ -8,6 +8,7 @@ using Mizan.Application.Interfaces;
 using Mizan.Contracts.Ai;
 using Mizan.Contracts.Coaching;
 using Mizan.Domain.Media;
+using Mizan.Infrastructure.Ai;
 
 namespace Mizan.Api.Controllers;
 
@@ -193,6 +194,25 @@ public class AiController : ControllerBase
     {
         await _mediator.Send(new DeleteAiChatThreadCommand(id));
         return NoContent();
+    }
+
+    /// <summary>
+    /// The public keys a gateway verifies the assistant's end-user token with (RFC 7517), at the
+    /// root well-known address and under /api, which reaches the API with no proxy route of its own.
+    /// Anonymous and cacheable; 404 while the token is off (docs/AI.md#behind-a-gateway).
+    /// </summary>
+    [HttpGet("/.well-known/jwks.json")]
+    [HttpGet("/api/.well-known/jwks.json")]
+    [AllowAnonymous]
+    [ProducesResponseType<AiJsonWebKeySet>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AiJsonWebKeySet>> GetEndUserKeys([FromServices] AiEndUserTokens tokens, CancellationToken cancellationToken)
+    {
+        var keys = await tokens.GetKeysAsync(cancellationToken);
+        if (keys.Keys.Count == 0) return NotFound();
+        // Short, so a gateway that caches the set sees a rotated key within minutes.
+        Response.Headers.CacheControl = "public, max-age=300";
+        return Ok(keys);
     }
 
     [HttpGet("usage/global")]

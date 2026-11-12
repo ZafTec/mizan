@@ -38,7 +38,7 @@ public class TelegramPlanCostTextTests
         PlanCostText.List(new ShoppingListDetailDto
         {
             Currency = "ETB",
-            TotalCost = (decimal?)total,
+            TotalCost = Dec.Of(total),
             CostConfidence = confidence,
             UnpricedCount = unpriced,
         }).Should().Be(expected);

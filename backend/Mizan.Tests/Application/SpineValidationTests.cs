@@ -28,7 +28,7 @@ public class SpineValidationTests
     public void MeasurementsNeedAtLeastOnePlausibleValue(double? weight, double? bodyFat, bool valid)
     {
         var command = new LogBodyMeasurementCommand(Guid.NewGuid(), DateTime.UtcNow,
-            weight.HasValue ? (decimal)weight.Value : null, bodyFat.HasValue ? (decimal)bodyFat.Value : null,
+            weight.HasValue ? Dec.Of(weight.Value) : null, bodyFat.HasValue ? Dec.Of(bodyFat.Value) : null,
             null, null, null, null, null, null, null, null, null);
         new LogBodyMeasurementCommandValidator().Validate(command).IsValid.Should().Be(valid);
     }

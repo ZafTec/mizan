@@ -227,6 +227,7 @@ public static class AdminActionRegistry
             Change<PublishAiPromptVersionCommand>("admin_publish_ai_prompt_version", Confirm, "Publish a prompt version: every new AI call uses it."),
             Change<SetRuntimeSettingCommand>("admin_set_setting", Confirm, "Set a runtime setting by key. A secret is set in the admin console, not here."),
             Change<ClearRuntimeSettingCommand>("admin_clear_setting", Confirm, "Clear a runtime setting so its default applies."),
+            ChangeNone<RotateEndUserSigningKeyCommand>("admin_rotate_end_user_key", Confirm, "Make a new end-user signing key. The current one stays published until its tokens expire."),
             Change<DeleteTemplateCommand>("admin_delete_template", Confirm, "Delete a global meal plan template. Plans made from it are kept."),
             Change<UpdatePriceAliasCommand>("admin_update_price_alias", Confirm, "Match a scraped product to a food with its quantity and unit, or ignore it."),
             Change<ResolvePriceReportCommand>("admin_resolve_price_report", Confirm, "Accept a price report (its price is recorded) or reject it, with a note."),

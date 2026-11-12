@@ -67,7 +67,7 @@ public class LogPlanEntryCommandHandler : IRequestHandler<LogPlanEntryCommand, L
     public async Task<LogPlanEntryResult> Handle(LogPlanEntryCommand request, CancellationToken cancellationToken)
     {
         var userId = _access.RequireUserId();
-        var plan = await _access.LoadReadableAsync(request.PlanId, cancellationToken);
+        var plan = await _access.LoadForReadingAsync(request.PlanId, cancellationToken);
         var entry = plan.Entries.FirstOrDefault(e => e.Id == request.EntryId)
             ?? throw new EntityNotFoundException("Plan entry", request.EntryId);
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mizan.Contracts.Mcp;
 using Mizan.Mcp.Server;
 using Mizan.Mcp.Server.Apps;
@@ -44,11 +45,35 @@ builder.Services.AddSingleton(links);
 var toolset = McpToolsets.Parse(builder.Configuration[McpToolsets.ConfigKey]);
 builder.Services.AddSingleton<TaskToolProxy>();
 
+// A hosted assistant through the gateway (docs/MCP.md#served-to-a-hosted-assistant-through-the-gateway): its settings
+// are runtime settings the API holds, read at startup and every minute; closed until they are fully and validly set.
+builder.Services.TryAddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(sp => new GatewaySettings(sp.GetRequiredService<IServiceScopeFactory>(), toolset));
+builder.Services.AddHostedService<GatewaySettingsRefresher>();
+builder.Services.AddHttpClient(GatewayKeys.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddSingleton<GatewayKeys>();
+builder.Services.AddSingleton<GatewayTokenVerifier>();
+var redis = builder.Configuration.GetConnectionString("Redis");
+if (string.IsNullOrWhiteSpace(redis)) builder.Services.AddSingleton<IGatewayReplayGuard, MemoryGatewayReplayGuard>();
+else builder.Services.AddSingleton<IGatewayReplayGuard>(sp => new RedisGatewayReplayGuard(redis, sp.GetRequiredService<TimeProvider>()));
+
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = McpOAuthAuthenticationOptions.Scheme;
+        options.DefaultAuthenticateScheme = GatewayAuthenticationOptions.Selector;
         options.DefaultChallengeScheme = McpAuthenticationDefaults.AuthenticationScheme;
     })
+    // The gateway presents its own key; everyone else is a connected app with an OAuth token.
+    .AddPolicyScheme(GatewayAuthenticationOptions.Selector, GatewayAuthenticationOptions.Selector, options =>
+        options.ForwardDefaultSelector = context =>
+        {
+            var gateway = context.RequestServices.GetRequiredService<GatewaySettings>().Current;
+            return gateway.IsEnabled && (gateway.ClientKeyHeader.Length > 0
+                ? context.Request.Headers.ContainsKey(gateway.ClientKeyHeader)
+                : gateway.IsClientKey(gateway.PresentedKey(context.Request)))
+                ? GatewayAuthenticationOptions.Scheme
+                : McpOAuthAuthenticationOptions.Scheme;
+        })
+    .AddScheme<GatewayAuthenticationOptions, GatewayAuthenticationHandler>(GatewayAuthenticationOptions.Scheme, _ => { })
     .AddScheme<McpOAuthAuthenticationOptions, McpOAuthAuthenticationHandler>(McpOAuthAuthenticationOptions.Scheme, _ => { })
     .AddMcp(options =>
     {
@@ -58,7 +83,7 @@ builder.Services.AddAuthentication(options =>
         {
             Resource = publicUrl,
             AuthorizationServers = { authorizationServer },
-            ScopesSupported = McpScopes.All.Where(scope => !McpScopes.IsAdminScope(scope)).ToList(),
+            ScopesSupported = McpScopes.All.ToList(),
             ResourceName = "Mizan",
             BearerMethodsSupported = { "header" },
         };
@@ -115,8 +140,9 @@ otel.ConfigureResource(resource => resource
     .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
 );
 
+// ASP.NET Core 11 emits OpenTelemetry-conformant HTTP server spans and metrics itself; subscribing to
+// its source and meters replaces the instrumentation package.
 otel.WithMetrics(metrics => metrics
-    .AddAspNetCoreInstrumentation()
     .AddMeter("Microsoft.AspNetCore.Hosting")
     .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
     .AddMeter("System.Net.Http")
@@ -126,7 +152,7 @@ otel.WithMetrics(metrics => metrics
 
 otel.WithTracing(tracing =>
 {
-    tracing.AddAspNetCoreInstrumentation();
+    tracing.AddSource("Microsoft.AspNetCore");
     tracing.AddHttpClientInstrumentation();
     tracing.AddSource("Mizan.Mcp.Tools");
 
@@ -204,7 +230,6 @@ var mcpServer = builder.Services.AddMcpServer(options =>
     // Stateless: no session to pin a client to one instance. Older clients that
     // still send initialize are served the same way.
     http.Stateless = builder.Configuration.GetValue("Mcp:Stateless", true);
-    http.IdleTimeout = TimeSpan.FromMinutes(30);
 });
 
 if (toolset == McpToolset.Tasks)
@@ -266,6 +291,8 @@ mcpServer
         // instead of becoming a task that can only fail.
         var name = context.Params?.Name ?? string.Empty;
         if (!taskTools.Contains(name) || McpGrantAccess.LimitReached(null, links) is not null) return McpTaskExecutionMode.Synchronous;
+        // A gateway call names its person in the call itself, so it is answered while the token is checked.
+        if (GatewayPrincipals.IsGateway(McpCallIdentity.Current)) return McpTaskExecutionMode.Synchronous;
         // Task tools: the caller's cached manifest says whether the API would take the call. This choice
         // cannot wait on the API, so without a cached manifest the call is answered at once (the API still checks it).
         var allowed = toolset == McpToolset.Tasks
@@ -294,8 +321,8 @@ mcpServer
         {
             tool.Title ??= McpToolText.Title(tool.Name);
             tool.Annotations ??= new ToolAnnotations();
-            // Every tool talks only to Mizan, never to the open internet.
-            tool.Annotations.OpenWorldHint = false;
+            // Closed-world unless the tool says otherwise: a task tool that fetches an address the caller gave says so.
+            tool.Annotations.OpenWorldHint ??= false;
         }
 
         return result;
@@ -402,6 +429,17 @@ mcpServer
         Log.Information("[MCP Tool] Calling tool: {ToolName}", toolName);
 
         var caller = McpCallIdentity.Of(httpContext);
+        // The gateway names the person in the call. Once the token holds, the call runs as them, and the API applies
+        // their role, households, coaching grants and assistant consent; the token itself grants nothing.
+        var viaGateway = GatewayPrincipals.IsClient(caller);
+        if (viaGateway)
+        {
+            var verifier = context.Server.Services?.GetService<GatewayTokenVerifier>()
+                ?? throw GatewayTokenVerifier.Refuse(GatewayRefusals.Missing, "The gateway path is not configured.");
+            caller = GatewayPrincipals.User(await verifier.VerifyAsync(context.Params?.Meta, cancellationToken));
+            McpCallIdentity.Current = caller;
+        }
+
         if (caller?.Identity?.IsAuthenticated != true)
         {
             Log.Warning("[MCP Tool] Tool call rejected - user not authenticated. Tool: {ToolName}", toolName);
@@ -472,12 +510,17 @@ mcpServer
             Log.Information("[MCP Tool] Tool succeeded: {ToolName} (elapsed: {ElapsedMs}ms, error: {IsError})",
                 toolName, sw.ElapsedMilliseconds, result.IsError);
 
-            if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
+            if (backend != null && userId != Guid.Empty && (grantId != Guid.Empty || viaGateway))
             {
                 await backend.LogUsageAsync(grantId, userId, "tool", toolName, result.IsError != true, null, (int)sw.ElapsedMilliseconds);
             }
 
             return result;
+        }
+        catch (BackendApiException ex) when (viaGateway && ex.Status == System.Net.HttpStatusCode.Unauthorized)
+        {
+            // The API would not act for the person the token named: no such account, or one that is disabled or deleted.
+            throw GatewayTokenVerifier.Refuse(GatewayRefusals.SubjectUnknown, "The person the token names has no usable Mizan account.");
         }
         catch (Exception ex)
         {
@@ -495,7 +538,7 @@ mcpServer
             Log.Error("[MCP Tool] Tool failed: {ToolName} (elapsed: {ElapsedMs}ms, error: {Error})",
                 toolName, sw.ElapsedMilliseconds, ex.Message);
 
-            if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
+            if (backend != null && userId != Guid.Empty && (grantId != Guid.Empty || viaGateway))
             {
                 await backend.LogUsageAsync(grantId, userId, "tool", toolName, false, ex.Message, (int)sw.ElapsedMilliseconds);
             }
@@ -549,7 +592,7 @@ IResult ProtectedResource() => Results.Json(new Dictionary<string, object>
 {
     ["resource"] = publicUrl,
     ["authorization_servers"] = new[] { authorizationServer },
-    ["scopes_supported"] = McpScopes.All.Where(scope => !McpScopes.IsAdminScope(scope)).ToArray(),
+    ["scopes_supported"] = McpScopes.All.ToArray(),
     ["bearer_methods_supported"] = new[] { "header" },
     ["resource_name"] = "Mizan",
 });
@@ -586,6 +629,12 @@ app.Run();
 // follows the areas the API checks. Everything else, and every page in legacy mode, keeps its scope.
 async Task<bool> ResourceAllowedAsync(HttpContext? http, string uri, CancellationToken cancellationToken)
 {
+    // The gateway names a person only on a tool call, so it reads no resource that holds someone's data.
+    if (GatewayPrincipals.IsGateway(McpCallIdentity.Of(http))
+        && !uri.StartsWith("skill://", StringComparison.Ordinal) && !uri.StartsWith("ui://", StringComparison.Ordinal)
+        && !McpResourceScopes.IsReference(uri))
+        return false;
+
     if (toolset == McpToolset.Tasks && uri.StartsWith("ui://", StringComparison.Ordinal))
     {
         return http?.User.Identity?.IsAuthenticated == true

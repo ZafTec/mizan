@@ -20,58 +20,55 @@ export default async function UsageThisMonth({
   };
   const usage = await getPlatformUsageServer(filters).catch(() => null);
 
+  const facts = usage
+    ? [
+        { label: "Requests", value: usage.total.requests.toLocaleString() },
+        { label: "Tokens", value: usage.total.tokens.toLocaleString() },
+        {
+          label: "Cost",
+          value: usage.total.cost.toLocaleString(undefined, {
+            maximumFractionDigits: 4,
+          }),
+        },
+        { label: "Refused", value: usage.total.refusals.toLocaleString() },
+      ]
+    : [];
+
   return (
     <section
       aria-labelledby="usage-this-month"
-      className="card p-5 sm:p-6"
+      className="flex flex-col"
       data-testid="usage-this-month"
     >
-      <h2
-        id="usage-this-month"
-        className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
-      >
-        Usage this month
-      </h2>
+      <div className="log-section-header">
+        <h2 id="usage-this-month" className="text-[20px] font-semibold">
+          Usage this month
+        </h2>
+        <Link
+          href={`/admin/usage?${usageQuery(filters)}`}
+          className="text-link"
+        >
+          See usage in detail
+        </Link>
+      </div>
       {usage ? (
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <div>
-            <dt className="text-muted-foreground">Requests</dt>
-            <dd className="tabular-nums font-medium">
-              {usage.total.requests.toLocaleString()}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Tokens</dt>
-            <dd className="tabular-nums font-medium">
-              {usage.total.tokens.toLocaleString()}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Cost</dt>
-            <dd className="tabular-nums font-medium">
-              {usage.total.cost.toLocaleString(undefined, {
-                maximumFractionDigits: 4,
-              })}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Refused</dt>
-            <dd className="tabular-nums font-medium">
-              {usage.total.refusals.toLocaleString()}
-            </dd>
-          </div>
+        <dl className="grid grid-cols-2 border-b border-border sm:grid-cols-4">
+          {facts.map((fact) => (
+            <div key={fact.label} className="flex flex-col gap-0.5 py-3.5 pr-4">
+              <dt className="text-[12px] text-muted-foreground">
+                {fact.label}
+              </dt>
+              <dd className="text-[20px] leading-tight font-semibold tabular-nums">
+                {fact.value}
+              </dd>
+            </div>
+          ))}
         </dl>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="log-empty text-[14px] text-muted-foreground">
           Usage could not be loaded.
         </p>
       )}
-      <Link
-        href={`/admin/usage?${usageQuery(filters)}`}
-        className="text-link mt-3 text-sm"
-      >
-        See usage in detail
-      </Link>
     </section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 
@@ -62,7 +62,7 @@ export function ProWallDialog({
   plan = "pro",
 }: ProWallConfig & { open: boolean; onClose: () => void }) {
   return (
-    <ModalShell
+    <Modal
       open={open}
       onClose={onClose}
       size="sm"
@@ -81,7 +81,7 @@ export function ProWallDialog({
       <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
         {message}
       </p>
-    </ModalShell>
+    </Modal>
   );
 }
 

@@ -146,8 +146,8 @@ public sealed class GetSyncChangesQueryHandler : IRequestHandler<GetSyncChangesQ
         var parameter = stamp.Parameters[0];
         Expression<Func<T, bool>> After(DateTime value, bool strict) => Expression.Lambda<Func<T, bool>>(
             strict
-                ? Expression.GreaterThan(stamp.Body, Expression.Constant(value))
-                : Expression.GreaterThanOrEqual(stamp.Body, Expression.Constant(value)),
+                ? Expression.GreaterThan(stamp.Body, Captured(value))
+                : Expression.GreaterThanOrEqual(stamp.Body, Captured(value)),
             parameter);
 
         var items = await source.Where(After(floor, strict: false)).OrderBy(stamp).Take(limit + 1).ToListAsync(ct);
@@ -157,10 +157,20 @@ public sealed class GetSyncChangesQueryHandler : IRequestHandler<GetSyncChangesQ
         var last = stamp.Compile()(items[^1]);
 
         // Whatever else shares the last timestamp comes along, so the next page starts after all of it.
-        var tied = await source.Where(Expression.Lambda<Func<T, bool>>(Expression.Equal(stamp.Body, Expression.Constant(last)), parameter)).ToListAsync(ct);
+        var tied = await source.Where(Expression.Lambda<Func<T, bool>>(Expression.Equal(stamp.Body, Captured(last)), parameter)).ToListAsync(ct);
         foreach (var row in tied.Where(r => !items.Contains(r))) items.Add(row);
 
         return new PageResult<T>(items, last);
+    }
+
+    /// <summary>
+    /// The cursor as a captured value, which EF sends as a parameter. A constant would write every
+    /// client's cursor into the SQL text, so each sync compiled and cached a query of its own.
+    /// </summary>
+    private static Expression Captured(DateTime value)
+    {
+        Expression<Func<DateTime>> read = () => value;
+        return read.Body;
     }
 
     /// <summary>The smallest step the database can tell apart, so the next page starts after everything delivered here.</summary>

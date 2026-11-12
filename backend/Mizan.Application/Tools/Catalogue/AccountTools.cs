@@ -133,6 +133,7 @@ public static class AccountTools
             Description = "Change the person's profile settings, which channels their notifications use and the quiet hours, or mark notifications read. "
                 + "Change only what the person asked for: a field left out keeps its value.",
             Kind = ToolKind.Write,
+            Idempotent = true,
             ModeArgument = "section",
             DefaultMode = "profile",
             Properties = new JsonObject

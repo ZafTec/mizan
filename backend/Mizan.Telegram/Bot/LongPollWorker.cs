@@ -55,6 +55,13 @@ public sealed class LongPollWorker : BackgroundService
             {
                 return;
             }
+            catch (Exception ex)
+            {
+                // Since .NET 11 an exception that leaves ExecuteAsync stops the host, and with it the bot.
+                _logger.LogError(ex, "Telegram polling round failed; starting another");
+                try { await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); }
+                catch (OperationCanceledException) { return; }
+            }
         }
     }
 

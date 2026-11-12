@@ -69,7 +69,7 @@ public class PriceBookTests
 
         var result = PriceBook.PerGram(Row(food, price, quantity, unit, PriceConfidence.Observed), food);
 
-        result.Should().Be(perGram is null ? null : (decimal)perGram.Value);
+        result.Should().Be(perGram is null ? null : Dec.Of(perGram.Value));
     }
 
     [Fact]
@@ -146,5 +146,5 @@ public class PriceBookTests
     [InlineData(350d, null, null, "ETB", null)]
     [InlineData(null, 300d, "ETB", "ETB", null)]
     public void OverBudget_ComparesOnlyAmountsInOneCurrency(double? weekly, double? budget, string? budgetCurrency, string currency, bool? over) =>
-        PlanCosting.OverBudget((decimal?)weekly, (decimal?)budget, budgetCurrency, currency).Should().Be(over);
+        PlanCosting.OverBudget(Dec.Of(weekly), Dec.Of(budget), budgetCurrency, currency).Should().Be(over);
 }

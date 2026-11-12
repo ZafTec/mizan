@@ -12,11 +12,12 @@ import {
   type Column,
 } from "@/components/ui/data-table";
 import EndRelationshipButton from "./EndRelationshipButton";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Trainer relationships | Mizan admin",
+  title: "Coaching links | Mizan admin",
   description: "Who coaches whom, and what they can see",
 };
 
@@ -48,8 +49,8 @@ function Grants({ r }: { r: AdminRelationship }) {
           title={`${label}: ${granted ? "shared" : "not shared"}`}
           className={
             granted
-              ? "flex h-5 w-5 items-center justify-center rounded bg-verdigris-100 text-[11px] font-semibold text-verdigris-800 dark:bg-verdigris-500/20 dark:text-verdigris-300"
-              : "flex h-5 w-5 items-center justify-center rounded bg-charcoal-blue-100 text-[11px] text-charcoal-blue-400 dark:bg-white/5 dark:text-charcoal-blue-600"
+              ? "flex h-5 w-5 items-center justify-center rounded-[3px] bg-verdigris-100 text-[11px] font-semibold text-verdigris-800 dark:bg-verdigris-500/20 dark:text-verdigris-300"
+              : "flex h-5 w-5 items-center justify-center rounded-[3px] bg-charcoal-blue-100 text-[11px] text-charcoal-blue-400 dark:bg-white/5 dark:text-charcoal-blue-600"
           }
         >
           {letter}
@@ -156,18 +157,11 @@ export default async function AdminRelationshipsPage({
   });
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="space-y-2">
-        <p className="eyebrow">Administration</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Trainer relationships
-        </h1>
-        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          Which axes a client shares is the client&apos;s decision and is
-          read-only here. Ending a relationship revokes the coach&apos;s access
-          immediately.
-        </p>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Coaching links"
+        lead="Who coaches whom and what each client shares; ending a link revokes the coach's access at once."
+      />
 
       <TableToolbar
         searchPlaceholder="Trainer or client…"

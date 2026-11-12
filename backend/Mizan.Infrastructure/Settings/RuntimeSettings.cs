@@ -73,12 +73,38 @@ internal sealed class RuntimeSettings : IRuntimeSettings
     public async Task SetAsync(string key, string value, Guid? updatedByUserId, CancellationToken cancellationToken = default)
     {
         var definition = Require(key);
-        var stored = definition.IsSecret ? _cache.Protector.Protect(value) : value;
+        await UpsertAsync(definition, value, updatedByUserId, DateTime.UtcNow, cancellationToken);
+        await ChangedAsync(definition, cancellationToken);
+    }
+
+    public async Task SetManyAsync(IReadOnlyDictionary<string, string> values, Guid? updatedByUserId, CancellationToken cancellationToken = default)
+    {
+        var changes = values.Select(pair => (Definition: Require(pair.Key), pair.Value)).ToList();
         var now = DateTime.UtcNow;
+
+        await using (var transaction = await _db.Database.BeginTransactionAsync(cancellationToken))
+        {
+            foreach (var (definition, value) in changes)
+            {
+                await UpsertAsync(definition, value, updatedByUserId, now, cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        foreach (var definition in changes.Select(c => c.Definition).DistinctBy(d => d.Group))
+        {
+            await ChangedAsync(definition, cancellationToken);
+        }
+    }
+
+    private async Task UpsertAsync(RuntimeSettingDefinition definition, string value, Guid? updatedByUserId, DateTime now, CancellationToken cancellationToken)
+    {
+        var stored = definition.IsSecret ? _cache.Protector.Protect(value) : value;
 
         // One statement, so two administrators saving the same key at once both succeed and the
         // later one wins, rather than one of them hitting the primary key.
-        await _db.Database.ExecuteSqlInterpolatedAsync(
+        await _db.Database.ExecuteSqlAsync(
             $"""
             INSERT INTO system_settings (key, value, is_secret, updated_at, updated_by_user_id)
             VALUES ({definition.Key}, {stored}, {definition.IsSecret}, {now}, {updatedByUserId})
@@ -87,8 +113,6 @@ internal sealed class RuntimeSettings : IRuntimeSettings
                 updated_at = EXCLUDED.updated_at, updated_by_user_id = EXCLUDED.updated_by_user_id
             """,
             cancellationToken);
-
-        await ChangedAsync(definition, cancellationToken);
     }
 
     public async Task<bool> ClearAsync(string key, CancellationToken cancellationToken = default)

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 using McpReverseProxyHeaders = McpServer::Mizan.Mcp.Server.ReverseProxyHeaders;
 
@@ -53,11 +54,11 @@ public class McpReverseProxyHeadersTests
         configure.Should().Throw<InvalidOperationException>();
     }
 
-    private static TestServer BuildServer(IConfiguration configuration, string peer) =>
-        new(new WebHostBuilder()
-            .ConfigureServices(services => services.Configure<ForwardedHeadersOptions>(options =>
-                McpReverseProxyHeaders.Configure(options, configuration)))
-            .Configure(app =>
+    private static IHost BuildServer(IConfiguration configuration, string peer) =>
+        TestHosts.Start(
+            services => services.Configure<ForwardedHeadersOptions>(options =>
+                McpReverseProxyHeaders.Configure(options, configuration)),
+            app =>
             {
                 app.Use(async (context, next) =>
                 {
@@ -67,11 +68,11 @@ public class McpReverseProxyHeadersTests
                 app.UseForwardedHeaders();
                 app.Run(context => context.Response.WriteAsync(
                     $"{context.Request.Scheme}|{context.Request.Host}|{context.Connection.RemoteIpAddress}"));
-            }));
+            });
 
-    private static HttpClient ForwardingClient(TestServer server)
+    private static HttpClient ForwardingClient(IHost server)
     {
-        var client = server.CreateClient();
+        var client = server.GetTestClient();
         client.BaseAddress = new Uri("http://mcp.example.test");
         client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
         client.DefaultRequestHeaders.Add("X-Forwarded-For", "203.0.113.10");

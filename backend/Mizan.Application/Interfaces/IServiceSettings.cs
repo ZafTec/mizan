@@ -1,3 +1,4 @@
+using Mizan.Contracts.Mcp;
 using Mizan.Contracts.Prices;
 using Mizan.Contracts.Telegram;
 
@@ -13,4 +14,6 @@ public interface IServiceSettings
     Task<TelegramBotSettings> GetTelegramBotAsync(CancellationToken cancellationToken = default);
 
     Task<PriceCrawlSettings> GetPriceCrawlAsync(CancellationToken cancellationToken = default);
+
+    Task<McpGatewaySettings> GetMcpGatewayAsync(CancellationToken cancellationToken = default);
 }

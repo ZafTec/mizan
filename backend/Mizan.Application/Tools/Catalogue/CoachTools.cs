@@ -22,6 +22,8 @@ public static class CoachTools
             {
                 ["query"] = ToolSchema.String("trainers: part of a name or speciality."),
                 ["relationshipId"] = ToolSchema.Id("chat: the coaching relationship, from view mine."),
+                ["before"] = ToolSchema.Id("chat: a message id; reads the messages before it. The latest messages by default."),
+                ["take"] = ToolSchema.Integer("chat: messages per page, 50 by default, at most 200."),
                 ["page"] = ToolSchema.Integer("trainers, requests: page, from 1."),
                 ["pageSize"] = ToolSchema.Integer("trainers, requests: results per page, 20 by default."),
             },
@@ -67,11 +69,14 @@ public static class CoachTools
                 new ToolMode
                 {
                     Name = "chat",
-                    Summary = "The messages with the trainer in relationshipId, with the conversation id manage_my_coach message needs.",
+                    Summary = "The latest messages with the trainer in relationshipId, oldest first, with the conversation id manage_my_coach message needs. When hasOlder is true, pass the first message id as before to read the page before it.",
                     Area = McpScopes.CoachingRead,
                     Requests = [typeof(GetChatConversationQuery)],
                     Replaces = ["get_coach_chat"],
-                    Build = (args, _) => new GetChatConversationQuery(args.RequiredGuid("relationshipId")),
+                    Build = (args, _) => new GetChatConversationQuery(
+                        args.RequiredGuid("relationshipId"),
+                        args.OptionalGuid("before"),
+                        args.OptionalInt("take") ?? GetChatConversationQuery.DefaultTake),
                     NotFound = "There is no such conversation.",
                 },
             ],

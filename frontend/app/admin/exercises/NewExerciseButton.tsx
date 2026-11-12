@@ -9,7 +9,7 @@ export default function NewExerciseButton() {
     <>
       <button
         type="button"
-        className="btn-primary !rounded-2xl"
+        className="btn-primary"
         onClick={() => setOpen(true)}
       >
         New exercise

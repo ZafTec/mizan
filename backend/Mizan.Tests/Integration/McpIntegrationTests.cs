@@ -207,7 +207,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         jsonResponse.Should().NotBeNull();
         jsonResponse!.Result.Should().NotBeNull();
 
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("protocolVersion");
         result.Should().ContainKey("capabilities");
         result.Should().ContainKey("serverInfo");
@@ -237,7 +237,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         jsonResponse.Should().NotBeNull();
         jsonResponse!.Result.Should().NotBeNull();
 
-        var toolsResult = JsonSerializer.Deserialize<JsonElement>(jsonResponse.Result.ToString());
+        var toolsResult = JsonSerializer.Deserialize<JsonElement>(jsonResponse!.Result!.ToString()!);
         var toolsList = toolsResult.GetProperty("tools").Deserialize<List<Dictionary<string, object>>>();
         toolsList.Should().NotBeNull();
         toolsList.Should().HaveCountGreaterThan(20);
@@ -281,7 +281,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -318,7 +318,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var foodsResult = JsonSerializer.Deserialize<Dictionary<string, object>>(textContent);
         foodsResult.Should().ContainKey("items");
 
-        var items = JsonSerializer.Deserialize<List<object>>(foodsResult["items"].ToString());
+        var items = JsonSerializer.Deserialize<List<object>>(foodsResult!["items"].ToString()!);
         items.Should().HaveCountLessThanOrEqualTo(3);
     }
 
@@ -350,7 +350,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var foodsResult = JsonSerializer.Deserialize<Dictionary<string, object>>(textContent);
         foodsResult.Should().ContainKey("items");
 
-        var items = JsonSerializer.Deserialize<List<object>>(foodsResult["items"].ToString());
+        var items = JsonSerializer.Deserialize<List<object>>(foodsResult!["items"].ToString()!);
         items.Should().BeEmpty();
     }
 
@@ -426,7 +426,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
 
         // An admin curates the shared catalogue, so their food has no owner.
@@ -715,7 +715,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -746,7 +746,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var recipesResult = JsonSerializer.Deserialize<Dictionary<string, object>>(textContent);
         recipesResult.Should().ContainKey("items");
 
-        var recipes = JsonSerializer.Deserialize<List<object>>(recipesResult["items"].ToString());
+        var recipes = JsonSerializer.Deserialize<List<object>>(recipesResult!["items"].ToString()!);
         recipes.Should().BeEmpty();
     }
 
@@ -844,7 +844,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -872,7 +872,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -1017,7 +1017,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -1046,7 +1046,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -1075,7 +1075,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -1166,7 +1166,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
     }
 
@@ -1278,7 +1278,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
 
         elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
@@ -1314,7 +1314,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result.ToString()!);
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result!.ToString()!);
         result.Should().ContainKey("content");
 
         // The tool filter in Program.cs awaits LogUsageAsync before it answers, so the call is on the Usage page by now.
@@ -1667,9 +1667,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
     private string? ExtractToolResultText(JsonRpcResponse? response)
     {
         if (response?.Result == null) return null;
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(response.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(response!.Result!.ToString()!);
         if (result == null || !result.ContainsKey("content")) return null;
-        var contentArray = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(result["content"].ToString());
+        var contentArray = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(result!["content"].ToString()!);
         if (contentArray == null || contentArray.Count == 0) return null;
         // JsonElement.ToString() on a String type returns the raw value without JSON quotes.
         // The tool text is already a plain string (not a JSON-encoded string), so return it directly.

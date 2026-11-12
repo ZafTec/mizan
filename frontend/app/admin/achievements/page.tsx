@@ -12,6 +12,8 @@ import {
   type Column,
 } from "@/components/ui/data-table";
 import DeleteAchievementButton from "./DeleteAchievementButton";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminFacts from "@/components/admin/AdminFacts";
 
 export const dynamic = "force-dynamic";
 
@@ -101,10 +103,7 @@ const columns: Column<AchievementAnalyticsRow>[] = [
     width: "1%",
     cell: (a) => (
       <div className="flex items-center justify-end gap-3">
-        <Link
-          href={`/admin/achievements/${a.id}/edit`}
-          className="text-xs text-verdigris-700 hover:underline dark:text-verdigris-300"
-        >
+        <Link href={`/admin/achievements/${a.id}/edit`} className="text-link">
           Edit
         </Link>
         <DeleteAchievementButton
@@ -116,19 +115,6 @@ const columns: Column<AchievementAnalyticsRow>[] = [
     ),
   },
 ];
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-3xl border border-charcoal-blue-200 p-4 dark:border-white/10">
-      <p className="text-xs uppercase tracking-wide text-charcoal-blue-500 dark:text-charcoal-blue-400">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums text-charcoal-blue-900 dark:text-charcoal-blue-50">
-        {value}
-      </p>
-    </div>
-  );
-}
 
 export default async function AdminAchievementsPage({
   searchParams,
@@ -153,34 +139,32 @@ export default async function AdminAchievementsPage({
     .filter((c): c is string => Boolean(c));
 
   return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Administration</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Achievements
-          </h1>
-        </div>
-        <Link
-          href="/admin/achievements/new"
-          className="btn-primary !rounded-2xl"
-        >
-          New achievement
-        </Link>
-      </header>
+    <div className="flex flex-col gap-6 [&>header]:mb-2">
+      <AdminPageHeader
+        title="Achievements"
+        lead="The catalogue, and how often each one is unlocked."
+        action={
+          <Link href="/admin/achievements/new" className="btn-primary">
+            New achievement
+          </Link>
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="In catalogue" value={analytics.totalAchievements} />
-        <Stat label="Total unlocks" value={analytics.totalUnlocks} />
-        <Stat
-          label="Users with one"
-          value={`${analytics.usersWithAtLeastOne} / ${analytics.totalUsers}`}
-        />
-        <Stat
-          label="Average each"
-          value={analytics.averageUnlocksPerUser.toFixed(1)}
-        />
-      </div>
+      <AdminFacts
+        facts={[
+          { label: "In catalogue", value: analytics.totalAchievements },
+          {
+            label: "Unlocks",
+            value: analytics.totalUnlocks,
+            note: `${analytics.averageUnlocksPerUser.toFixed(1)} a person on average`,
+          },
+          {
+            label: "People with one",
+            value: analytics.usersWithAtLeastOne,
+            note: `of ${analytics.totalUsers}`,
+          },
+        ]}
+      />
 
       <TableToolbar
         searchPlaceholder="Search achievements…"
@@ -214,10 +198,7 @@ export default async function AdminAchievementsPage({
           title: "No achievements match",
           description: "Try a different search, or add one.",
           action: (
-            <Link
-              href="/admin/achievements/new"
-              className="btn-primary !rounded-2xl"
-            >
+            <Link href="/admin/achievements/new" className="btn-primary">
               New achievement
             </Link>
           ),

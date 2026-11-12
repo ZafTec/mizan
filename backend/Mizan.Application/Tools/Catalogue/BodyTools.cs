@@ -22,7 +22,7 @@ public static class BodyTools
                 ["from"] = ToolSchema.Date("First day, YYYY-MM-DD. Optional."),
                 ["to"] = ToolSchema.Date("Last day, YYYY-MM-DD. Optional."),
                 ["page"] = ToolSchema.Integer("Page, from 1."),
-                ["pageSize"] = ToolSchema.Integer("Measurements per page, 20 by default."),
+                ["pageSize"] = ToolSchema.Integer("Measurements per page, 20 by default (at most 25)."),
             },
             Modes =
             [
@@ -37,7 +37,8 @@ public static class BodyTools
                     {
                         UserId = context.UserId,
                         Page = args.OptionalInt("page") ?? 1,
-                        PageSize = args.OptionalInt("pageSize") ?? 20,
+                        // A page stays well under a host's reply limit (docs/MCP.md#reply-size).
+                        PageSize = Math.Clamp(args.OptionalInt("pageSize") ?? 20, 1, 25),
                         SortBy = "date",
                         SortOrder = "desc",
                         From = args.OptionalDate("from"),
@@ -52,6 +53,7 @@ public static class BodyTools
             Title = "Log body measurements",
             Description = "Record weight and any other measurements for a day. One measurement a day: a later write for the same day updates it. Log what was measured; leave the rest out.",
             Kind = ToolKind.Write,
+            Idempotent = true,
             Properties = new JsonObject
             {
                 ["date"] = ToolSchema.Date("YYYY-MM-DD, today by default."),

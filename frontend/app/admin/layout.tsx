@@ -1,7 +1,7 @@
-import { getUserOptionalServer } from "@/helper/session";
 import { redirect } from "next/navigation";
-import AppShell from "@/components/Layout/AppShell";
-import AdminTabs from "@/components/admin/AdminTabs";
+import { getUserOptionalServer } from "@/helper/session";
+import { getAdminOverviewServer } from "@/lib/api/admin-ops.server";
+import AdminShell from "@/components/admin/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -18,12 +18,9 @@ export default async function AdminLayout({
     redirect("/");
   }
 
+  const overview = await getAdminOverviewServer();
+
   return (
-    <AppShell user={user} variant="admin">
-      <div className="space-y-6 lg:space-y-8">
-        <AdminTabs />
-        {children}
-      </div>
-    </AppShell>
+    <AdminShell attention={overview?.attention ?? {}}>{children}</AdminShell>
   );
 }

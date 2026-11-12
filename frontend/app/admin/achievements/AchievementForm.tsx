@@ -127,7 +127,7 @@ export default function AchievementForm({
 
   return (
     <div className="space-y-6">
-      <section className="card space-y-4 p-6">
+      <section className="space-y-4 border-t border-foreground pt-4">
         <Field label="Name">
           <input
             value={draft.name}
@@ -161,12 +161,12 @@ export default function AchievementForm({
                 width={56}
                 height={56}
                 unoptimized
-                className="h-14 w-14 rounded-sm border border-border object-contain"
+                className="h-14 w-14 rounded-[3px] border border-border object-contain"
               />
             ) : (
               <span
                 aria-hidden="true"
-                className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed border-border text-xs text-muted-foreground"
+                className="flex h-14 w-14 items-center justify-center rounded-[3px] border border-dashed border-border text-xs text-muted-foreground"
               >
                 28px
               </span>
@@ -227,12 +227,12 @@ export default function AchievementForm({
         </div>
       </section>
 
-      <section className="card space-y-4 p-6">
+      <section className="space-y-4 border-t border-foreground pt-4">
         <div>
-          <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+          <h2 className="text-[20px] leading-[1.3] font-semibold">
             Unlock condition
           </h2>
-          <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          <p className="text-[13px] text-muted-foreground">
             Evaluated after every relevant log. Streaks use the live count, so a
             lapsed streak cannot unlock one.
           </p>
@@ -258,7 +258,7 @@ export default function AchievementForm({
           </Field>
         </div>
 
-        <p className="rounded-2xl bg-charcoal-blue-50 px-3 py-2 text-sm text-charcoal-blue-600 dark:bg-white/[0.03] dark:text-charcoal-blue-300">
+        <p className="text-sm text-muted-foreground">
           Unlocks at{" "}
           <strong>
             {criteriaLabel.toLowerCase()} ≥ {draft.threshold}

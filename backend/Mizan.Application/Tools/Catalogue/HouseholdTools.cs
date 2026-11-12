@@ -67,6 +67,7 @@ public static class HouseholdTools
             Description = "Create a household, choose the active one, invite a registered person by email, answer an invitation, or revoke one you sent. "
                 + "Leaving a household or removing a member is delete, kind household_membership.",
             Kind = ToolKind.Write,
+            Additive = true,
             ModeArgument = "action",
             Properties = new JsonObject
             {

@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Mizan.Domain.Entities;
+using Mizan.Infrastructure.Data;
 using Xunit;
 
 namespace Mizan.Tests.Integration;
@@ -123,6 +126,33 @@ public class FoodsControllerTests
         (await service.GetAsync($"/api/Foods/{foodId}")).StatusCode.Should().Be(HttpStatusCode.OK);
         var search = await service.GetFromJsonAsync<SearchFoodsResponse>("/api/Foods/search?searchTerm=My%20Private%20Food");
         search!.Items.Should().Contain(f => f.Id == foodId);
+    }
+
+    [Fact]
+    public async Task APersonFindsAFoodByAnyPartOfItsNameOrBrand_IgnoringCase()
+    {
+        await _fixture.ResetDatabaseAsync();
+
+        var userId = Guid.NewGuid();
+        var email = $"user-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email);
+        using (var scope = _fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+            foreach (var (name, brand) in new[] { ("Greek Yogurt", "Fage"), ("Plain yogurt 2%", (string?)null), ("Oat milk", "Oatly"), ("Rolled oats", null) })
+                db.Foods.Add(new Food { Id = Guid.NewGuid(), Name = name, Brand = brand, CaloriesPer100g = 100m, ProteinPer100g = 5m, CarbsPer100g = 10m, FatPer100g = 2m });
+            await db.SaveChangesAsync();
+        }
+
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        async Task<IEnumerable<string>> NamesAsync(string term) =>
+            (await client.GetFromJsonAsync<SearchFoodsResponse>($"/api/Foods/search?searchTerm={Uri.EscapeDataString(term)}"))!.Items.Select(f => f.Name);
+
+        (await NamesAsync("YOGURT")).Should().Equal("Greek Yogurt", "Plain yogurt 2%");
+        (await NamesAsync("oatl")).Should().Equal("Oat milk");
+        (await NamesAsync("oat")).Should().Equal("Oat milk", "Rolled oats");
+        (await NamesAsync("2%")).Should().Equal("Plain yogurt 2%");
+        (await NamesAsync("t_m")).Should().BeEmpty();
     }
 
     private sealed record CreateFoodResponse(Guid Id, bool Success);

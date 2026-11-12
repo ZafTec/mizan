@@ -649,10 +649,7 @@ export default function CampaignEditor({
         aria-label="Preview"
       >
         <section aria-labelledby="campaign-reach" className="space-y-2">
-          <h2
-            id="campaign-reach"
-            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-          >
+          <h2 id="campaign-reach" className="text-[15px] font-semibold">
             Audience
           </h2>
           {audience ? (

@@ -34,6 +34,8 @@ public static class CoachingTools
             {
                 ["clientId"] = ToolSchema.Id("nutrition, workouts: " + ClientHelp),
                 ["relationshipId"] = ToolSchema.Id("chat: the coaching relationship, from view clients."),
+                ["before"] = ToolSchema.Id("chat: a message id; reads the messages before it. The latest messages by default."),
+                ["take"] = ToolSchema.Integer("chat: messages per page, 50 by default, at most 200."),
                 ["date"] = ToolSchema.Date("nutrition: the day, today by default."),
                 ["page"] = ToolSchema.Integer("clients, requests, workouts: page, from 1."),
                 ["pageSize"] = ToolSchema.Integer("clients, requests, workouts: results per page, 20 by default."),
@@ -86,12 +88,15 @@ public static class CoachingTools
                 new ToolMode
                 {
                     Name = "chat",
-                    Summary = "The messages with the client in relationshipId, with the conversation id manage_clients message needs.",
+                    Summary = "The latest messages with the client in relationshipId, oldest first, with the conversation id manage_clients message needs. When hasOlder is true, pass the first message id as before to read the page before it.",
                     Area = McpScopes.CoachingRead,
                     MinimumRole = ToolRole.Trainer,
                     Requests = [typeof(GetChatConversationQuery)],
                     Replaces = ["get_coach_chat"],
-                    Build = (args, _) => new GetChatConversationQuery(args.RequiredGuid("relationshipId")),
+                    Build = (args, _) => new GetChatConversationQuery(
+                        args.RequiredGuid("relationshipId"),
+                        args.OptionalGuid("before"),
+                        args.OptionalInt("take") ?? GetChatConversationQuery.DefaultTake),
                     NotFound = "There is no such conversation.",
                 },
             ],
@@ -103,6 +108,7 @@ public static class CoachingTools
             Description = "For coaches. Accept or decline a request to coach someone, or message a client. "
                 + "What the coach may see is the client's choice: a coach cannot change it.",
             Kind = ToolKind.Write,
+            Additive = true,
             ModeArgument = "action",
             Properties = new JsonObject
             {
@@ -146,6 +152,7 @@ public static class CoachingTools
             Description = "For coaches whose client allowed meal planning. Draft a meal plan for the client, empty or with entries, "
                 + "or from a template. The plan is the client's: it waits as a draft until they accept or decline it, and they are told.",
             Kind = ToolKind.Write,
+            Additive = true,
             ModeArgument = "action",
             Required = ["clientId", "startDate"],
             Properties = new JsonObject
@@ -266,6 +273,7 @@ public static class CoachingTools
             Description = "For coaches. Ask the Mizan assistant about one client. It reads only what the client shared with the coach and "
                 + "allowed AI to read, never writes to the client's log, and spends the coach's AI allowance. Pass threadId to continue a thread.",
             Kind = ToolKind.Write,
+            Additive = true,
             Required = ["clientId", "message"],
             Properties = new JsonObject
             {

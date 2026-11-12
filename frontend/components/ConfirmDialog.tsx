@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 import { getErrorMessage } from "@/lib/toast";
 
 export interface ConfirmDialogProps {
@@ -34,7 +34,8 @@ export interface ConfirmDialogProps {
 }
 
 /**
- * The one confirmation for destructive actions and sign-out. Cancel takes
+ * The one confirmation pattern, built on the shared `Modal`: destructive
+ * actions, sign-out and any other step that asks before it acts. Cancel takes
  * focus first, so Enter on open never destroys anything; the confirm button
  * is the filled destructive style, shows progress while the request runs and
  * the dialog shows a failure inline instead of closing.
@@ -85,7 +86,7 @@ export function ConfirmDialog({
   };
 
   return (
-    <ModalShell
+    <Modal
       open={open}
       onClose={close}
       closeOnOverlayClick={!pending}
@@ -129,7 +130,7 @@ export function ConfirmDialog({
           </p>
         )}
       </div>
-    </ModalShell>
+    </Modal>
   );
 }
 

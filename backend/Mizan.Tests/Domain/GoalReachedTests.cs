@@ -15,7 +15,7 @@ public class GoalReachedTests
     [InlineData(72, 72, 71, false)]    // already on the target before
     [InlineData(72, 71, 70, false)]    // already past it and moving away
     public void ATargetIsReached_WhenTheValueCrossesIt(double target, double before, double now, bool reached) =>
-        GoalReached.Crossed((decimal)target, (decimal)before, (decimal)now).Should().Be(reached);
+        GoalReached.Crossed(Dec.Of(target), Dec.Of(before), Dec.Of(now)).Should().Be(reached);
 
     [Fact]
     public void WithoutAnEarlierValue_NothingIsReached() =>
@@ -31,12 +31,12 @@ public class GoalReachedTests
     [InlineData(72, "kg", 72)]
     [InlineData(72, null, 72)]
     public void ATargetWeightIsComparedInKilograms(double target, string? unit, double kilograms) =>
-        Math.Round(GoalReached.TargetWeightKg((decimal)target, unit)!.Value, 3).Should().Be((decimal)kilograms);
+        Math.Round(GoalReached.TargetWeightKg(Dec.Of(target), unit)!.Value, 3).Should().Be(Dec.Of(kilograms));
 
     [Theory]
     [InlineData(71.84, "kg", "71.8 kg")]
     [InlineData(72, "kg", "72 kg")]
     [InlineData(80, "lb", "176.4 lb")]
     public void AWeightIsShownInTheGoalsUnit(double kilograms, string unit, string shown) =>
-        GoalReached.Weight((decimal)kilograms, unit).Should().Be(shown);
+        GoalReached.Weight(Dec.Of(kilograms), unit).Should().Be(shown);
 }

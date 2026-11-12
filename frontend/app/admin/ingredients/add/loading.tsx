@@ -1,5 +1,5 @@
-import { FormSkeleton } from "@/components/ui/skeletons";
+import { AdminFormSkeleton } from "@/components/admin/AdminSkeletons";
 
 export default function Loading() {
-  return <FormSkeleton />;
+  return <AdminFormSkeleton />;
 }

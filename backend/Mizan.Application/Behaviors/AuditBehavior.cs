@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,13 @@ namespace Mizan.Application.Behaviors;
 public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
+    // Read once per closed request type: every request passes through here, and these never change.
+    private static readonly string RequestName = typeof(TRequest).Name;
+    private static readonly bool IsCommand = RequestName.EndsWith("Command", StringComparison.Ordinal);
+    private static readonly string AuditedEntityType = RequestName.Replace("Command", "");
+    private static readonly PropertyInfo? IdProperty =
+        typeof(TRequest).GetProperty("Id") ?? typeof(TRequest).GetProperty("recipeId") ?? typeof(TRequest).GetProperty("foodId");
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<AuditBehavior<TRequest, TResponse>> _logger;
@@ -25,10 +33,10 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        var requestName = RequestName;
 
         // Only audit commands (convention: ends with "Command")
-        if (!requestName.EndsWith("Command"))
+        if (!IsCommand)
         {
             return await next();
         }
@@ -47,10 +55,9 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 
             // Try to extract an ID from the request or response if possible
             string entityId = string.Empty;
-            var idProperty = typeof(TRequest).GetProperty("Id") ?? typeof(TRequest).GetProperty("recipeId") ?? typeof(TRequest).GetProperty("foodId");
-            if (idProperty != null)
+            if (IdProperty != null)
             {
-                entityId = idProperty.GetValue(request)?.ToString() ?? string.Empty;
+                entityId = IdProperty.GetValue(request)?.ToString() ?? string.Empty;
             }
 
             if (string.IsNullOrEmpty(entityId) && response != null)
@@ -67,7 +74,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Action = requestName,
-                EntityType = requestName.Replace("Command", ""),
+                EntityType = AuditedEntityType,
                 EntityId = entityId,
                 Details = JsonSerializer.Serialize(DetailsOf(request)),
                 IpAddress = ipAddress,

@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Caching.Memory;
 using Mizan.Contracts.Tools;
+using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Authorization;
 using ModelContextProtocol.Protocol;
 
@@ -33,7 +34,7 @@ public sealed class TaskToolProxy
         _links = links;
     }
 
-    /// <summary>The caller's task tools as MCP tools: annotations from each tool's kind, closed-world, and the app page for those that have one.</summary>
+    /// <summary>The caller's task tools as MCP tools: the API's annotations, an output schema, and the app page for those that have one.</summary>
     public async Task<IList<Tool>> ListAsync(CancellationToken cancellationToken) =>
         (await ManifestAsync(cancellationToken)).Tools.Select(ToTool).ToList();
 
@@ -81,25 +82,49 @@ public sealed class TaskToolProxy
 
     // Per connection: the grant and the person. An administrator's manifest differs from their own
     // ordinary connection's because the grant differs, and the API decides what each one gets.
+    // The gateway's list is one for everyone it serves, since it names no person when it lists.
     private string CacheKey()
     {
         var http = _http.HttpContext;
+        if (GatewayPrincipals.IsGateway(McpCallIdentity.Of(http))) return "mcp:task-tools:gateway";
         return $"mcp:task-tools:{McpGrantAccess.GrantId(http)}:{McpGrantAccess.UserId(http)}";
     }
 
+    /// <summary>
+    /// Every task tool answers with an object (<see cref="ToResult"/>). Its fields depend on the mode, so the schema
+    /// promises the object and the fields every error carries, and leaves the rest open.
+    /// </summary>
+    public static readonly JsonElement OutputSchema = JsonSerializer.SerializeToElement(new JsonObject
+    {
+        ["type"] = "object",
+        ["properties"] = new JsonObject
+        {
+            ["errorCode"] = new JsonObject { ["type"] = new JsonArray("string", "null"), ["description"] = "Set when the call was refused or failed." },
+            ["needs"] = new JsonObject { ["type"] = new JsonArray("string", "null"), ["description"] = "The permission a refused call is missing." },
+            ["confirmation"] = new JsonObject { ["type"] = "object", ["description"] = "A previewed action's token, expiry and preview." },
+            ["items"] = new JsonObject { ["type"] = "array", ["description"] = "A list answer." },
+        },
+        ["additionalProperties"] = true,
+    });
+
+    /// <summary>
+    /// The annotations hold for the tool's worst mode, as the API works them out (<c>ToolFilter.Hints</c>). An API that
+    /// sends none is read from the kind, destructive for any write.
+    /// </summary>
     public static Tool ToTool(ToolDescriptorDto descriptor) => new()
     {
         Name = descriptor.Name,
         Title = descriptor.Title,
         Description = descriptor.Description,
         InputSchema = descriptor.InputSchema,
+        OutputSchema = OutputSchema,
         Annotations = new ToolAnnotations
         {
             Title = descriptor.Title,
-            ReadOnlyHint = descriptor.Kind == ToolKinds.Read,
-            DestructiveHint = descriptor.Kind == ToolKinds.Read ? null : descriptor.Kind == ToolKinds.Destructive,
-            // Every tool talks only to Mizan, never to the open internet.
-            OpenWorldHint = false,
+            ReadOnlyHint = descriptor.Hints?.ReadOnly ?? descriptor.Kind == ToolKinds.Read,
+            DestructiveHint = descriptor.Hints?.Destructive ?? descriptor.Kind != ToolKinds.Read,
+            IdempotentHint = descriptor.Hints?.Idempotent ?? descriptor.Kind == ToolKinds.Read,
+            OpenWorldHint = descriptor.Hints?.OpenWorld ?? false,
         },
         // The MCP Apps link: a host that shows apps renders this page with the tool's result.
         Meta = descriptor.App is null ? null : new JsonObject { ["ui"] = new JsonObject { ["resourceUri"] = descriptor.App } },
@@ -113,6 +138,20 @@ public sealed class TaskToolProxy
     public static CallToolResult ToResult(ToolCallResultDto result, McpLinks links)
     {
         var text = result.IsError && result.ErrorCode == "upgrade_required" ? links.UpgradeRequired(result.Text) : result.Text;
+
+        // The common answer, a success with nothing to add, goes on as the API sent it rather than through a
+        // text copy, a node tree and a second serialization.
+        if (!result.IsError && result.Confirmation is null && result.Data is { ValueKind: JsonValueKind.Object or JsonValueKind.Array } plain)
+        {
+            return new CallToolResult
+            {
+                Content = [new TextContentBlock { Text = text }],
+                StructuredContent = plain.ValueKind == JsonValueKind.Object
+                    ? plain
+                    : JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement> { ["items"] = plain }),
+                IsError = false,
+            };
+        }
 
         JsonObject? structured = result.Data is { } data ? data.ValueKind switch
         {
@@ -145,10 +184,11 @@ public sealed class TaskToolProxy
             structured = error;
         }
 
+        // Always an object, as the output schema says, even when the answer is only text.
         return new CallToolResult
         {
             Content = [new TextContentBlock { Text = text }],
-            StructuredContent = structured is null ? null : JsonSerializer.SerializeToElement(structured),
+            StructuredContent = JsonSerializer.SerializeToElement(structured ?? new JsonObject()),
             IsError = result.IsError,
         };
     }

@@ -70,24 +70,21 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
         var day = DateOnly.FromDateTime(request.Date ?? DateTime.UtcNow);
         var targetDate = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
-        var foodEntries = await _context.FoodDiaryEntries
-            .Include(fl => fl.Food)
-            .Include(fl => fl.Recipe)
+        // Projected in the query: the trainer's view reads names, not tracked food and recipe entities.
+        var entries = await _context.FoodDiaryEntries.AsNoTracking()
             .Where(fl => fl.UserId == request.ClientId && fl.EntryDate == day)
             .OrderBy(fl => fl.LoggedAt)
+            .Select(fl => new FoodLogEntryDto(
+                fl.Id,
+                fl.Food != null ? fl.Food.Name : fl.Recipe != null ? fl.Recipe.Title : "Unknown",
+                fl.Servings,
+                fl.Food != null ? fl.Food.ServingUnit : "serving",
+                fl.Calories ?? 0,
+                fl.ProteinGrams ?? 0,
+                fl.CarbsGrams ?? 0,
+                fl.FatGrams ?? 0,
+                fl.LoggedAt))
             .ToListAsync(cancellationToken);
-
-        var entries = foodEntries.Select(fl => new FoodLogEntryDto(
-            fl.Id,
-            fl.Food?.Name ?? fl.Recipe?.Title ?? "Unknown",
-            fl.Servings,
-            fl.Food?.ServingUnit ?? "serving",
-            fl.Calories ?? 0,
-            fl.ProteinGrams ?? 0,
-            fl.CarbsGrams ?? 0,
-            fl.FatGrams ?? 0,
-            fl.LoggedAt
-        )).ToList();
 
         var summary = new NutritionSummaryDto(
             entries.Sum(e => e.Calories),

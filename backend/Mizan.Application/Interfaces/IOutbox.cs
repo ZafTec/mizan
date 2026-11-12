@@ -36,7 +36,21 @@ public interface IOutbox
         DateTime runAfter,
         string dedupeKey,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Stages many waiting jobs of one type under the rules of <see cref="ScheduleAsync{T}"/>, looking
+    /// their keys up in one query rather than one each, so a scan over many people costs one round
+    /// trip. A key that is already queued, or repeated in <paramref name="jobs"/>, keeps the first job.
+    /// Returns how many jobs were staged. <b>Nothing is queued until the caller saves.</b>
+    /// </summary>
+    Task<int> ScheduleAllAsync<T>(
+        string type,
+        IEnumerable<ScheduledJob<T>> jobs,
+        CancellationToken cancellationToken = default);
 }
+
+/// <summary>One job for <see cref="IOutbox.ScheduleAllAsync{T}"/>: its payload, when it may run (UTC), and its dedupe key.</summary>
+public sealed record ScheduledJob<T>(T Payload, DateTime RunAfter, string DedupeKey);
 
 /// <summary>
 /// One job type's worth of work.

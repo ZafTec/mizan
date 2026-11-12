@@ -52,7 +52,7 @@ export default function JobActions({ job }: { job: AdminJob }) {
               "Could not requeue the job",
             )
           }
-          className="text-xs text-verdigris-700 hover:underline disabled:opacity-50 dark:text-verdigris-400"
+          className="text-link disabled:opacity-50"
         >
           Retry
         </button>
@@ -60,7 +60,7 @@ export default function JobActions({ job }: { job: AdminJob }) {
       {deletable && (
         <ConfirmButton
           disabled={pending}
-          className="text-xs text-destructive hover:underline disabled:opacity-50"
+          className="inline-flex min-h-9 items-center text-[13px] font-medium text-destructive underline-offset-4 hover:underline disabled:opacity-50 max-sm:min-h-11"
           title="Discard this job?"
           description="The job and its record are deleted and it will not run again."
           confirmLabel="Discard job"

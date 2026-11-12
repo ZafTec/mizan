@@ -154,8 +154,8 @@ public class ExternalProviderCompatibilityTests
             ["ReverseProxy:KnownProxy"] = "172.18.0.2",
         }).Build();
         using var backchannel = new ProviderBackchannel();
-        using var server = new TestServer(new WebHostBuilder()
-            .ConfigureServices(services =>
+        using var host = TestHosts.Start(
+            services =>
             {
                 services.AddLogging();
                 services.AddDataProtection().UseEphemeralDataProtectionProvider();
@@ -176,8 +176,8 @@ public class ExternalProviderCompatibilityTests
                         ExternalProviders.Configure(options, configuration, "github");
                         options.BackchannelHttpHandler = backchannel;
                     });
-            })
-            .Configure(app =>
+            },
+            app =>
             {
                 app.Use(async (context, next) =>
                 {
@@ -190,8 +190,8 @@ public class ExternalProviderCompatibilityTests
                 {
                     RedirectUri = ExternalProviders.CallbackPath,
                 }));
-            }));
-        using var client = server.CreateClient();
+            });
+        using var client = host.GetTestClient();
         client.BaseAddress = new Uri("http://api.mizan.example.test");
         client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
         client.DefaultRequestHeaders.Add("X-Forwarded-For", "203.0.113.10");

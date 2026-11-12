@@ -41,6 +41,14 @@ public class AdminSettingsController : ControllerBase
     public async Task<ActionResult<SmtpTestResult>> TestSmtp(CancellationToken cancellationToken)
         => Ok(await _mediator.Send(new SendTestEmailCommand(), cancellationToken));
 
+    /// <summary>
+    /// Makes a new end-user signing key and keeps the one it replaces published until its tokens
+    /// expire. Returns key ids only.
+    /// </summary>
+    [HttpPost("end-user-key/rotate")]
+    public async Task<ActionResult<EndUserKeyRotationResult>> RotateEndUserKey(CancellationToken cancellationToken)
+        => Ok(await _mediator.Send(new RotateEndUserSigningKeyCommand(), cancellationToken));
+
     /// <summary>One tiny provider call on the evaluation line. Reports the error class, never the provider's body.</summary>
     [HttpPost("ai/test")]
     public async Task<ActionResult<AiProviderTestResult>> TestAi(CancellationToken cancellationToken)

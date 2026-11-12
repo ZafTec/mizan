@@ -14,7 +14,7 @@ Clients connect through OAuth. There are no personal tokens.
 4. Mizan shows a consent page at `/oauth/consent`. Sign in, then choose what the app may do:
    - **Areas**: profile, nutrition, training, body, recipes, planning, households, social, notifications, trainer, and AI use. Each is read or write; write includes read.
    - **Households**: none, selected ones, or all.
-   - `admin` is offered to administrators only and is off by default.
+   - `admin` is offered to administrators only and is off by default. Discovery advertises the admin scopes so a client that asks for every advertised scope lets an administrator turn them on; for anyone else they are dropped.
 5. The client receives a one-hour access token (`mza_`) and a rotating refresh token (`mzr_`, 30 days). PKCE S256 is required. Reusing a refresh token revokes the whole family.
 
 Manage connections under **More → Connected apps** (`/profile/mcp`): last use, 30-day usage per app and per tool, **Edit access**, and **Disconnect**. Editing may only reduce access; raising it needs a new consent. A reduction or disconnect applies on the app's next request.
@@ -59,11 +59,13 @@ Batches are one call: `log_food` takes `items[]` (foods, recipes, plan entries o
 
 `GET /api/tools/reference` (MCP resources `mizan://reference` and `mizan://reference/{price-regions,goal-types,meal-slots,macro-modes,reminder-kinds}`, open to every connection and not counted) lists the enabled price regions, goal types, meal slots, macro modes and reminder kinds the tools accept.
 
-`Mcp:Toolset` chooses what the MCP service offers: `legacy` (the code default) keeps the tools below; `tasks` (the production Compose default) passes `tools/list` and `tools/call` through to the API manifest and call endpoints (`TaskToolProxy`), with the same sign-in, free-plan cap and usage log. The manifest is cached 60 seconds per grant and user, so a changed grant shows within a minute; the API checks every call regardless. A tool's kind sets its annotations (`read` is read-only, `destructive` is destructive, all closed-world) and its app sets `_meta.ui.resourceUri`. A result's `data` becomes `structuredContent` (an array as `{items}`), a confirmation is added as `structuredContent.confirmation` `{token, expiresAt, preview}`, and an error carries `{errorCode, needs}`. `estimate_food` and `plan_meals` may run as tasks. The server instructions, prompts (`MizanTaskPrompts`) and skills (`SkillsTasks`, with `mizan-admin` beside the six shared names) name the task tools in this mode.
+`Mcp:Toolset` chooses what the MCP service offers: `legacy` (the code default) keeps the tools below; `tasks` (the production Compose default) passes `tools/list` and `tools/call` through to the API manifest and call endpoints (`TaskToolProxy`), with the same sign-in, free-plan cap and usage log. The manifest is cached 60 seconds per grant and user, so a changed grant shows within a minute; the API checks every call regardless. Each tool carries the annotations the API sends with it ([tool hints](#tool-hints)), an output schema that promises an object, and its app sets `_meta.ui.resourceUri`. A result's `data` becomes `structuredContent`, always an object (an array as `{items}`, nothing as `{}`), a confirmation is added as `structuredContent.confirmation` `{token, expiresAt, preview}`, and an error carries `{errorCode, needs}`. `estimate_food` and `plan_meals` may run as tasks. The server instructions, prompts (`MizanTaskPrompts`) and skills (`SkillsTasks`, with `mizan-admin` beside the six shared names) name the task tools in this mode.
 
 ### Coaching tools
 
 A connected app reads a client's area only when the client shares it with the coach and has also allowed AI to read it, because the data leaves Mizan for an outside model. `ClientReadAccess` checks both in Application; the web app needs only the first. A missing consent is refused with `client_ai_consent_required`, an unshared area with `forbidden`. On the connection side `coaching:read` is enough: its nutrition, training and body areas cover the coach's own data, not a client's ([AI](AI.md#consent)). `ask_about_client` spends the coach's allowance, never the client's.
+
+The coaching chat (`get_clients` and `get_my_coach` view `chat`, web `GET /api/Chat/{relationshipId}`) reads a page at a time: the latest `take` messages (50 by default, at most 200), oldest first, or those before the message `before`. `hasOlder` says whether an earlier page remains; the first message's id is the next `before`.
 
 ### Admin tools
 
@@ -72,6 +74,44 @@ A connected app reads a client's area only when the client shares it with the co
 ### Confirming a high-impact action
 
 Deleting a meal plan, a recipe, a household membership (leaving, or removing a member), the social profile, or a shopping list's ticked items does not happen on the first call. `delete` returns a preview of what goes and a `confirmation` token; the model shows the preview, and only when the person agrees calls `delete` again with `kind: "confirm"` and the token. The token is stored hashed in `pending_tool_actions` with the arguments and a hash of the preview's facts. It works once, for ten minutes, for the same person and connection, and only while that connection still allows the action. Confirming rebuilds the command from the stored arguments, runs the preview again and refuses with `facts_changed` if what the person saw has changed, `token_used` or `token_expired` otherwise. The audit entry records the confirmed action.
+
+### Tool hints
+
+`ToolFilter.Hints` works out a tool's annotations for its worst mode, and `GET /api/tools` sends them as `hints`: `readOnlyHint` when every mode reads; `destructiveHint` when a mode deletes or changes what is there (a write tool is destructive unless every mode only adds, such as `log_food`); `idempotentHint` for reads and for writes that set a value (`update_my_settings`, `log_body`); `openWorldHint` where a mode reaches past Mizan's data (`estimate_food` asks a model, `save_food` `image` fetches a picture from a public address). A client that trusts the hints asks before a destructive tool, so a tool with one destructive mode is marked destructive as a whole. These tools mix modes, and their hint follows the worst: `update_my_settings`, `set_goal`, `plan_meals`, `edit_meal_plan`, `update_shopping_list`, `set_reminder`, `social_action`, `log_workout`, `save_workout_template`, `save_food`, `manage_my_coach`, `save_plan_template`, `run_action`, `delete` (a preview, then `confirm`), `find_action` (its `run` executes read-only actions only, so it stays read-only). `manage_household` creates, invites and switches the active household (`set_active`) and is marked additive; leaving or removing a member goes through `delete`.
+
+### Reply size
+
+A host may drop or cut a tool reply over 32 KB, text and `structuredContent` together. Every list is paged and capped so a busy account's largest reply stays under 24 KB, which a test measures: `find_food` returns at most 40 foods, `get_body_trend` 25 measurements, `get_training` `history` 10 workouts with each exercise's set count and top set (every set comes with `workoutId`), and `get_meal_plan` `plan` four days from `fromDay`, with the violations of those days and the plan's own; the text names the next `fromDay`. A mode that narrows its result does so in `ToolMode.Window`, before the result is shaped and described.
+
+## Served to a hosted assistant through the gateway
+
+A hosted assistant can reach the task tools through a gateway that signs its users in itself. The gateway authenticates as one client with a shared key, and names the person on every `tools/call` with a short-lived signed token in `_meta`. It is off unless configured, and needs `Mcp:Toolset` `tasks`.
+
+The settings live under **Admin → Settings → Assistant gateway**. The MCP server reads them from the API (`GET /api/internal/settings/mcp-gateway`, with the service key) at startup and every minute, so a change applies within a minute without a restart. Until the first reading the gateway path is closed, and when a reading fails the last good one stays.
+
+| Setting | Meaning |
+| --- | --- |
+| `Gateway.ClientKey` | The gateway's key, at least 32 characters, stored encrypted. |
+| `Gateway.ClientKeyHeader` | The header that carries the key. Empty means `Authorization: Bearer <key>`. |
+| `Gateway.MetaKey` | The `_meta` key that holds the identity token, for example `example/end_user`. |
+| `Gateway.JwksUrl` | The gateway's signing keys, an `https://<gateway-host>/...` JWKS address. |
+| `Gateway.Issuer`, `Gateway.Audience`, `Gateway.TokenType` | The token's `iss`, `aud` and header `typ`, as the gateway documents them. |
+| `EndUser.Issuer` | Mizan's own end-user issuer, which the token must carry as `end_user_issuer` ([behind a gateway](AI.md#behind-a-gateway)). |
+
+Set all of the gateway values or none: a partial set, a missing end-user issuer or a toolset other than `tasks` keeps the gateway path closed and logs which setting is missing. A deployment that set the old `Mcp__Gateway__*` variables copies them in by running `--import-env-settings` on the API with those variables set ([moving settings](ADMIN.md#moving-settings-out-of-the-environment)).
+
+The gateway sees the tool list one person without a role of their own would see, cached once for every person, and it never sees admin tools: the API refuses an admin mode on this path with `needs: not_gateway`, whoever the person is. Resources are limited to skills, app pages and the reference lists. On each call the server checks the token before anything else and refuses with a code, never echoing the token:
+
+- `gateway_token_missing`, `gateway_token_malformed`: no token under the meta key, or not a compact JWT with `exp` and `jti`.
+- `gateway_token_algorithm`, `gateway_token_type`: the header is not `alg: EdDSA` with the configured `typ`.
+- `gateway_token_unknown_key`, `gateway_token_signature`: the `kid` is not an Ed25519 key in the JWKS, or the signature does not verify. Keys are cached for an hour and fetched again for an unknown `kid`, at most once a minute.
+- `gateway_token_expired`, `gateway_token_not_yet_valid`: `exp` or `nbf` is outside 60 seconds of skew.
+- `gateway_token_issuer`, `gateway_token_audience`, `gateway_end_user_issuer`: a claim does not match its setting.
+- `gateway_token_anonymous`, `gateway_token_subject`: `anonymous` is not an explicit `false`, or `sub` is not a Mizan user id.
+- `gateway_token_replayed`: the `jti` was used before. Used ids are kept until the token expires, in Redis when `ConnectionStrings__Redis` is set and in memory otherwise, which only protects a single instance.
+- `gateway_subject_unknown`: the user does not exist, is disabled or is deleted.
+
+The call then runs as that person through the regular service key, never the admin key. The token only says who the person is; it grants no access. Every call on this path is held to the person's assistant consent ([AI](AI.md#consent)) by `AssistantConsent`, the rule the in-app assistant uses: a read needs that area's AI read consent and a write its write consent, and a refusal carries `errorCode` `ai_consent_required` with the area and access and says where to change it (Settings, Assistant). A trainer reading a client through the gateway also needs the client's AI consent (`ClientReadAccess`, [coaching tools](#coaching-tools)). OAuth connected apps are not held to these switches: the grant the person made is their consent. Usage rows from the gateway have no grant and record `{"path":"gateway"}`, and the audit entry of every call records `"Path":"gateway"`.
 
 ## Tools, resources, and prompts
 

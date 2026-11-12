@@ -4,7 +4,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Notifications;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Outbox;
 using Mizan.Infrastructure.Data;
 
 namespace Mizan.Infrastructure.Outbox;
@@ -31,6 +33,14 @@ public class OutboxDispatcher : BackgroundService
 
     // Read again at the start of every pass, so a change in the admin area applies to the next one.
     private OutboxOptions _options = new();
+
+    /// <summary>How often the retention pass runs. Finished jobs are kept for days, so hourly is plenty.</summary>
+    private static readonly TimeSpan PruneEvery = TimeSpan.FromHours(1);
+
+    /// <summary>Rows one retention delete removes, so a large backlog never holds one long lock.</summary>
+    private const int PruneBatch = 1000;
+
+    private DateTime _nextPrune = DateTime.MinValue;
 
     public OutboxDispatcher(
         IServiceScopeFactory scopes,
@@ -59,6 +69,12 @@ public class OutboxDispatcher : BackgroundService
         {
             try
             {
+                if (DateTime.UtcNow >= _nextPrune)
+                {
+                    _nextPrune = DateTime.UtcNow + PruneEvery;
+                    await PruneAsync(DateTime.UtcNow, stoppingToken);
+                }
+
                 var ran = await RunOnceAsync(stoppingToken);
 
                 // Only idle when there was nothing to do. A backlog drains as
@@ -107,6 +123,51 @@ public class OutboxDispatcher : BackgroundService
 
         if (work.Count > 0) await Task.WhenAll(work);
         return claimedAny;
+    }
+
+    /// <summary>
+    /// The retention pass (<see cref="OutboxRetention"/>): deletes succeeded and dead-lettered jobs that finished
+    /// before their cutoff, in batches. A job that can still run is never touched, and neither is one a campaign's
+    /// report counts while the campaign exists. Returns how many were deleted. Public so a test can drive it.
+    /// </summary>
+    public async Task<int> PruneAsync(DateTime now, CancellationToken cancellationToken)
+    {
+        var options = await _settings.GetAsync(cancellationToken);
+        using var scope = _scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        var campaigns = (await db.NotificationSchedules.AsNoTracking()
+                .Where(s => s.Campaign != null)
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken))
+            .Select(CampaignReports.JobPattern)
+            .ToArray();
+
+        var deleted = 0;
+        foreach (var status in OutboxRetention.Removable)
+        {
+            if (OutboxRetention.CutoffFor(status, now, options.KeepSucceededDays, options.KeepDeadLetteredDays) is not { } cutoff) continue;
+            while (true)
+            {
+                var ids = await db.OutboxJobs.AsNoTracking()
+                    .Where(j => j.Status == status && j.CompletedAt < cutoff
+                        && (j.DedupeKey == null || !campaigns.Any(p => EF.Functions.Like(j.DedupeKey, p))))
+                    .OrderBy(j => j.CompletedAt)
+                    .Select(j => j.Id)
+                    .Take(PruneBatch)
+                    .ToListAsync(cancellationToken);
+                if (ids.Count == 0) break;
+
+                // The status and cutoff again: an operator may have retried one of these since it was read.
+                deleted += await db.OutboxJobs
+                    .Where(j => ids.Contains(j.Id) && j.Status == status && j.CompletedAt < cutoff)
+                    .ExecuteDeleteAsync(cancellationToken);
+                if (ids.Count < PruneBatch) break;
+            }
+        }
+
+        if (deleted > 0) _logger.LogInformation("Deleted {Count} finished outbox jobs past retention", deleted);
+        return deleted;
     }
 
     /// <summary>

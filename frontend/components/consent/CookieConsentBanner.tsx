@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-// Slides up from the bottom with a strong ease-out on enter (400ms) and a
-// fast exit (200ms) once the user decides. The banner only mounts when GA
+// A non-modal banner, not a dialog to dismiss: the page stays usable and it
+// leaves only through a choice. Slides up from the bottom with a strong
+// ease-out on enter (400ms) and a fast exit (200ms) once the user decides. The banner only mounts when GA
 // tracking is configured and the user hasn't chosen yet, see ConsentGate.
 export function CookieConsentBanner({
   onDecision,
@@ -48,7 +49,6 @@ export function CookieConsentBanner({
         className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-4 rounded-xl border border-charcoal-blue-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-white/10 dark:bg-charcoal-blue-900"
       >
         <div className="flex items-start gap-3 sm:items-center">
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-700 sm:mt-0 dark:text-brand-300"></span>
           <div className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-200">
             <p className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
               Mind if we count visits?

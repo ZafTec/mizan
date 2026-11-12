@@ -250,7 +250,7 @@ public sealed class CreateReminderCommandHandler : IRequestHandler<CreateReminde
                 {
                     if (request.MealPlanId is not { } planId || request.PrepSessionId is not { } sessionId)
                         throw new DomainValidationException("A pre-cook reminder needs the plan and its prep session.");
-                    var plan = await _plans.LoadReadableAsync(planId, cancellationToken);
+                    var plan = await _plans.LoadForReadingAsync(planId, cancellationToken);
                     var session = plan.PrepSessions.FirstOrDefault(s => s.Id == sessionId)
                         ?? throw new EntityNotFoundException("Prep session not found in that plan.");
                     var prepTime = ParseTime(request.PrepTime) ?? ReminderRules.DefaultPrepTime;
@@ -355,7 +355,7 @@ public sealed class UpdateReminderCommandHandler : IRequestHandler<UpdateReminde
         if (details.Kind == ReminderKinds.PreCook)
         {
             if (request.Schedule is not null) throw new DomainValidationException("A pre-cook reminder follows its prep session: change the prep time or how long before instead.");
-            var plan = await _plans.LoadReadableAsync(details.MealPlanId!.Value, cancellationToken);
+            var plan = await _plans.LoadForReadingAsync(details.MealPlanId!.Value, cancellationToken);
             var session = plan.PrepSessions.FirstOrDefault(s => s.Id == details.PrepSessionId)
                 ?? throw new EntityNotFoundException("That prep session is no longer in the plan.");
             planDay = plan.StartDate?.AddDays(session.DayIndex);

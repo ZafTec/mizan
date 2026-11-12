@@ -55,11 +55,15 @@ public static class ToolFilter
     /// <summary>What an administrator viewing Mizan as someone else is missing for an admin mode.</summary>
     public const string NotImpersonating = "not_impersonating";
 
+    /// <summary>What a call through the gateway is missing for an admin mode: administration is never served there.</summary>
+    public const string NotGateway = "not_gateway";
+
     /// <summary>Null when the caller may use the mode, else the scope it is missing (or the role, as <c>role:trainer</c>).</summary>
     public static string? Refusal(ToolMode mode, ToolCallContext context)
     {
         // Seeing the site as someone else never reaches administration, whatever role the session holds.
         if (mode.MinimumRole == ToolRole.Admin && context.Impersonating) return NotImpersonating;
+        if (mode.MinimumRole == ToolRole.Admin && context.Gateway) return NotGateway;
         if (!RoleAllows(mode.MinimumRole, context.Role)) return $"role:{mode.MinimumRole.ToString().ToLowerInvariant()}";
         if (!mode.Surfaces.HasFlag(context.Surface)) return $"surface:{SurfaceName(context.Surface)}";
         return GrantAllows(mode, context.Grant) ? null : mode.Area;
@@ -94,8 +98,19 @@ public static class ToolFilter
             tool.Description,
             KindName(tool.Kind),
             JsonSerializer.SerializeToElement(Schema(tool, modes)),
-            context.Surface == ToolSurface.Mcp ? tool.App : null);
+            context.Surface == ToolSurface.Mcp ? tool.App : null,
+            Hints(tool));
     }
+
+    /// <summary>
+    /// The tool's annotations, true for its worst mode: a write tool is destructive unless every mode only adds,
+    /// and read tools are read-only and idempotent. Narrowing the modes for a caller does not soften them.
+    /// </summary>
+    public static ToolHintsDto Hints(TaskTool tool) => new(
+        ReadOnly: tool.Kind == ToolKind.Read,
+        Destructive: tool.Kind == ToolKind.Destructive || (tool.Kind == ToolKind.Write && !tool.Additive),
+        Idempotent: tool.Kind == ToolKind.Read || tool.Idempotent,
+        OpenWorld: tool.OpenWorld);
 
     public static string KindName(ToolKind kind) => kind switch
     {

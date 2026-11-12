@@ -240,6 +240,8 @@ type FixtureState = {
   connections: FixtureConnection[];
   role: string;
   pro: boolean;
+  /** Estimates a Free account has used today; the API allows three (AiQuotaService). */
+  estimatesUsed: number;
   impersonating: boolean;
   threads: FixtureThread[];
   exercises: FixtureExercise[];
@@ -462,6 +464,7 @@ function initialState(empty = false): FixtureState {
     telegram: initialTelegram(),
     role: "user",
     pro: false,
+    estimatesUsed: 0,
     impersonating: false,
     threads: empty
       ? []
@@ -863,6 +866,7 @@ const server = Bun.serve({
       const options = (await request.json()) as {
         role?: string;
         pro?: boolean;
+        estimatesUsed?: number;
         userId?: string;
         empty?: boolean;
         unread?: number;
@@ -949,6 +953,7 @@ const server = Bun.serve({
       state.userId = options.userId ?? user.id;
       state.role = options.role ?? "user";
       state.pro = options.pro ?? false;
+      state.estimatesUsed = options.estimatesUsed ?? 0;
       state.planning = initialPlanning(state.userId, today, {
         none: options.empty,
         ...options.planning,
@@ -1310,11 +1315,16 @@ const server = Bun.serve({
       });
     }
     if (path === "/api/Nutrition/ai/analyze-text" && method === "POST") {
-      if (!state.pro)
+      if (!state.pro && state.estimatesUsed >= 3)
         return json(
-          { errorCode: "upgrade_required", error: "This is part of Pro." },
-          402,
+          {
+            errorCode: "ai_quota_exceeded",
+            error: "You have used today's AI requests.",
+            retryAfterSeconds: 3600,
+          },
+          429,
         );
+      if (!state.pro) state.estimatesUsed += 1;
       const body = (await request.json()) as { description?: string };
       state.writes.push({ path, body });
       return body.description?.trim()
@@ -1325,11 +1335,16 @@ const server = Bun.serve({
           );
     }
     if (path === "/api/Nutrition/ai/analyze-image" && method === "POST") {
-      if (!state.pro)
+      if (!state.pro && state.estimatesUsed >= 3)
         return json(
-          { errorCode: "upgrade_required", error: "This is part of Pro." },
-          402,
+          {
+            errorCode: "ai_quota_exceeded",
+            error: "You have used today's AI requests.",
+            retryAfterSeconds: 3600,
+          },
+          429,
         );
+      if (!state.pro) state.estimatesUsed += 1;
       const form = await request.formData();
       state.writes.push({ path, body: { image: Boolean(form.get("image")) } });
       return json(photoAnalysis);

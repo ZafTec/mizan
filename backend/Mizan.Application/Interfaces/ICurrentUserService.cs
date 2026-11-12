@@ -24,6 +24,13 @@ public interface ICurrentUserService
     /// full authority.
     /// </summary>
     GrantContext? Grant { get; }
+
+    /// <summary>
+    /// Set when a hosted assistant acts for the person through the gateway (docs/MCP.md). The person's assistant
+    /// consent applies to every tool call, as in the in-app chat, and no admin mode is offered. <see cref="Grant"/> is
+    /// null on this path: the token says who the person is and grants nothing.
+    /// </summary>
+    bool ViaGateway => false;
 }
 
 /// <summary>What one user allowed one connected app to do, as loaded from the database for this request.</summary>

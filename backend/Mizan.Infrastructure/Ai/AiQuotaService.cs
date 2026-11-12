@@ -217,11 +217,13 @@ public class AiQuotaService : IAiQuotaService
             AiQuotaLine.Onboarding => query.Where(log => log.Feature == AiFeatures.Onboarding),
             AiQuotaLine.TrainerClient => query.Where(log => log.Feature == AiFeatures.TrainerClient),
             AiQuotaLine.Planning => query.Where(log => log.Feature == AiFeatures.Planning),
+            AiQuotaLine.Estimates => query.Where(log => log.Feature == AiFeatures.FoodAnalysis),
             _ => query.Where(log =>
                 log.Feature != AiFeatures.Eval
                 && log.Feature != AiFeatures.Onboarding
                 && log.Feature != AiFeatures.TrainerClient
-                && log.Feature != AiFeatures.Planning),
+                && log.Feature != AiFeatures.Planning
+                && log.Feature != AiFeatures.FoodAnalysis),
         };
 
         var totals = await query

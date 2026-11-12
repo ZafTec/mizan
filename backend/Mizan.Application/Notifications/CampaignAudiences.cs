@@ -160,7 +160,7 @@ public sealed class CampaignStager
     public async Task<int> StageAsync(NotificationSchedule schedule, DateTimeOffset occurrence, IEnumerable<CampaignRecipient> recipients, CancellationToken cancellationToken)
     {
         var index = new Dictionary<NotificationChannels, int>();
-        var staged = 0;
+        var jobs = new List<ScheduledJob<NotificationDeliveryJob>>();
         foreach (var recipient in recipients)
         {
             foreach (var channel in NotificationKinds.Each.Where(c => recipient.Channels.HasFlag(c) && schedule.Channels.HasFlag(c)))
@@ -168,16 +168,15 @@ public sealed class CampaignStager
                 var position = index.GetValueOrDefault(channel);
                 index[channel] = position + 1;
                 var name = NotificationKinds.Name(channel);
-                await _outbox.ScheduleAsync(
-                    OutboxJobTypes.NotificationDelivery,
+                jobs.Add(new ScheduledJob<NotificationDeliveryJob>(
                     new NotificationDeliveryJob(schedule.Id, recipient.UserId, occurrence.UtcDateTime, name),
                     CampaignRules.RunAfter(occurrence.UtcDateTime, position, channel),
-                    NotificationScheduler.DeliveryKey(schedule.Id, occurrence, recipient.UserId, name),
-                    cancellationToken);
-                staged++;
+                    NotificationScheduler.DeliveryKey(schedule.Id, occurrence, recipient.UserId, name)));
             }
         }
-        return staged;
+        // One lookup for the whole audience: a campaign reaches thousands, one round trip each was the cost.
+        await _outbox.ScheduleAllAsync(OutboxJobTypes.NotificationDelivery, jobs, cancellationToken);
+        return jobs.Count;
     }
 }
 

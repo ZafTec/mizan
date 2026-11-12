@@ -55,6 +55,8 @@ public class McpParityCoverageTests
         ["GET .well-known/openid-configuration/api"] = OAuth,
         ["GET api/.well-known/oauth-authorization-server"] = OAuth,
         ["GET api/.well-known/openid-configuration"] = OAuth,
+        ["GET .well-known/jwks.json"] = "The keys a model gateway verifies the assistant's end-user token with; software reads them, not a person.",
+        ["GET api/.well-known/jwks.json"] = "The keys a model gateway verifies the assistant's end-user token with; software reads them, not a person.",
 
         // A connected app does not manage connected apps: the person grants and revokes them in the web.
         ["GET api/mcpconnections"] = Connections,
@@ -80,6 +82,7 @@ public class McpParityCoverageTests
         ["POST api/internal/prices/sources/*/runs"] = Service,
         ["GET api/internal/settings/prices"] = Service,
         ["GET api/internal/settings/telegram-bot"] = Service,
+        ["GET api/internal/settings/mcp-gateway"] = Service,
         ["POST api/webhooks/paddle"] = "Paddle's webhook, signed by Paddle.",
         ["GET health"] = "The container health probe.",
 

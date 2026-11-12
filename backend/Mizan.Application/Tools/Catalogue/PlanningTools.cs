@@ -36,6 +36,7 @@ public static class PlanningTools
             Properties = new JsonObject
             {
                 ["planId"] = ToolSchema.Id("plan: the plan. day: a plan (a draft too); without it, the active plan on that date."),
+                ["fromDay"] = ToolSchema.Integer($"plan: the first day to return, from 0; {PlanWindowDays} days come back at a time."),
                 ["date"] = ToolSchema.Date("day: YYYY-MM-DD, today by default (with planId, the plan's first day)."),
                 ["status"] = ToolSchema.Enum("list: only plans in this status.", ["Draft", "Active", "Archived", "Declined"]),
                 ["householdId"] = ToolSchema.Id("list: only the plans shared in this household (get_household view mine)."),
@@ -68,12 +69,13 @@ public static class PlanningTools
                 new ToolMode
                 {
                     Name = "plan",
-                    Summary = "One plan by planId: days, slots and entries with their ids, totals, prep sessions, rules, targets and violations.",
+                    Summary = "One plan by planId: days, slots and entries with their ids, totals, prep sessions, rules, targets and violations, four days at a time from fromDay.",
                     Area = McpScopes.PlanningRead,
                     Surfaces = ToolSurface.Both,
                     Requests = [typeof(GetMealPlanByIdQuery)],
                     Replaces = ["get_meal_plan"],
                     Build = (args, _) => new GetMealPlanByIdQuery(args.RequiredGuid("planId")),
+                    Window = (result, args) => result is MealPlanDetailDto plan ? PlanWindow(plan, args.OptionalInt("fromDay") ?? 0) : result,
                     NotFound = "There is no such plan, or it is not yours to read.",
                     Describe = result => result is MealPlanDetailDto plan ? DescribePlan(plan) : "There is no such plan.",
                 },
@@ -746,11 +748,34 @@ public static class PlanningTools
             + receipt.Guidance;
     }
 
+    /// <summary>How many days of a plan one reply carries: four days keep a busy plan well under a host's reply limit.</summary>
+    public const int PlanWindowDays = 4;
+
+    /// <summary>The days from <paramref name="fromDay"/>, four of them, with the violations that fall in them or in no day.</summary>
+    private static MealPlanDetailDto PlanWindow(MealPlanDetailDto plan, int fromDay)
+    {
+        var first = Math.Clamp(fromDay, 0, Math.Max(0, plan.DurationDays - 1));
+        var last = first + PlanWindowDays - 1;
+        return plan with
+        {
+            Days = plan.Days.Where(d => d.DayIndex >= first && d.DayIndex <= last).ToList(),
+            Violations = plan.Violations.Where(v => v.DayIndex is null || (v.DayIndex >= first && v.DayIndex <= last)).ToList(),
+        };
+    }
+
     private static string DescribePlan(MealPlanDetailDto plan)
     {
         var text = new StringBuilder();
         text.Append(CultureInfo.InvariantCulture,
             $"\"{plan.Name}\" (plan {plan.Id}, {plan.Status}): from {plan.StartDate:yyyy-MM-dd}, {plan.DurationDays} days, {plan.EntryCount} entries.\n");
+        if (plan.Days.Count > 0 && (plan.Days[0].DayIndex > 0 || plan.Days[^1].DayIndex < plan.DurationDays - 1))
+        {
+            var (first, last) = (plan.Days[0].DayIndex, plan.Days[^1].DayIndex);
+            text.Append(CultureInfo.InvariantCulture, $"Days {first} to {last} of 0 to {plan.DurationDays - 1}");
+            text.Append(last < plan.DurationDays - 1
+                ? string.Create(CultureInfo.InvariantCulture, $"; ask again with fromDay {last + 1} for the next.\n")
+                : ".\n");
+        }
         foreach (var day in plan.Days)
         {
             var entries = day.Slots.SelectMany(s => s.Entries).ToList();

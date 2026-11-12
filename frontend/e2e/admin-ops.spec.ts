@@ -65,15 +65,41 @@ test("the overview shows system health, and a check with nothing set up says so 
   await expect(
     grid.getByRole("listitem", { name: "Background jobs" }).getByRole("link"),
   ).toHaveAttribute("href", "/admin/jobs");
-  await expect(page.getByText("Total Users")).toBeVisible();
+  await expect(page.getByRole("link", { name: /^People \d+/ })).toBeVisible();
 
-  // Mail and Contact sit next to each other in the admin tabs.
-  const tabs = await page
+  // What waits is listed with its count and links to the filtered list; nothing else is.
+  const waiting = page.getByRole("region", { name: "Needs you" });
+  await expect(
+    waiting.getByRole("link", { name: /Emails that failed.*1/ }),
+  ).toHaveAttribute("href", "/admin/mail?status=Failed");
+  await expect(
+    waiting.getByRole("link", {
+      name: /New contact messages.*Oldest waiting 3 h.*1/,
+    }),
+  ).toHaveAttribute("href", "/admin/contact?status=New");
+  await expect(waiting.getByRole("link")).toHaveCount(2);
+
+  // The sidebar groups the sections; Mail sits in the inbox beside Contact and shows its count.
+  const sections = page.getByRole("navigation", { name: "Admin sections" });
+  await expect(
+    sections.getByRole("link", { name: "Overview" }),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(
+    sections.getByRole("link", { name: "Mail 1 waiting" }),
+  ).toBeVisible();
+  const inbox = await sections
     .locator("a[href^='/admin/']")
     .evaluateAll((links) => links.map((a) => a.getAttribute("href")));
-  const mail = tabs.indexOf("/admin/mail");
-  expect(mail).toBeGreaterThan(-1);
-  expect(tabs[mail + 1]).toBe("/admin/contact");
+  expect(inbox.indexOf("/admin/mail")).toBe(
+    inbox.indexOf("/admin/moderation") + 1,
+  );
+
+  // Go to finds a section from the keyboard.
+  await page.keyboard.press("Control+k");
+  await page.keyboard.type("flags");
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/admin\/feature-flags$/);
+  await page.goto("/admin");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await noOverflow(page);

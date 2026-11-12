@@ -3,7 +3,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ModalShell } from "@/components/ModalShell";
+import { Modal } from "@/components/ui/dialog";
 import { useImageUpload } from "@/components/ImageUpload";
 import {
   createSystemExercise,
@@ -130,7 +130,7 @@ export default function ExerciseEditor({
   const busy = saving || modelBusy || image.uploading;
 
   return (
-    <ModalShell
+    <Modal
       open={open}
       onClose={busy ? () => {} : onClose}
       closeOnOverlayClick={!busy}
@@ -354,6 +354,6 @@ export default function ExerciseEditor({
           </p>
         )}
       </form>
-    </ModalShell>
+    </Modal>
   );
 }

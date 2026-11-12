@@ -46,7 +46,7 @@ public class OAuthFlowTests
         doc.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(e => e.GetString())
             .Should().BeEquivalentTo(new[] { "S256" });
         doc.GetProperty("scopes_supported").EnumerateArray().Select(e => e.GetString())
-            .Should().Contain("nutrition:read").And.NotContain("admin");
+            .Should().Contain("nutrition:read").And.Contain("admin:write", "an administrator can only grant what the client asked for");
     }
 
     [Fact]
@@ -105,6 +105,40 @@ public class OAuthFlowTests
     }
 
     [Fact]
+    public async Task ABrowserBasedClientOnAnotherSite_ExchangesRefreshesAndRevokesItsTokens()
+    {
+        // A browser sends Sec-Fetch-Site and Origin with every cross-site form post. These endpoints
+        // carry no cookie, so the framework's cross-site form check must not refuse them.
+        var (_, browser) = await SignedInAsync();
+        var clientId = await RegisterAsync();
+        var pkce = Pkce.New();
+        var code = await ApproveAsync(browser, await AuthorizeAsync(clientId, pkce, "profile:read"), new[] { "profile:read" });
+
+        using var http = _fixture.CreateClient();
+        async Task<HttpResponseMessage> CrossSite(string path, params (string Key, string Value)[] fields)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = Form(fields) };
+            request.Headers.Add("Sec-Fetch-Site", "cross-site");
+            request.Headers.Add("Origin", "https://assistant.example");
+            return await http.SendAsync(request);
+        }
+
+        var exchanged = await CrossSite("/api/oauth/token",
+            ("grant_type", "authorization_code"), ("client_id", clientId), ("code", code),
+            ("code_verifier", pkce.Verifier), ("redirect_uri", Redirect));
+        exchanged.StatusCode.Should().Be(HttpStatusCode.OK, await exchanged.Content.ReadAsStringAsync());
+        var refresh = (await exchanged.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("refresh_token").GetString()!;
+
+        var refreshed = await CrossSite("/api/oauth/token",
+            ("grant_type", "refresh_token"), ("client_id", clientId), ("refresh_token", refresh));
+        refreshed.StatusCode.Should().Be(HttpStatusCode.OK, await refreshed.Content.ReadAsStringAsync());
+        var latest = (await refreshed.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("refresh_token").GetString()!;
+
+        (await CrossSite("/api/oauth/revoke", ("token", latest), ("client_id", clientId)))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task AnAdminMayGrantAdmin_AndLosesItWhenDemoted()
     {
         var (user, browser) = await SignedInAsync(role: "admin");
@@ -127,6 +161,33 @@ public class OAuthFlowTests
 
         (await IntrospectAsync(access)).GetProperty("scopes").EnumerateArray().Select(e => e.GetString())
             .Should().NotContain("admin", "the token reads the account's role now, not at consent time");
+    }
+
+    [Theory]
+    [InlineData("admin", true)]
+    [InlineData("user", false)]
+    public async Task AnAppThatAsksForEverythingAdvertised_LetsOnlyAnAdministratorGrantAdministration(string role, bool granted)
+    {
+        var (_, browser) = await SignedInAsync(role: role);
+        using var anonymous = _fixture.CreateClient();
+        var advertised = (await anonymous.GetFromJsonAsync<JsonElement>("/api/.well-known/oauth-authorization-server"))
+            .GetProperty("scopes_supported").EnumerateArray().Select(e => e.GetString()!).ToArray();
+        var clientId = await RegisterAsync();
+        var pkce = Pkce.New();
+        var secret = await AuthorizeAsync(clientId, pkce, scope: string.Join(' ', advertised));
+
+        var view = await browser.PostAsJsonAsync("/api/oauth/authorization-requests/view", new { request = secret });
+        var shown = await view.Content.ReadFromJsonAsync<JsonElement>();
+        shown.GetProperty("scopeGroups").EnumerateArray().Any(g => g.GetProperty("group").GetString() == "admin")
+            .Should().Be(granted);
+
+        var code = await ApproveAsync(browser, secret, new[] { "nutrition:read", "admin:read", "admin:write" });
+        var tokens = await ExchangeAsync(clientId, code, pkce.Verifier);
+        var scopes = (await IntrospectAsync(tokens.GetProperty("access_token").GetString()!))
+            .GetProperty("scopes").EnumerateArray().Select(e => e.GetString()).ToList();
+
+        scopes.Should().Contain("nutrition:read");
+        scopes.Contains("admin:write").Should().Be(granted);
     }
 
     [Fact]

@@ -183,11 +183,13 @@ public class ReplaceBillingPlanPriceCommandHandler : IRequestHandler<ReplaceBill
         current.UpdatedAt = now;
         _context.BillingPlans.Add(replacement);
 
-        // Discounts restricted to the old plan follow it to the new price.
+        // Discounts restricted to the old plan follow it to the new price. An
+        // administrator keeps a handful of discounts, so they are matched here
+        // rather than with an array query the database provider cannot translate.
         var discounts = await _context.BillingDiscounts
-            .Where(d => d.IsActive && d.PlanIds.Contains(current.Id))
+            .Where(d => d.IsActive)
             .ToListAsync(cancellationToken);
-        foreach (var discount in discounts)
+        foreach (var discount in discounts.Where(d => d.PlanIds.Contains(current.Id)))
         {
             discount.PlanIds = discount.PlanIds.Append(replacement.Id).ToList();
             discount.UpdatedAt = now;

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -13,6 +12,12 @@ namespace Mizan.Api.Controllers;
 [Authorize(Policy = "UserOrMcp")]
 public class ProfileController : ControllerBase
 {
+    private static readonly JsonSerializerOptions ExportJson = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+    };
+
     private readonly IMediator _mediator;
     private readonly ICurrentUserService _currentUser;
 
@@ -36,13 +41,7 @@ public class ProfileController : ControllerBase
             return NotFound();
         }
 
-        var json = JsonSerializer.Serialize(export, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-        });
-
         var fileName = $"mizan-profile-export-{DateTime.UtcNow:yyyy-MM-dd}.json";
-        return File(Encoding.UTF8.GetBytes(json), "application/json", fileName);
+        return File(JsonSerializer.SerializeToUtf8Bytes(export, ExportJson), "application/json", fileName);
     }
 }

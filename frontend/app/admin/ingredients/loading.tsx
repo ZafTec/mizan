@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/ui/data-table";
+import { AdminListSkeleton } from "@/components/admin/AdminSkeletons";
 
 export default function Loading() {
-  return <PageSkeleton columns={8} />;
+  return <AdminListSkeleton />;
 }
