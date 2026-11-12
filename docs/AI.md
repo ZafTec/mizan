@@ -52,7 +52,7 @@ An endpoint that does not take images can leave photos to another: `Ai.Vision.Ba
 
 ### Behind a gateway
 
-The endpoint may be a gateway that meters, filters and limits per person. Mizan then sends, on every call made for a person to the main endpoint, a signed end-user token in a header the gateway names. The token is an ES256 JWT with only `iss`, `aud`, `sub` (the Mizan user id, never an email or name), `iat` and `exp`; it is cached per person and renewed a minute before it expires. Calls made for no person (the admin **Test provider**) carry none. The token and the key are never logged, and an error message that would quote a token has it replaced.
+The endpoint may be a gateway that meters, filters and limits per person. Mizan then sends, on every call made for a person to the main endpoint, a signed end-user token in a header the gateway names. The token is an ES256 JWT with `iss`, `aud`, `sub` (the Mizan user id, which never changes), `iat`, `exp` and `attributes`: the person's name, email and plan, so the gateway's console shows who each person is. It is cached per person and renewed a minute before it expires, so a changed name or plan reaches the gateway within one token lifetime. If the person cannot be read, the token is signed without attributes and the call goes ahead. Calls made for no person (the admin **Test provider**) carry none. The token and the key are never logged, and an error message that would quote a token has it replaced.
 
 The settings live under **Admin → Settings → Tokens Mizan signs** ([runtime settings](ADMIN.md#runtime-settings)) and apply without a restart. The first five are needed together; none set leaves the feature off, and a partial or invalid set turns it off and logs which setting is wrong, never the key.
 

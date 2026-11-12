@@ -10,7 +10,8 @@ namespace Mizan.Tests.Infrastructure;
 
 /// <summary>
 /// The end-user token a gateway reads on every call: ES256, verifiable with the published key,
-/// naming the person only by their opaque id (docs/AI.md#behind-a-gateway).
+/// identifying the person by their opaque id and describing them in display attributes
+/// (docs/AI.md#behind-a-gateway).
 /// </summary>
 public class AiEndUserTokensTests
 {
@@ -48,7 +49,36 @@ public class AiEndUserTokensTests
         claims.GetProperty("sub").GetString().Should().Be(userId.ToString("D"));
         claims.GetProperty("iat").GetInt64().Should().Be(time.GetUtcNow().ToUnixTimeSeconds());
         (claims.GetProperty("exp").GetInt64() - claims.GetProperty("iat").GetInt64()).Should().Be(600);
-        Encoding.UTF8.GetString(Decode(parts[1])).Should().NotContain("@", "no email goes in the token");
+        Encoding.UTF8.GetString(Decode(parts[1])).Should().NotContain("@", "without a profile there is nothing to describe");
+    }
+
+    [Fact]
+    public async Task AToken_DescribesThePerson_InAttributes_AndKeepsTheIdAsSubject()
+    {
+        var profiles = new FakeProfiles(new Dictionary<string, string> { ["name"] = "Sara", ["email"] = "sara@example.test", ["plan"] = "pro" });
+        using var tokens = Tokens(Options(), profiles: profiles);
+        var userId = Guid.NewGuid();
+
+        var claims = Claims(await tokens.TokenForAsync(userId));
+
+        claims.GetProperty("sub").GetString().Should().Be(userId.ToString("D"), "the gateway's record of a person never changes with their name");
+        var attributes = claims.GetProperty("attributes");
+        attributes.GetProperty("name").GetString().Should().Be("Sara");
+        attributes.GetProperty("email").GetString().Should().Be("sara@example.test");
+        attributes.GetProperty("plan").GetString().Should().Be("pro");
+
+        await tokens.TokenForAsync(userId);
+        profiles.Reads.Should().Be(1, "a cached token does not read the person again");
+    }
+
+    [Fact]
+    public async Task AToken_IsStillSigned_WhenThePersonCannotBeRead()
+    {
+        using var tokens = Tokens(Options(), profiles: new FakeProfiles(null));
+
+        var claims = Claims(await tokens.TokenForAsync(Guid.NewGuid()));
+
+        claims.TryGetProperty("attributes", out _).Should().BeFalse();
     }
 
     [Fact]
@@ -132,8 +162,8 @@ public class AiEndUserTokensTests
         PrivateKey = SigningKey,
     };
 
-    internal static AiEndUserTokens Tokens(AiEndUserOptions options, TimeProvider? time = null) =>
-        new(new FixedRuntimeOptions<AiEndUserOptions>(options), time ?? TimeProvider.System, NullLogger<AiEndUserTokens>.Instance);
+    internal static AiEndUserTokens Tokens(AiEndUserOptions options, TimeProvider? time = null, IAiEndUserProfiles? profiles = null) =>
+        new(new FixedRuntimeOptions<AiEndUserOptions>(options), time ?? TimeProvider.System, NullLogger<AiEndUserTokens>.Instance, profiles: profiles);
 
     internal static JsonElement Claims(string token) =>
         JsonDocument.Parse(Decode(token.Split('.')[1])).RootElement.Clone();
@@ -148,6 +178,20 @@ public class AiEndUserTokensTests
     {
         using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         return key.ExportPkcs8PrivateKeyPem();
+    }
+
+    /// <summary>Answers with fixed attributes, or fails the read when given none.</summary>
+    private sealed class FakeProfiles(IReadOnlyDictionary<string, string>? attributes) : IAiEndUserProfiles
+    {
+        public int Reads { get; private set; }
+
+        public Task<IReadOnlyDictionary<string, string>> AttributesForAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            Reads++;
+            return attributes is null
+                ? Task.FromException<IReadOnlyDictionary<string, string>>(new InvalidOperationException("the database is down"))
+                : Task.FromResult(attributes);
+        }
     }
 
     private sealed class ManualTime(DateTimeOffset now) : TimeProvider
